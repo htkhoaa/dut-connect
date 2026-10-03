@@ -1,0 +1,102 @@
+spring:
+  application:
+    name: dut-connect
+  profiles:
+    default: dev
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/dut_connect}
+    username: ${SPRING_DATASOURCE_USERNAME:dut_connect}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 3000
+      validation-timeout: 1000
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    default-schema: dut_connect
+    schemas: dut_connect
+    create-schemas: true
+    clean-disabled: true
+    validate-on-migrate: true
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: dut_connect
+        jdbc:
+          time_zone: UTC
+  sql:
+    init:
+      mode: never
+  jackson:
+    time-zone: UTC
+    deserialization:
+      accept-float-as-int: false
+    serialization:
+      write-dates-as-timestamps: false
+  mvc:
+    log-request-details: false
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+
+management:
+  endpoints:
+    web:
+      base-path: /api/actuator
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,db
+
+# Identity, donation/payment and advisory AI configuration.
+app:
+  google:
+    client-id: ${APP_GOOGLE_CLIENT_ID:}
+  jwt:
+    secret: ${APP_JWT_SECRET:}
+    access-token-ttl-minutes: ${APP_ACCESS_TOKEN_TTL_MINUTES:15}
+    refresh-token-ttl-days: ${APP_REFRESH_TOKEN_TTL_DAYS:7}
+  allowed-origins: ${APP_ALLOWED_ORIGINS:http://localhost:5173,http://localhost}
+  bootstrap-admin:
+    enabled: ${APP_BOOTSTRAP_ADMIN_ENABLED:false}
+    email: ${APP_BOOTSTRAP_ADMIN_EMAIL:}
+    student-id: ${APP_BOOTSTRAP_ADMIN_STUDENT_ID:}
+    full-name: ${APP_BOOTSTRAP_ADMIN_FULL_NAME:}
+    password: ${APP_BOOTSTRAP_ADMIN_PASSWORD:}
+  donation:
+    min-vnd: ${APP_DONATION_MIN_VND:10000}
+    max-vnd: ${APP_DONATION_MAX_VND:100000000}
+payment:
+  provider: ${PAYMENT_PROVIDER:mock}
+  zalopay:
+    app-id: ${ZALOPAY_APP_ID:}
+    key1: ${ZALOPAY_KEY1:}
+    key2: ${ZALOPAY_KEY2:}
+    create-order-url: ${ZALOPAY_CREATE_ORDER_URL:https://sb-openapi.zalopay.vn/v2/create}
+    query-order-url: ${ZALOPAY_QUERY_ORDER_URL:https://sb-openapi.zalopay.vn/v2/query}
+    callback-url: ${ZALOPAY_CALLBACK_URL:}
+    redirect-url: ${ZALOPAY_REDIRECT_URL:}
+ai:
+  enabled: ${AI_ENABLED:false}
+  base-url: ${AI_BASE_URL:}
+  api-key: ${AI_API_KEY:}
+  model: ${AI_MODEL:}
+  max-applicants: ${AI_MAX_APPLICANTS:20}
+
+logging:
+  pattern:
+    level: "%5p [requestId=%X{requestId}]"

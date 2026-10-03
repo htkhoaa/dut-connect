@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    password: ${SPRING_DATASOURCE_PASSWORD:dut_connect_dev}
+  jpa:
+    show-sql: false
+app:
+  demo-catalog:
+    hidden-campaign-ids: ${APP_DEMO_CATALOG_CAMPAIGN_IDS:}
+    hidden-proposal-ids: ${APP_DEMO_CATALOG_PROPOSAL_IDS:}
+    hidden-organization-ids: ${APP_DEMO_CATALOG_ORGANIZATION_IDS:}
+    hidden-category-ids: ${APP_DEMO_CATALOG_CATEGORY_IDS:}
+logging:
+  level:
+    vn.edu.dut.connect: INFO

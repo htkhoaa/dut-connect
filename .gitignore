@@ -1,0 +1,75 @@
+HELP.md
+**/node_modules/
+**/dist/
+*.tsbuildinfo
+*.log
+.env
+.env.*
+!.env.example
+!**/.env.example
+# Local secrets and deployment account metadata
+**/.vercel/
+**/.aws/
+**/.ssh/
+/secrets/
+/credentials/
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+/.agents/
+/.codex/
+.verification/
+.local/
+.m2/
+.npm-cache/
+# Generated caches, compiled files, database dumps, and editor/OS leftovers
+**/.cache/
+**/.vite/
+**/coverage/
+*.class
+*.hprof
+*.dump
+*.sql.gz
+*.sql.zip
+*.bak
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
