@@ -54,11 +54,24 @@ Chọn một trong hai cách:
 ]
 ```
 
-Thay `BACKEND-HOST` bằng host thật. Hiện chưa có host nên chưa thêm proxy giả vào cấu hình chạy. Cấu hình mặc định `/api/v1` chỉ hoạt động với Nginx Docker ở local; trên Vercel cần thực hiện một trong hai cách trên, nếu không API sẽ nhận HTML từ rewrite SPA. Vite dev proxy và `VITE_BACKEND_PROXY_TARGET` chỉ phục vụ phát triển local.
+Thay `BACKEND-HOST` bằng host thật nếu triển khai backend khác. Cấu hình đã áp dụng cho deployment hiện tại nằm ở phần dưới. Vite dev proxy và `VITE_BACKEND_PROXY_TARGET` chỉ phục vụ phát triển local.
 
 Chỉ đặt biến công khai `VITE_*` ở frontend. Mật khẩu PostgreSQL/admin, JWT secret, ZaloPay keys và AI API key đặt trong môi trường của backend, theo `.env.example`, không đưa lên GitHub hoặc bundle frontend. Sau khi đổi `VITE_API_BASE_URL`, deploy lại frontend.
 
-Trước khi coi deployment hoàn tất, kiểm tra tải lại đường dẫn chi tiết, đăng nhập, refresh trang giữ phiên, đăng xuất và API với HTTPS. URL backend và domain production hiện còn cần bạn cung cấp.
+Trước khi coi deployment hoàn tất, kiểm tra tải lại đường dẫn chi tiết, đăng nhập, refresh trang giữ phiên, đăng xuất và API với HTTPS.
+
+## Kết nối production hiện tại
+
+- Frontend: `https://dutconnect.vercel.app`.
+- Backend: `https://dut-connect.onrender.com`.
+- `frontend/vercel.json` chuyển `/api/:path*` tới `https://dut-connect.onrender.com/api/:path*` trước rewrite SPA. Ví dụ `/api/v1/campaigns` giữ nguyên đường dẫn `/api/v1/campaigns` ở backend.
+- Trên Vercel, giữ `VITE_API_BASE_URL=/api/v1` hoặc bỏ biến để dùng mặc định này; không trỏ trình duyệt trực tiếp sang Render. Nếu trước đó đã đặt giá trị khác, sửa rồi redeploy.
+- Trên Render, đặt `SPRING_PROFILES_ACTIVE=prod` và `APP_ALLOWED_ORIGINS=https://dutconnect.vercel.app` (không có dấu `/` cuối).
+- Dùng domain production để kiểm tra đăng nhập. Domain riêng của mỗi deployment/preview chưa được thêm vào allowlist Origin của backend.
+- Cookie refresh HttpOnly/Secure, host-only, path `/api/v1/auth` được trình duyệt nhận dưới domain frontend qua proxy; không thay SameSite hay đưa token vào localStorage.
+- Không cần sửa `application-prod.yml`; thông tin database/secret vẫn là biến môi trường riêng trên Render.
+
+Backend readiness đã trả HTTP 200, `{"status":"UP"}`. Database Neon mới chưa có chiến dịch/tổ chức/tài khoản demo từ Docker local; danh sách rỗng là bình thường sau khi kết nối thành công. Không tự nhập dữ liệu kiểm tra vào production.
 
 ## Frontend khi backend chưa sẵn sàng
 
