@@ -59,3 +59,9 @@ Thay `BACKEND-HOST` bằng host thật. Hiện chưa có host nên chưa thêm p
 Chỉ đặt biến công khai `VITE_*` ở frontend. Mật khẩu PostgreSQL/admin, JWT secret, ZaloPay keys và AI API key đặt trong môi trường của backend, theo `.env.example`, không đưa lên GitHub hoặc bundle frontend. Sau khi đổi `VITE_API_BASE_URL`, deploy lại frontend.
 
 Trước khi coi deployment hoàn tất, kiểm tra tải lại đường dẫn chi tiết, đăng nhập, refresh trang giữ phiên, đăng xuất và API với HTTPS. URL backend và domain production hiện còn cần bạn cung cấp.
+
+## Frontend khi backend chưa sẵn sàng
+
+Vercel có thể trả `index.html` với HTTP 200 cho đường dẫn API chưa có proxy. Lớp API frontend từ chối phản hồi HTML/non-JSON thay vì lưu nó vào cache truy vấn hoặc phiên đăng nhập. Trang chủ, chiến dịch và tổ chức vẫn hiển thị giao diện, kèm thông báo “Dịch vụ dữ liệu chưa sẵn sàng. Vui lòng thử lại sau.” Đăng nhập sẽ không tạo phiên từ phản hồi này. Phản hồi không có nội dung 204/205 và tải báo cáo dạng binary vẫn được hỗ trợ.
+
+Kiểm tra thủ công ngày 2026-10-04 trên bản frontend build: máy chủ static cục bộ mô phỏng API trả HTML 200 cho GET/POST; các trang `/`, `/campaigns`, `/organizations`, `/login` không còn lỗi JavaScript và đăng nhập không chuyển trang. Chuyển API GET sang backend local thật trả JSON khôi phục 6 card chiến dịch và 3 card tổ chức trên trang chủ. `npm run build` thành công. Chưa kiểm tra deployment Vercel mới hoặc API production vì backend production chưa được cấu hình.

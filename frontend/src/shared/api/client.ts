@@ -1,4 +1,4 @@
-import axios, {AxiosHeaders} from 'axios';
+import axios, {AxiosError, AxiosHeaders} from 'axios';
 import type {AuthResponse, LoginValues} from '../../features/auth/types';
 import {useAuth} from '../../features/auth/store';
 import {queryClient} from './queryClient';
@@ -94,7 +94,20 @@ apiClient.interceptors.request.use((config) => {
     }
     return config;
 }, undefined, {synchronous: true});
-apiClient.interceptors.response.use((response) => response, async (error: unknown) => {
+apiClient.interceptors.response.use((response) => {
+    if (response.status === 204 || response.status === 205) return response;
+    const contentType = String(response.headers['content-type'] || '').toLowerCase();
+    const binary = response.config.responseType === 'blob' || response.config.responseType === 'arraybuffer';
+    // A static SPA host can return index.html with HTTP 200 for an unconfigured API route.
+    // Reject it before query caching or authentication treats it as application data.
+    if (contentType.includes('text/html') || (!binary &&
+        (!/^application\/(?:[\w.-]+\+)?json(?:\s*;|$)/.test(contentType) ||
+            response.data === null || typeof response.data !== 'object'))) {
+        throw new AxiosError('The API did not return application data.', 'ERR_INVALID_API_RESPONSE',
+            response.config, response.request, response);
+    }
+    return response;
+}, async (error: unknown) => {
     if (!axios.isAxiosError(error)) throw error;
     const config = error.config as (NonNullable<typeof error.config> & {
         authRetried?: boolean;

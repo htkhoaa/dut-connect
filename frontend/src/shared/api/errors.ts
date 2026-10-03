@@ -20,6 +20,9 @@ export function apiError(error: unknown): ApiError | undefined {
 }
 
 export function errorMessage(error: unknown): string {
+    if (axios.isAxiosError(error) && error.code === 'ERR_INVALID_API_RESPONSE') {
+        return 'Dịch vụ dữ liệu chưa sẵn sàng. Vui lòng thử lại sau.';
+    }
     return apiError(error)?.message || 'Không thể kết nối. Vui lòng thử lại.';
 }
 
