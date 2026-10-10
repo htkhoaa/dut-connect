@@ -24,6 +24,7 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.beans.factory.annotation.Qualifier;
 import vn.edu.dut.connect.identity.infrastructure.security.*;
+import vn.edu.dut.connect.shared.api.ErrorCode;
 
 /**
  * Stateless bearer authentication with explicitly protected cookie flows.
@@ -83,8 +84,14 @@ public class InfrastructureSecurityConfiguration {
     }
 
     @Bean
+    InMemoryRateLimiter inMemoryRateLimiter() {
+        return new InMemoryRateLimiter(60, 60_000);
+    }
+
+    @Bean
     SecurityFilterChain infrastructureSecurityFilterChain(HttpSecurity http, ActiveUserJwtConverter converter,
-                                                          IdentitySettings settings, SecurityErrorWriter errors) throws Exception {
+                                                          IdentitySettings settings, SecurityErrorWriter errors,
+                                                          InMemoryRateLimiter rateLimiter) throws Exception {
         return http
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -94,6 +101,7 @@ public class InfrastructureSecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> {
                 })
+                .addFilterBefore(new RateLimitingFilter(rateLimiter, errors), AuthorizationFilter.class)
                 .addFilterBefore(new CookieOriginFilter(settings, errors), AuthorizationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.GET, "/api/actuator/health", "/api/actuator/health/**").permitAll()
@@ -110,16 +118,16 @@ public class InfrastructureSecurityConfiguration {
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e
-                        .authenticationEntryPoint((r, s, x) -> errors.write(r, s, 401, "AUTHENTICATION_REQUIRED", "Authentication required"))
-                        .accessDeniedHandler((r, s, x) -> errors.write(r, s, 403, "ACCESS_DENIED", "Permission denied")))
+                        .authenticationEntryPoint((r, s, x) -> errors.write(r, s, ErrorCode.AUTHENTICATION_REQUIRED))
+                        .accessDeniedHandler((r, s, x) -> errors.write(r, s, ErrorCode.ACCESS_DENIED)))
                 .oauth2ResourceServer(o -> o.jwt(j -> j.jwtAuthenticationConverter(converter))
                         .authenticationEntryPoint((r, s, x) -> {
                             if (x instanceof OAuth2AuthenticationException oauth
                                     && "temporarily_unavailable".equals(oauth.getError().getErrorCode()))
-                                errors.write(r, s, 503, "SERVICE_UNAVAILABLE", "Authentication temporarily unavailable");
-                            else errors.write(r, s, 401, "AUTHENTICATION_REQUIRED", "Invalid or expired authentication");
+                                errors.write(r, s, ErrorCode.SERVICE_UNAVAILABLE, "Authentication temporarily unavailable");
+                            else errors.write(r, s, ErrorCode.AUTHENTICATION_REQUIRED, "Invalid or expired authentication");
                         })
-                        .accessDeniedHandler((r, s, x) -> errors.write(r, s, 403, "ACCESS_DENIED", "Permission denied")))
+                        .accessDeniedHandler((r, s, x) -> errors.write(r, s, ErrorCode.ACCESS_DENIED)))
                 .build();
     }
 }

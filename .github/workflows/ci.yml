@@ -1,0 +1,214 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # =========================================================================
+  # 1. BACKEND BUILD & TEST JOB
+  # =========================================================================
+  backend:
+    name: Backend Build & Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Grant Execute Permission to Maven Wrapper
+        run: chmod +x backend/mvnw
+
+      - name: Check Code Formatting & Hygiene (Spotless)
+        run: |
+          cd backend
+          ./mvnw spotless:check
+
+      - name: Run Automated Unit Tests
+        run: |
+          cd backend
+          ./mvnw test
+
+      - name: Verify Build & Packaging
+        run: |
+          cd backend
+          ./mvnw -B package -DskipTests
+
+      - name: Archive Test Reports on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-test-reports
+          path: backend/target/surefire-reports/
+
+  # =========================================================================
+  # 2. FRONTEND BUILD & TYPECHECK JOB
+  # =========================================================================
+  frontend:
+    name: Frontend Typecheck & Bundle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Type-Check & Build Bundle
+        run: |
+          cd frontend
+          npm run build
+
+  # =========================================================================
+  # 3. SECURITY SCAN JOB (Secrets, CVEs, Dependency Audit)
+  # =========================================================================
+  security-scan:
+    name: Security & Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan Repository for Hardcoded Secrets (Gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Audit Frontend Dependencies (npm audit)
+        run: |
+          cd frontend
+          npm audit --omit=dev --audit-level=high
+
+      - name: Scan Filesystem for Critical CVEs (Trivy)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+        continue-on-error: true
+
+  # =========================================================================
+  # 4. CONNECTOR TEST JOB (Payment, Gateways, Rate Limiters)
+  # =========================================================================
+  connector-test:
+    name: Integration Connector & Gateway Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Grant Execute Permission to Maven Wrapper
+        run: chmod +x backend/mvnw
+
+      - name: Run Connector Integration Tests
+        run: |
+          cd backend
+          ./mvnw test -Dtest="PaymentConnectorTest,RateLimitingFilterTest,InMemoryRateLimiterTest,CookieOriginFilterTest"
+
+  # =========================================================================
+  # 5. CONTRACT / SCHEMA TEST JOB (Flyway Migrations & Domain Contracts)
+  # =========================================================================
+  contract-schema-test:
+    name: Contract & Database Schema Verification
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: dut_connect
+          POSTGRES_USER: dut_connect
+          POSTGRES_PASSWORD: dut_connect_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Grant Execute Permission to Maven Wrapper
+        run: chmod +x backend/mvnw
+
+      - name: Verify Domain API & DTO Contracts
+        run: |
+          cd backend
+          ./mvnw test -Dtest="DomainContractsTest"
+
+      - name: Run Flyway Migration from Clean State (V1 -> V17)
+        run: |
+          cd backend
+          ./mvnw -B flyway:migrate \
+            "-Dflyway.url=jdbc:postgresql://localhost:5432/dut_connect" \
+            "-Dflyway.user=dut_connect" \
+            "-Dflyway.password=dut_connect_test_password" \
+            "-Dflyway.schemas=dut_connect" \
+            "-Dflyway.defaultSchema=dut_connect"
+
+      - name: Validate Schema Integrity & Migration Checksums
+        run: |
+          cd backend
+          ./mvnw -B flyway:validate \
+            "-Dflyway.url=jdbc:postgresql://localhost:5432/dut_connect" \
+            "-Dflyway.user=dut_connect" \
+            "-Dflyway.password=dut_connect_test_password" \
+            "-Dflyway.schemas=dut_connect" \
+            "-Dflyway.defaultSchema=dut_connect"
+
+  # =========================================================================
+  # 6. DOCKER LINT JOB
+  # =========================================================================
+  docker-lint:
+    name: Docker Compose Syntax Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Validate Docker Compose Configuration
+        env:
+          APP_JWT_SECRET: "ci-dummy-jwt-secret-key-at-least-32-chars-long"
+        run: docker compose config --quiet

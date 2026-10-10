@@ -1,7 +1,6 @@
 package vn.edu.dut.connect.campaign.application;
 import java.util.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import vn.edu.dut.connect.campaign.domain.*;
 import vn.edu.dut.connect.shared.application.*;
 import vn.edu.dut.connect.identity.application.*;

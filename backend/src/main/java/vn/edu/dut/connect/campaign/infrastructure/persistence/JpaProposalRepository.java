@@ -7,6 +7,6 @@ interface JpaProposalRepository extends JpaRepository<Proposal,UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select e from Proposal e where e.id=:id")
     Optional<Proposal> lockById(UUID id);
-    
-    
+
+
 }

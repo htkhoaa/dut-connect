@@ -13,7 +13,6 @@ import vn.edu.dut.connect.volunteer.domain.*;
 
 import static vn.edu.dut.connect.volunteer.application.CoordinationContracts.*;
 
-import vn.edu.dut.connect.volunteer.application.VolunteerContracts.VersionRequest;
 
 @RestController
 @RequestMapping("/api/v1")

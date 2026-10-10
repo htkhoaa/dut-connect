@@ -1,134 +1,164 @@
 package vn.edu.dut.connect.shared.api;
 
-import jakarta.servlet.http.HttpServletRequest;
-
-import java.util.List;
 import java.sql.SQLException;
+import java.util.List;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.MediaType;
-import org.springframework.web.HttpMediaTypeNotSupportedException;
-import org.springframework.web.HttpMediaTypeNotAcceptableException;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.transaction.CannotCreateTransactionException;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import vn.edu.dut.connect.campaign.domain.CampaignViolation;
+import vn.edu.dut.connect.donation.domain.PaymentViolation;
+import vn.edu.dut.connect.finance.domain.ExpenseViolation;
+import vn.edu.dut.connect.organization.domain.OrganizationRuleViolation;
 import vn.edu.dut.connect.shared.application.ApplicationFailure;
+import vn.edu.dut.connect.volunteer.domain.VolunteerViolation;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
-    @ExceptionHandler(vn.edu.dut.connect.finance.domain.ExpenseViolation.class)
-    ResponseEntity<ApiError> expense(vn.edu.dut.connect.finance.domain.ExpenseViolation e,HttpServletRequest r){
-        var fields=e.field()==null?List.<ApiError.FieldError>of():List.of(new ApiError.FieldError(e.field(),e.getMessage()));
-        return error(r,"VALIDATION_ERROR".equals(e.code())?400:409,e.code(),e.getMessage(),fields);
-    }
+
     private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
-    @ExceptionHandler(vn.edu.dut.connect.donation.domain.PaymentViolation.class)
-    ResponseEntity<ApiError> payment(vn.edu.dut.connect.donation.domain.PaymentViolation e,HttpServletRequest r){
-        var fields=e.field()==null?List.<ApiError.FieldError>of():List.of(new ApiError.FieldError(e.field(),e.getMessage()));
-        int status="VALIDATION_ERROR".equals(e.code())||"PAYMENT_VERIFICATION_FAILED".equals(e.code())?400:"PAYMENT_PROVIDER_ERROR".equals(e.code())?502:409;
-        return error(r,status,e.code(),e.getMessage(),fields);
-    }
-
-    @ExceptionHandler(vn.edu.dut.connect.volunteer.domain.VolunteerViolation.class)
-    ResponseEntity<ApiError> volunteer(vn.edu.dut.connect.volunteer.domain.VolunteerViolation e, HttpServletRequest r) {
-        var fields=e.field()==null?List.<ApiError.FieldError>of():List.of(new ApiError.FieldError(e.field(),e.getMessage()));
-        return error(r,"VALIDATION_ERROR".equals(e.code())?400:409,e.code(),e.getMessage(),fields);
-    }
-
-    @ExceptionHandler(vn.edu.dut.connect.campaign.domain.CampaignViolation.class)
-    ResponseEntity<ApiError> campaign(vn.edu.dut.connect.campaign.domain.CampaignViolation e, HttpServletRequest r) {
-        var fields = e.field() == null ? List.<ApiError.FieldError>of() : List.of(new ApiError.FieldError(e.field(), e.getMessage()));
-        return error(r, "VALIDATION_ERROR".equals(e.code()) ? 400 : 409, e.code(), e.getMessage(), fields);
-    }
-
-    @ExceptionHandler(vn.edu.dut.connect.organization.domain.OrganizationRuleViolation.class)
-    ResponseEntity<ApiError> organization(vn.edu.dut.connect.organization.domain.OrganizationRuleViolation e,HttpServletRequest r) {
-        return error(r,409,e.code(),e.getMessage(),List.of());
-    }
-
     @ExceptionHandler(ApplicationFailure.class)
-    ResponseEntity<ApiError> application(ApplicationFailure e, HttpServletRequest r) {
+    public ResponseEntity<ApiError> application(ApplicationFailure e, HttpServletRequest r) {
         return error(r, e.status(), e.code(), e.getMessage(), List.of());
     }
 
+    @ExceptionHandler(CampaignViolation.class)
+    public ResponseEntity<ApiError> campaign(CampaignViolation e, HttpServletRequest r) {
+        return domainViolation(r, e.code(), e.getMessage(), e.field());
+    }
+
+    @ExceptionHandler(ExpenseViolation.class)
+    public ResponseEntity<ApiError> expense(ExpenseViolation e, HttpServletRequest r) {
+        return domainViolation(r, e.code(), e.getMessage(), e.field());
+    }
+
+    @ExceptionHandler(VolunteerViolation.class)
+    public ResponseEntity<ApiError> volunteer(VolunteerViolation e, HttpServletRequest r) {
+        return domainViolation(r, e.code(), e.getMessage(), e.field());
+    }
+
+    @ExceptionHandler(PaymentViolation.class)
+    public ResponseEntity<ApiError> payment(PaymentViolation e, HttpServletRequest r) {
+        int status = ("VALIDATION_ERROR".equals(e.code()) || "PAYMENT_VERIFICATION_FAILED".equals(e.code())) ? 400
+                : ("PAYMENT_PROVIDER_ERROR".equals(e.code()) ? 502 : 409);
+        return domainViolation(r, status, e.code(), e.getMessage(), e.field());
+    }
+
+    @ExceptionHandler(OrganizationRuleViolation.class)
+    public ResponseEntity<ApiError> organization(OrganizationRuleViolation e, HttpServletRequest r) {
+        return error(r, 409, e.code(), e.getMessage(), List.of());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    ResponseEntity<ApiError> validation(MethodArgumentNotValidException e, HttpServletRequest r) {
-        return error(r, 400, "VALIDATION_ERROR", "Request validation failed", e.getBindingResult().getFieldErrors().stream()
-                .map(x -> new ApiError.FieldError(x.getField(), x.getDefaultMessage())).toList());
+    public ResponseEntity<ApiError> validation(MethodArgumentNotValidException e, HttpServletRequest r) {
+        List<ApiError.FieldError> fields = e.getBindingResult().getFieldErrors().stream()
+                .map(err -> new ApiError.FieldError(err.getField(), err.getDefaultMessage()))
+                .toList();
+        return error(r, ErrorCode.VALIDATION_ERROR.statusCode(), ErrorCode.VALIDATION_ERROR.code(),
+                ErrorCode.VALIDATION_ERROR.defaultMessage(), fields);
     }
 
     @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
-    ResponseEntity<ApiError> malformed(RuntimeException e, HttpServletRequest r) {
-        return error(r, 400, "VALIDATION_ERROR", "Invalid request value", List.of());
-    }
-
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    ResponseEntity<ApiError> integrity(DataIntegrityViolationException e, HttpServletRequest r) {
-        for (Throwable cause = e; cause != null; cause = cause.getCause()) {
-            if (cause instanceof SQLException sql && "23505".equals(sql.getSQLState())) {
-                if (sql.getMessage()!=null && sql.getMessage().contains("\"uk_volunteer_campaign_user\""))
-                    return error(r,409,"DUPLICATE_APPLICATION","You already have an application for this campaign",List.of());
-                return error(r, 409, "CONFLICT", "A unique value already exists", List.of());
-            }
-        }
-        log.error("Unexpected data integrity failure: type={}", e.getClass().getSimpleName());
-        return error(r, 500, "INTERNAL_ERROR", "Unable to process request", List.of());
-    }
-
-    @ExceptionHandler(OptimisticLockingFailureException.class)
-    ResponseEntity<ApiError> version(OptimisticLockingFailureException e, HttpServletRequest r) {
-        return error(r, 409, "OPTIMISTIC_LOCK_CONFLICT", "This record changed. Reload and try again.", List.of());
-    }
-
-    @ExceptionHandler({DataAccessResourceFailureException.class, CannotCreateTransactionException.class})
-    ResponseEntity<ApiError> unavailable(RuntimeException e, HttpServletRequest r) {
-        return error(r, 503, "SERVICE_UNAVAILABLE", "Database temporarily unavailable", List.of());
-    }
-
-    @ExceptionHandler(NoResourceFoundException.class)
-    ResponseEntity<ApiError> notFound(NoResourceFoundException e, HttpServletRequest r) {
-        return error(r, 404, "RESOURCE_NOT_FOUND", "Resource not found", List.of());
-    }
-
-    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    ResponseEntity<ApiError> method(HttpRequestMethodNotSupportedException e, HttpServletRequest r) {
-        return error(r, 405, "METHOD_NOT_ALLOWED", "Request method not supported", List.of());
+    public ResponseEntity<ApiError> malformed(RuntimeException e, HttpServletRequest r) {
+        return error(r, ErrorCode.MALFORMED_REQUEST);
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
-    ResponseEntity<ApiError> parameter(MissingServletRequestParameterException e, HttpServletRequest r) {
-        return error(r, 400, "VALIDATION_ERROR", "Required request parameter missing", List.of());
+    public ResponseEntity<ApiError> parameter(MissingServletRequestParameterException e, HttpServletRequest r) {
+        return error(r, ErrorCode.MISSING_PARAMETER);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiError> notFound(NoResourceFoundException e, HttpServletRequest r) {
+        return error(r, ErrorCode.RESOURCE_NOT_FOUND);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiError> method(HttpRequestMethodNotSupportedException e, HttpServletRequest r) {
+        return error(r, ErrorCode.METHOD_NOT_ALLOWED);
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-    ResponseEntity<ApiError> unsupportedMedia(HttpMediaTypeNotSupportedException e, HttpServletRequest r) {
-        return error(r, 415, "UNSUPPORTED_MEDIA_TYPE", "Use a supported request content type", List.of());
+    public ResponseEntity<ApiError> unsupportedMedia(HttpMediaTypeNotSupportedException e, HttpServletRequest r) {
+        return error(r, ErrorCode.UNSUPPORTED_MEDIA_TYPE);
     }
 
     @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
-    ResponseEntity<ApiError> unacceptableMedia(HttpMediaTypeNotAcceptableException e, HttpServletRequest r) {
-        return error(r, 406, "NOT_ACCEPTABLE", "Requested response format is unavailable", List.of());
+    public ResponseEntity<ApiError> unacceptableMedia(HttpMediaTypeNotAcceptableException e, HttpServletRequest r) {
+        return error(r, ErrorCode.NOT_ACCEPTABLE);
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ApiError> version(OptimisticLockingFailureException e, HttpServletRequest r) {
+        return error(r, ErrorCode.OPTIMISTIC_LOCK_CONFLICT);
+    }
+
+    @ExceptionHandler({DataAccessResourceFailureException.class, CannotCreateTransactionException.class})
+    public ResponseEntity<ApiError> unavailable(RuntimeException e, HttpServletRequest r) {
+        return error(r, ErrorCode.SERVICE_UNAVAILABLE);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> integrity(DataIntegrityViolationException e, HttpServletRequest r) {
+        for (Throwable current = e.getCause(); current != null; current = current.getCause()) {
+            if (current instanceof SQLException sql && "23505".equals(sql.getSQLState())) {
+                if (sql.getMessage() != null && sql.getMessage().contains("\"uk_volunteer_campaign_user\"")) {
+                    return error(r, ErrorCode.DUPLICATE_APPLICATION);
+                }
+                return error(r, ErrorCode.CONFLICT);
+            }
+        }
+        log.error("Unexpected data integrity failure: path={}, ex={}", r.getRequestURI(), e.getMessage(), e);
+        return error(r, ErrorCode.INTERNAL_ERROR);
     }
 
     @ExceptionHandler(RuntimeException.class)
-    ResponseEntity<ApiError> unexpected(RuntimeException e, HttpServletRequest r) {
-        log.error("Unhandled request failure: type={}", e.getClass().getSimpleName());
-        return error(r, 500, "INTERNAL_ERROR", "Unable to process request", List.of());
+    public ResponseEntity<ApiError> unexpected(RuntimeException e, HttpServletRequest r) {
+        log.error("Unhandled request failure: path={}, ex={}", r.getRequestURI(), e.getMessage(), e);
+        return error(r, ErrorCode.INTERNAL_ERROR);
+    }
+
+    private ResponseEntity<ApiError> domainViolation(HttpServletRequest r, String code, String message, String field) {
+        int status = "VALIDATION_ERROR".equals(code) ? 400 : 409;
+        return domainViolation(r, status, code, message, field);
+    }
+
+    private ResponseEntity<ApiError> domainViolation(HttpServletRequest r, int status, String code, String message, String field) {
+        List<ApiError.FieldError> fields = (field != null && !field.isBlank())
+                ? List.of(new ApiError.FieldError(field, message)) : List.of();
+        return error(r, status, code, message, fields);
+    }
+
+    private ResponseEntity<ApiError> error(HttpServletRequest r, ErrorCode errorCode) {
+        return error(r, errorCode.statusCode(), errorCode.code(), errorCode.defaultMessage(), List.of());
     }
 
     private ResponseEntity<ApiError> error(HttpServletRequest r, int status, String code, String message, List<ApiError.FieldError> fields) {
-        return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON)
+        if (status >= 500) {
+            log.error("System error [code={}, path={}, method={}]: {}", code, r.getRequestURI(), r.getMethod(), message);
+        } else if (log.isWarnEnabled()) {
+            log.warn("Client error [status={}, code={}, path={}, method={}]: {}", status, code, r.getRequestURI(), r.getMethod(), message);
+        }
+        return ResponseEntity.status(status)
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(ApiError.of(r, status, code, message, fields));
     }
 }
