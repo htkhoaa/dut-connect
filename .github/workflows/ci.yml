@@ -37,7 +37,7 @@ jobs:
           cd backend
           ./mvnw spotless:check
 
-      - name: Run Automated Unit Tests (66 tests)
+      - name: Run Automated Unit Tests
         run: |
           cd backend
           ./mvnw test
@@ -209,4 +209,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate Docker Compose Configuration
+        env:
+          APP_JWT_SECRET: "ci-dummy-jwt-secret-key-at-least-32-chars-long"
         run: docker compose config --quiet
