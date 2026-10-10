@@ -2,7 +2,6 @@ package vn.edu.dut.connect.campaign.application;
 import java.util.*;
 import java.time.*;
 import vn.edu.dut.connect.campaign.domain.*;
-import vn.edu.dut.connect.shared.application.PageResult;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 public final class CampaignContracts {

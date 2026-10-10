@@ -1,8 +1,6 @@
 package vn.edu.dut.connect.campaign.api;
 import java.util.UUID;
-import java.net.URI;
 import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.dut.connect.campaign.application.*;

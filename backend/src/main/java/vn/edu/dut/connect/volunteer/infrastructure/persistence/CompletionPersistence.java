@@ -1,14 +1,11 @@
 package vn.edu.dut.connect.volunteer.infrastructure.persistence;
 
 import java.util.*;
-import java.time.Instant;
 
 import org.springframework.stereotype.Repository;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import vn.edu.dut.connect.volunteer.application.*;
 import vn.edu.dut.connect.volunteer.domain.*;
-import vn.edu.dut.connect.shared.application.PageResult;
-import vn.edu.dut.connect.identity.application.Pagination;
 
 import static vn.edu.dut.connect.volunteer.application.CoordinationContracts.*;
 

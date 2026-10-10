@@ -5,7 +5,6 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.edu.dut.connect.campaign.domain.*;
 import vn.edu.dut.connect.shared.application.*;
 import vn.edu.dut.connect.identity.application.*;
-import vn.edu.dut.connect.organization.application.OrganizationAccessPort;
 import static vn.edu.dut.connect.campaign.application.CampaignContracts.*;
 import java.util.stream.Collectors;
 @Service

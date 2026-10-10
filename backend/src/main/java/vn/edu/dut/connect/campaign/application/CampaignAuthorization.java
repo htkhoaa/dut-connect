@@ -1,11 +1,9 @@
 package vn.edu.dut.connect.campaign.application;
 import java.util.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import vn.edu.dut.connect.campaign.domain.*;
 import vn.edu.dut.connect.shared.application.*;
 import vn.edu.dut.connect.identity.application.*;
-import vn.edu.dut.connect.organization.application.OrganizationAccessPort;
 import static vn.edu.dut.connect.campaign.application.CampaignContracts.*;
 @Service
 public class CampaignAuthorization {

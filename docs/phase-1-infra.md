@@ -1,4 +1,4 @@
-# Phase 1 verification — 2026-10-01
+# Phase 1: Infrastructure — 2026-10-01
 
 Scope: repository and infrastructure only, following spec §44. No later-phase business behavior or automated tests were implemented.
 

@@ -5,7 +5,6 @@ import java.util.UUID;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
-import org.springframework.http.ResponseEntity;
 import vn.edu.dut.connect.identity.application.Pagination;
 import vn.edu.dut.connect.shared.api.PageResponse;
 import vn.edu.dut.connect.volunteer.application.*;
@@ -13,7 +12,6 @@ import vn.edu.dut.connect.volunteer.domain.*;
 
 import static vn.edu.dut.connect.volunteer.application.CoordinationContracts.*;
 
-import vn.edu.dut.connect.volunteer.application.VolunteerContracts.VersionRequest;
 
 @RestController
 @RequestMapping("/api/v1")
