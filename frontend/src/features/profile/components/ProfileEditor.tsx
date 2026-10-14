@@ -1,3 +1,4 @@
+import {useLanguage, tr, renderText} from "../../../shared/lib/i18n";
 ﻿import {useEffect, useState} from 'react';
 import {useForm, type FieldPath} from 'react-hook-form';
 import {z} from 'zod';
@@ -10,12 +11,14 @@ import {FormField} from '../../../shared/components/FormField';
 import {Input} from '../../../shared/components/Input';
 import {Select} from '../../../shared/components/Select';
 import {Textarea} from '../../../shared/components/Textarea';
+import {faculties} from '../../../shared/lib/faculties';
 const schema = z.object({
     fullName: z.string().trim().min(1).max(150), faculty: z.string().trim().min(1).max(150),
     bio: z.string().max(500), preferredTrack: z.enum(['', 'TECHNICAL', 'LOGISTICS']), experience: z.string().max(10000),
 });
 
 export function ProfileEditor({profile}: { profile: Profile }) {
+    useLanguage();
     const form = useForm<ProfileValues>({
         defaultValues: {
             fullName: profile.user.fullName, faculty: profile.faculty, bio: profile.bio || '',
@@ -55,28 +58,30 @@ export function ProfileEditor({profile}: { profile: Profile }) {
                     form.setError(field.field as FieldPath<ProfileValues>, {message: field.message});
         }
     });
-    return <Card><h2 className="mb-5 text-xl font-semibold">Thông tin cá nhân</h2>
-        <p className="mb-5 text-sm text-text-secondary">{profile.user.studentId} · {profile.user.email}</p>
+    return <Card><h2 className="mb-5 text-xl font-semibold">{tr("Thông tin cá nhân")}</h2>
+        <p className="mb-5 text-sm text-text-secondary">{renderText(profile.user.studentId)} · {renderText(profile.user.email)}</p>
         <form noValidate onSubmit={submit} className="space-y-4">
-            <FormField id="fullName" label="Họ và tên" error={form.formState.errors.fullName?.message}><Input
+            <FormField id="fullName" label={tr("Họ và tên")} error={form.formState.errors.fullName?.message}><Input
                 id="fullName" maxLength={150} {...form.register('fullName')} /></FormField>
-            <FormField id="faculty" label="Khoa" error={form.formState.errors.faculty?.message}><Input id="faculty"
-                                                                                                          maxLength={150} {...form.register('faculty')} /></FormField>
-            <FormField id="bio" label="Giới thiệu bản thân" error={form.formState.errors.bio?.message}><Textarea id="bio" rows={3}
+            <FormField id="faculty" label="Khoa" error={form.formState.errors.faculty?.message}><Select id="faculty" {...form.register('faculty')}>
+                {renderText(!faculties.some(f => f === profile.faculty) && <option value={profile.faculty}>{renderText(profile.faculty)}</option>)}
+                {renderText(faculties.map(f => <option key={f} value={f}>{renderText(f)}</option>))}
+            </Select></FormField>
+            <FormField id="bio" label={tr("Giới thiệu bản thân")} error={form.formState.errors.bio?.message}><Textarea id="bio" rows={3}
                                                                                                  maxLength={500} {...form.register('bio')} /></FormField>
-            <FormField id="preferredTrack" label="Nhóm đóng góp mong muốn"
+            <FormField id="preferredTrack" label={tr("Nhóm đóng góp mong muốn")}
                        error={form.formState.errors.preferredTrack?.message}>
                 <Select id="preferredTrack" {...form.register('preferredTrack')}>
-                    <option value="">Chưa chọn</option>
-                    <option value="TECHNICAL">Kỹ thuật</option>
-                    <option value="LOGISTICS">Hậu cần</option>
+                    <option value="">{tr("Chưa chọn")}</option>
+                    <option value="TECHNICAL">{tr("Kỹ thuật")}</option>
+                    <option value="LOGISTICS">{tr("Hậu cần")}</option>
                 </Select>
             </FormField>
-            <FormField id="experience" label="Kinh nghiệm" error={form.formState.errors.experience?.message}><Textarea
+            <FormField id="experience" label={tr("Kinh nghiệm")} error={form.formState.errors.experience?.message}><Textarea
                 id="experience" rows={4} maxLength={10000} {...form.register('experience')} /></FormField>
-            {update.isError && <p role="alert" className="text-danger">{errorMessage(update.error)}</p>}
-            {update.isSuccess && <p role="status" className="text-success">Đã lưu hồ sơ.</p>}
-            <Button type="submit" disabled={update.isPending}>{update.isPending ? 'Đang lưu…' : 'Lưu hồ sơ'}</Button>
+            {renderText(update.isError && <p role="alert" className="text-danger">{renderText(errorMessage(update.error))}</p>)}
+            {renderText(update.isSuccess && <p role="status" className="text-success">{tr("Đã lưu hồ sơ.")}</p>)}
+            <Button type="submit" disabled={update.isPending}>{renderText(update.isPending ? tr("Đang lưu…") : tr("Lưu hồ sơ"))}</Button>
         </form>
     </Card>;
 }

@@ -12,6 +12,7 @@ public interface UserRepository {
     Optional<User> lockUser(UUID id);
 
     Optional<User> findEmail(String email);
+    Optional<User> findStudentId(String studentId);
 
     boolean studentIdExists(String studentId);
 

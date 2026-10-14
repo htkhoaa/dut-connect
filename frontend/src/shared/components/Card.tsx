@@ -1,5 +1,7 @@
+import {useLanguage, renderText} from "../lib/i18n";
 import type {ReactNode} from 'react';
 
 export function Card({children, className = ''}: { children: ReactNode; className?: string }) {
-    return <div className={'ui-card ' + className}>{children}</div>;
+    useLanguage();
+    return <div className={'ui-card ' + className}>{renderText(children)}</div>;
 }

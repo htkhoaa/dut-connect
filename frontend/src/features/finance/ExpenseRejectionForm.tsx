@@ -1,3 +1,4 @@
+import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
 import {useState} from 'react';
 import {useForm} from 'react-hook-form';
 import {z} from 'zod';
@@ -12,6 +13,7 @@ import {ConfirmDialog} from '../../shared/components/ConfirmDialog';
 const schema=z.object({reason:z.string().trim().min(1,'Vui lòng nhập lý do từ chối.').max(1000,'Nhập tối đa 1000 ký tự.')});
 
 export function ExpenseRejectionForm({expense,onSaved,onCancel}:{expense:Expense;onSaved:()=>void;onCancel:()=>void}){
+    useLanguage();
     const form=useForm<{reason:string}>({defaultValues:{reason:''}});
     const review=useReviewExpense();
     const [reason,setReason]=useState<string|null>(null);
@@ -20,12 +22,12 @@ export function ExpenseRejectionForm({expense,onSaved,onCancel}:{expense:Expense
         if(!parsed.success){form.setError('reason',{message:parsed.error.issues[0].message});return;}
         setReason(parsed.data.reason);
     })}>
-        <FormField id="rejection-reason" label="Lý do từ chối" error={form.formState.errors.reason?.message}>
+        <FormField id="rejection-reason" label={tr("Lý do từ chối")} error={form.formState.errors.reason?.message}>
             <Textarea id="rejection-reason" maxLength={1000} rows={3} disabled={review.isPending} {...form.register('reason')}/>
         </FormField>
-        {review.isError&&<p role="alert" className="text-danger">{errorMessage(review.error)}</p>}
-        <div className="flex flex-wrap gap-3"><Button type="submit" disabled={review.isPending}>Xác nhận từ chối</Button><Button disabled={review.isPending} onClick={onCancel}>Hủy</Button></div>
-        <ConfirmDialog open={reason!==null} title="Từ chối chi phí?" message="Từ chối là quyết định cuối cùng. Chi phí sẽ không được tính vào số liệu công khai." confirmLabel="Xác nhận xét duyệt" busy={review.isPending} onClose={()=>setReason(null)} onConfirm={()=>{
+        {renderText(review.isError&&<p role="alert" className="text-danger">{renderText(errorMessage(review.error))}</p>)}
+        <div className="flex flex-wrap gap-3"><Button type="submit" disabled={review.isPending}>{tr("Xác nhận từ chối")}</Button><Button disabled={review.isPending} onClick={onCancel}>{tr("Hủy")}</Button></div>
+        <ConfirmDialog open={reason!==null} title={tr("Từ chối chi phí?")} message={tr("Từ chối là quyết định cuối cùng. Chi phí sẽ không được tính vào số liệu công khai.")} confirmLabel={tr("Xác nhận xét duyệt")} busy={review.isPending} onClose={()=>setReason(null)} onConfirm={()=>{
             if(reason!==null)review.mutate({id:expense.id,version:expense.version,command:'reject',reason},{
                 onSuccess:onSaved,
                 onError:error=>{

@@ -30,13 +30,15 @@ const date = offset => iso(offset).slice(0, 10);
 await login('admin', {email: env.APP_BOOTSTRAP_ADMIN_EMAIL, password: env.APP_BOOTSTRAP_ADMIN_PASSWORD});
 const [types, categories, skills] = await Promise.all([catalog('/organization-types'), catalog('/campaign-categories'), catalog('/skills')]);
 for (const [index, person] of people.entries()) {
-    state.people[person.key] ||= {values: {studentId: 'DEMO-DUT-' + String(index + 1).padStart(3, '0'), fullName: person.name, faculty: person.faculty, email: person.key + '@demo.dut-connect.local', password: 'Demo-' + randomBytes(18).toString('base64url')}};
-    const record = state.people[person.key];save();
+    state.people[person.key] ||= {values: {studentId: String(900000001 + index), fullName: person.name, faculty: person.faculty, email: String(900000001 + index) + '@sv1.dut.udn.vn', password: 'Demo-' + randomBytes(18).toString('base64url')}};
+    const record = state.people[person.key];
+    const facultyAliases = {'Công nghệ thông tin':'K. Công nghệ Thông tin','Quản lý dự án':'K. Quản lý dự án và Công nghiệp','Điện':'K. Điện','Kiến trúc':'K. Kiến trúc','Điện tử – Viễn thông':'K. Điện tử và Trí tuệ nhân tạo'};
+    if (!record.registered) record.values.faculty = facultyAliases[person.faculty] || person.faculty;save();
     if (!record.registered) {await request('/auth/register', null, 'POST', record.values);record.registered = true;save();}
     await login(person.key, record.values);record.userId = sessions[person.key].user.id;
     if (!record.profileReady) {
         const profile = await request('/me/profile', person.key);
-        const updated = await request('/me/profile', person.key, 'PUT', {fullName: person.name, faculty: person.faculty, bio: 'Sinh viên mẫu của DUT Connect, yêu thích hoạt động cộng đồng.', preferredTrack: person.track, experience: person.track === 'TECHNICAL' ? 'Đã hỗ trợ lớp học công nghệ, chuẩn bị bộ thực hành và hướng dẫn kỹ năng máy tính.' : 'Có kinh nghiệm chuẩn bị vật tư, phối hợp đội nhóm và tổ chức hoạt động sinh viên.', version: profile.version, userVersion: profile.user.version});
+        const updated = await request('/me/profile', person.key, 'PUT', {fullName: person.name, faculty: record.values.faculty, bio: 'Sinh viên mẫu của DUT Connect, yêu thích hoạt động cộng đồng.', preferredTrack: person.track, experience: person.track === 'TECHNICAL' ? 'Đã hỗ trợ lớp học công nghệ, chuẩn bị bộ thực hành và hướng dẫn kỹ năng máy tính.' : 'Có kinh nghiệm chuẩn bị vật tư, phối hợp đội nhóm và tổ chức hoạt động sinh viên.', version: profile.version, userVersion: profile.user.version});
         await request('/me/skills', person.key, 'PUT', {skillIds: person.skills.map(name => {const skill = skills.find(s => s.name === name);if (!skill) throw Error('Thiếu kỹ năng ' + name);return skill.id;}), version: updated.version});
         record.profileReady = true;save();
     }

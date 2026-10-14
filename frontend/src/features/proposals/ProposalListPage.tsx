@@ -1,3 +1,4 @@
+import {useLanguage, tr, renderText, locale} from "../../shared/lib/i18n";
 import {useEffect, useState} from 'react';
 import {useForm, useWatch} from 'react-hook-form';
 import {z} from 'zod';
@@ -17,16 +18,17 @@ import {EmptyState} from '../../shared/components/EmptyState';
 import {ErrorState} from '../../shared/components/ErrorState';
 import {useDebouncedValue} from '../../shared/hooks/useDebouncedValue';
 export function ProposalListPage({admin=false}:{admin?:boolean}){
+    useLanguage();
     const [page,setPage]=useState(0);const [q,setQ]=useState('');const [status,setStatus]=useState<ProposalStatus|''>(admin?'PENDING':'');
     const form=useForm<{q:string}>({defaultValues:{q:''}});const list=useProposals(admin,page,q,status);
     const query=useDebouncedValue((useWatch({control:form.control,name:'q'})||'').trim());
     useEffect(()=>{if(z.string().max(200).safeParse(query).success){setQ(query);setPage(0);}},[query]);
-    return <div className="space-y-5"><div className="flex flex-wrap justify-between gap-3"><h1 className="text-3xl font-semibold">{admin?'Duyệt đề xuất':'Đề xuất của tôi'}</h1>{!admin&&<Link className="text-primary hover:underline" to="/proposals/new">Tạo đề xuất</Link>}</div>
-        <form className="flex flex-wrap gap-3" onSubmit={form.handleSubmit(v=>{const result=z.string().trim().max(200).safeParse(v.q);if(result.success){setQ(result.data);setPage(0);}else form.setError('q',{message:'Tìm kiếm tối đa 200 ký tự'});})}><Input aria-label="Tìm kiếm đề xuất" className="sm:max-w-md" maxLength={200} {...form.register('q')}/><Button type="submit">Tìm kiếm</Button>{admin&&<Select aria-label="Trạng thái đề xuất" className="sm:max-w-xs" value={status} onChange={e=>{setStatus(e.target.value as ProposalStatus|'');setPage(0);}}><option value="">Tất cả trạng thái</option>{Object.entries(proposalStatuses).map(([value,p])=><option key={value} value={value}>{p.label}</option>)}</Select>}</form>
-        {form.formState.errors.q&&<p role="alert" className="text-danger">{form.formState.errors.q.message}</p>}
-        {list.isPending?<LoadingState/>:list.isError?<ErrorState message={errorMessage(list.error)} onRetry={()=>void list.refetch()}/>:<>
-            {list.data.items.length===0?<EmptyState message="Chưa có đề xuất."/>:<Table caption="Đề xuất"><thead><tr>{['Tiêu đề','Đơn vị tổ chức','Trạng thái','Ngày tạo'].map(x=><th key={x} className="p-4" scope="col">{x}</th>)}</tr></thead><tbody>{list.data.items.map(p=><tr key={p.id} className="border-t border-border"><td className="p-4"><Link className="text-primary hover:underline" to={'/proposals/'+p.id}>{p.title}</Link></td><td className="p-4">{organizers[p.organizerType]}</td><td className="p-4"><Badge tone={proposalStatuses[p.status].tone}>{proposalStatuses[p.status].label}</Badge></td><td className="p-4">{new Date(p.createdAt).toLocaleDateString('vi-VN')}</td></tr>)}</tbody></Table>}
+    return <div className="space-y-5"><div className="flex flex-wrap justify-between gap-3"><h1 className="text-3xl font-semibold">{renderText(admin?tr("Duyệt đề xuất"):tr("Đề xuất của tôi"))}</h1>{renderText(!admin&&<Link className="text-primary hover:underline" to="/proposals/new">{tr("Tạo đề xuất")}</Link>)}</div>
+        <form className="flex flex-wrap gap-3" onSubmit={form.handleSubmit(v=>{const result=z.string().trim().max(200).safeParse(v.q);if(result.success){setQ(result.data);setPage(0);}else form.setError('q',{message:tr("Tìm kiếm tối đa 200 ký tự")});})}><Input aria-label={tr("Tìm kiếm đề xuất")} className="sm:max-w-md" maxLength={200} {...form.register('q')}/><Button type="submit">{tr("Tìm kiếm")}</Button>{renderText(admin&&<Select aria-label={tr("Trạng thái đề xuất")} className="sm:max-w-xs" value={status} onChange={e=>{setStatus(e.target.value as ProposalStatus|'');setPage(0);}}><option value="">{tr("Tất cả trạng thái")}</option>{renderText(Object.entries(proposalStatuses).map(([value,p])=><option key={value} value={value}>{renderText(p.label)}</option>))}</Select>)}</form>
+        {renderText(form.formState.errors.q&&<p role="alert" className="text-danger">{renderText(form.formState.errors.q.message)}</p>)}
+        {renderText(list.isPending?<LoadingState/>:list.isError?<ErrorState message={errorMessage(list.error)} onRetry={()=>void list.refetch()}/>:<>
+            {list.data.items.length===0?<EmptyState message={tr("Chưa có đề xuất.")}/>:<Table caption={tr("Đề xuất")}><thead><tr>{renderText([tr("Tiêu đề"),tr("Đơn vị tổ chức"),tr("Trạng thái"),tr("Ngày tạo")].map(x=><th key={x} className="p-4" scope="col">{renderText(x)}</th>))}</tr></thead><tbody>{renderText(list.data.items.map(p=><tr key={p.id} className="border-t border-border"><td className="p-4"><Link className="text-primary hover:underline" to={'/proposals/'+p.id}>{renderText(p.title)}</Link></td><td className="p-4">{renderText(organizers[p.organizerType])}</td><td className="p-4"><Badge tone={proposalStatuses[p.status].tone}>{renderText(proposalStatuses[p.status].label)}</Badge></td><td className="p-4">{renderText(new Date(p.createdAt).toLocaleDateString(locale()))}</td></tr>))}</tbody></Table>}
             <Pagination {...list.data} onPageChange={setPage}/>
-        </>}
+        </>)}
     </div>;
 }

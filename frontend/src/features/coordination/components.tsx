@@ -1,3 +1,4 @@
+import {useLanguage, tr, renderText, locale} from "../../shared/lib/i18n";
 import {Link} from 'react-router-dom';
 import type {ReactNode} from 'react';
 import {useState} from 'react';
@@ -8,15 +9,17 @@ import {LoadingState} from '../../shared/components/LoadingState';
 import {errorMessage} from '../../shared/api/errors';
 
 export function WorkspaceLinks({id}: { id: string }) {
+    useLanguage();
     return <nav
-        className="flex flex-wrap gap-4">{[['', 'Không gian làm việc'], ['/team', 'Đội tình nguyện'], ['/meetings', 'Lịch họp'], ['/tasks', 'Nhiệm vụ'], ['/attendance', 'Điểm danh'], ['/completions', 'Hoàn thành'], ['/finance', 'Tài chính']].map(([suffix, label]) =>
+        className="flex flex-wrap gap-4">{renderText([['', tr("Không gian làm việc")], ['/team', tr("Đội tình nguyện")], ['/meetings', tr("Lịch họp")], ['/tasks', tr("Nhiệm vụ")], ['/attendance', tr("Điểm danh")], ['/completions', tr("Hoàn thành")], ['/finance', tr("Tài chính")]].map(([suffix, label]) =>
         <Link className="text-primary hover:underline" key={suffix}
-              to={'/manage/campaigns/' + id + suffix}>{label}</Link>)}</nav>;
+              to={'/manage/campaigns/' + id + suffix}>{renderText(label)}</Link>))}</nav>;
 }
 
 export function Field({label, error, children}: { label: string; error?: string; children: ReactNode }) {
-    return <label className="block space-y-2"><span className="block font-medium">{label}</span>{children}{error &&
-        <span role="alert" className="block text-danger">{error}</span>}</label>;
+    useLanguage();
+    return <label className="block space-y-2"><span className="block font-medium">{renderText(label)}</span>{renderText(children)}{renderText(error &&
+        <span role="alert" className="block text-danger">{renderText(error)}</span>)}</label>;
 }
 
 export function Roster({campaignId, render}: {
@@ -28,17 +31,18 @@ export function Roster({campaignId, render}: {
         assignedTrack: 'TECHNICAL' | 'LOGISTICS' | null
     }) => ReactNode
 }) {
+    useLanguage();
     const [page, setPage] = useState(0);
     const q = useApplications(campaignId, {page, status: 'ACCEPTED', track: ''});
     if (q.isPending) return <LoadingState/>;
     if (q.isError) return <ErrorState message={errorMessage(q.error)}/>;
-    return <div className="space-y-3">{!q.data.items.length && <p>Chưa có tình nguyện viên được chấp nhận.</p>}{q.data.items.map(u =>
-        <div className="break-words" key={u.userId}>{render(u)}</div>)}<Pagination {...q.data} onPageChange={setPage}/>
+    return <div className="space-y-3">{renderText(!q.data.items.length && <p>{tr("Chưa có tình nguyện viên được chấp nhận.")}</p>)}{renderText(q.data.items.map(u =>
+        <div className="break-words" key={u.userId}>{renderText(render(u))}</div>))}<Pagination {...q.data} onPageChange={setPage}/>
     </div>;
 }
 
 export function date(value: string | null) {
-    return value ? new Date(value).toLocaleString('vi-VN') : 'Chưa thiết lập';
+    return value ? new Date(value).toLocaleString(locale()) : tr("Chưa thiết lập");
 }
 
 export function local(value: string | null) {

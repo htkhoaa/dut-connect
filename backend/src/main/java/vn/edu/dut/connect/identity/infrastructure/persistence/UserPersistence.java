@@ -29,6 +29,10 @@ public class UserPersistence implements UserRepository {
         return users.findByEmail(email);
     }
 
+    public Optional<User> findStudentId(String studentId) {
+        return users.findByStudentId(studentId);
+    }
+
     public boolean studentIdExists(String id) {
         return users.existsByStudentId(id);
     }

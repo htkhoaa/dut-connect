@@ -1,3 +1,4 @@
+import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
 import {useSearchParams, Link, useParams} from 'react-router-dom';
 import {useDonation} from './hooks';
 import {validId} from './types';
@@ -7,13 +8,14 @@ import {ErrorState} from '../../shared/components/ErrorState';
 import {errorMessage} from '../../shared/api/errors';
 
 export function PaymentResultPage() {
+    useLanguage();
     const [params] = useSearchParams();
     const route = useParams();
     const id = route.donationId || params.get('donationId') || '';
     const q = useDonation(id);
-    return <div className="space-y-6"><h1 className="text-3xl font-semibold">Kết quả thanh toán</h1><p>Trạng thái được xác nhận từ hệ thống thanh toán. Chuyển hướng hoặc tham số URL không xác nhận thanh toán.</p><Link
-        className="text-primary hover:underline" to="/me/donations">Khoản đóng góp của tôi</Link>{!validId(id) ?
-        <ErrorState message="Cần mã khoản đóng góp hợp lệ."/> : q.isPending ? <LoadingState/> : q.isError ?
+    return <div className="space-y-6"><h1 className="text-3xl font-semibold">{tr("Kết quả thanh toán")}</h1><p>{tr("Trạng thái được xác nhận từ hệ thống thanh toán. Chuyển hướng hoặc tham số URL không xác nhận thanh toán.")}</p><Link
+        className="text-primary hover:underline" to="/me/donations">{tr("Khoản đóng góp của tôi")}</Link>{renderText(!validId(id) ?
+        <ErrorState message={tr("Cần mã khoản đóng góp hợp lệ.")}/> : q.isPending ? <LoadingState/> : q.isError ?
             <ErrorState message={errorMessage(q.error)} onRetry={() => void q.refetch()}/> :
-            <DonationCard donation={q.data}/>}</div>;
+            <DonationCard donation={q.data}/>)}</div>;
 }

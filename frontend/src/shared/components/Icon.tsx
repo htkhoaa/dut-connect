@@ -1,3 +1,4 @@
+import {useLanguage} from "../lib/i18n";
 const paths = {
     book: 'M12 6C8 3 4 3 2 4v15c3-1 6-1 10 2 4-3 7-3 10-2V4c-2-1-6-1-10 2ZM12 6v15',
     cpu: 'M7 7h10v10H7ZM3 9h4M3 15h4M17 9h4M17 15h4M9 3v4M15 3v4M9 17v4M15 17v4',
@@ -22,6 +23,7 @@ const paths = {
 };
 export type IconName = keyof typeof paths;
 export function Icon({name, size = 20, className = ''}: {name: IconName; size?: number; className?: string}) {
+    useLanguage();
     return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
                 strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className}><path d={paths[name]}/></svg>;
 }

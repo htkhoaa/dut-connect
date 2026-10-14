@@ -20,12 +20,12 @@ export interface AuthResponse {
 }
 
 export interface LoginValues {
-    email: string;
+    studentId: string;
     password: string
 }
 
 export interface RegisterValues extends LoginValues {
-    studentId: string;
+    email: string;
     fullName: string;
     faculty: string
 }

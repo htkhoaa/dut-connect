@@ -14,3 +14,13 @@ Không sử dụng ảnh do AI tạo. Các ảnh PNG/WebP tạo trước đó đ
 Tải ảnh website DUT ngày 03/10/2026. Quyền tác giả thuộc chủ sở hữu nguồn ảnh, không được tuyên bố là ảnh do dự án tạo. UI ghi nguồn bài viết ở footer. Ảnh hoạt động là tư liệu của trường, không phải bằng chứng rằng từng chiến dịch demo đã diễn ra. Dữ liệu chiến dịch/tổ chức mẫu vẫn được đánh dấu riêng.
 
 Ảnh được lưu nội bộ để UI không phụ thuộc hotlink hoặc tải từ website khác khi chạy. CSS dùng object-fit/background-size để bố trí ảnh, lớp phủ sáng giúp giữ độ tương phản của nội dung. SVG favicon và icon giao diện là vector của sản phẩm.
+
+## Bổ sung ngày 14/10/2026
+
+- dut-logo-51.png: ảnh logo kỷ niệm 51 năm do chủ dự án cung cấp; giữ nguyên tệp gốc.
+- dut-volunteer-summer.jpg: [Mùa hè xanh 2025](https://dut.udn.vn/KhoaHoa/Tintuc/id/11414), ảnh gốc https://dut.udn.vn/Files/admin/images/Tin_tuc/DoanThanhnien/2025/MHX/image004.jpg.
+- dut-volunteer-spring.jpg: [Ra quân Xuân tình nguyện 2026](https://dut.udn.vn/Fast/Tintuc/id/11702), ảnh gốc https://dut.udn.vn/Files/admin/images/Tin_tuc/DoanThanhnien/2026/XuanTinhnguyen/image002.jpg.
+- dut-volunteer-beach.jpg: [Chủ nhật xanh tại biển Nguyễn Tất Thành](https://dut.udn.vn/KhoaNhietDL/Tintuc/id/11881), ảnh đầu tiên trong bài.
+- dut-volunteer-blood.jpg: [Hiến máu đợt 2 năm 2021](https://dut.udn.vn/hoidongtruong/Tintuc/id/6213), ảnh gốc https://dut.udn.vn/Files/admin/images/Tin_tuc/DoanThanhnien/2021/HienmauND2/image005.jpg.
+
+Hai bài Khoa Môi trường [Chủ nhật xanh](https://dut.udn.vn/KhoaCNTT/Tintuc/id/11824) và [Hướng nghiệp](https://dut.udn.vn/Tuyensinh2020/Tintuc/id/11809) nhúng ảnh Facebook trả HTTP 403 khi tải. Card dùng ảnh campus do chủ dự án cung cấp, không giả định đó là ảnh chụp sự kiện. Không tạo/sửa ảnh bằng AI. Nguồn và quyền tác giả được giữ trong tài liệu; chú thích ảnh trên giao diện đã gỡ theo yêu cầu.

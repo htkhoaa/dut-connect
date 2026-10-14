@@ -1,3 +1,4 @@
+import {useLanguage, tr, renderText} from "../../../shared/lib/i18n";
 import {catalogLabel} from '../../../shared/lib/catalogLabels';
 import {useEffect,useState} from 'react';
 import {useForm,type FieldPath} from 'react-hook-form';
@@ -28,11 +29,11 @@ const schema=z.object({
     volunteerRequirements:z.string().max(10000),fundraisingGoal:optionalMoney,institutionalFunding:optionalMoney,
     sponsorName:z.string().max(200),sponsorFunding:optionalMoney,estimatedBudget:optionalMoney
 }).superRefine((v,ctx)=>{
-    if(v.endDate<v.startDate)ctx.addIssue({code:'custom',path:['endDate'],message:'Ngày kết thúc không được trước ngày bắt đầu'});
-    if(v.organizerType==='ORGANIZATION'&&!z.uuid().safeParse(v.organizationId).success)ctx.addIssue({code:'custom',path:['organizationId'],message:'Chọn tổ chức đã xác minh'});
-    if(v.contributionMode!=='DONATION_ONLY'&&(!v.targetVolunteerCount||Number(v.targetVolunteerCount)<1))ctx.addIssue({code:'custom',path:['targetVolunteerCount'],message:'Cần ít nhất một vị trí tình nguyện'});
-    if(v.fundraisingGoal&&/^\d+$/.test(v.fundraisingGoal)&&BigInt(v.fundraisingGoal)===0n)ctx.addIssue({code:'custom',path:['fundraisingGoal'],message:'Mục tiêu phải lớn hơn 0'});
-    for(const name of ['applicationDeadline','fundraisingDeadline'] as const)if(v[name]&&Number.isNaN(new Date(v[name]).getTime()))ctx.addIssue({code:'custom',path:[name],message:'Nhập ngày và giờ hợp lệ'});
+    if(v.endDate<v.startDate)ctx.addIssue({code:'custom',path:['endDate'],message:tr("Ngày kết thúc không được trước ngày bắt đầu")});
+    if(v.organizerType==='ORGANIZATION'&&!z.uuid().safeParse(v.organizationId).success)ctx.addIssue({code:'custom',path:['organizationId'],message:tr("Chọn tổ chức đã xác minh")});
+    if(v.contributionMode!=='DONATION_ONLY'&&(!v.targetVolunteerCount||Number(v.targetVolunteerCount)<1))ctx.addIssue({code:'custom',path:['targetVolunteerCount'],message:tr("Cần ít nhất một vị trí tình nguyện")});
+    if(v.fundraisingGoal&&/^\d+$/.test(v.fundraisingGoal)&&BigInt(v.fundraisingGoal)===0n)ctx.addIssue({code:'custom',path:['fundraisingGoal'],message:tr("Mục tiêu phải lớn hơn 0")});
+    for(const name of ['applicationDeadline','fundraisingDeadline'] as const)if(v[name]&&Number.isNaN(new Date(v[name]).getTime()))ctx.addIssue({code:'custom',path:[name],message:tr("Nhập ngày và giờ hợp lệ")});
 });
 function localTime(value:string|null|undefined){
     if(!value)return '';
@@ -65,6 +66,7 @@ function payload(v:FormValues,original?:Content):Content{
         institutionalFunding:v.institutionalFunding||'0',sponsorFunding:v.sponsorFunding||'0',sponsorName:v.sponsorName.trim()||null,estimatedBudget:v.estimatedBudget||null};
 }
 export function PlanForm({kind='proposal',id,content,version:initialVersion,categoryName,organizationName,modeLocked=false}:{kind?:'proposal'|'campaign';id?:string;content?:Content;version?:number;categoryName?:string;organizationName?:string;modeLocked?:boolean}){
+    useLanguage();
     const categories=useCategoryCatalog();const organizations=useOrganizationOptions('mine');
     const proposal=useSaveProposal(kind==='proposal'?id:undefined);const campaign=useEditCampaign(id||'');
     const form=useForm<FormValues>({defaultValues:defaults(content)});const [version,setVersion]=useState(initialVersion);
@@ -86,27 +88,27 @@ export function PlanForm({kind='proposal',id,content,version:initialVersion,cate
             }
         }
     });
-    if(categories.isPending||organizations.isPending)return <LoadingState message="Đang tải thông tin đề xuất…"/>;
+    if(categories.isPending||organizations.isPending)return <LoadingState message={tr("Đang tải thông tin đề xuất…")}/>;
     if(categories.isError||organizations.isError)return <ErrorState message={errorMessage(categories.error||organizations.error)} onRetry={()=>{void categories.refetch();void organizations.refetch();}}/>;
     function input(name:keyof FormValues,label:string,type='text',max?:number){return <FormField id={'plan-'+name} label={label} error={form.formState.errors[name]?.message}><Input id={'plan-'+name} type={type} step={type==='datetime-local'?'0.001':undefined} maxLength={max} {...form.register(name)}/></FormField>;}
     function area(name:keyof FormValues,label:string,max:number){return <FormField id={'plan-'+name} label={label} error={form.formState.errors[name]?.message}><Textarea id={'plan-'+name} rows={4} maxLength={max} {...form.register(name)}/></FormField>;}
     return <form noValidate onSubmit={submit} className="space-y-5">
         <fieldset disabled={mutation.isPending} className="space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">
-                <FormField id="plan-organizerType" label="Đơn vị tổ chức" error={form.formState.errors.organizerType?.message}><Select id="plan-organizerType" disabled={kind==='campaign'} {...form.register('organizerType')}>{Object.entries(organizers).map(([value,label])=><option key={value} value={value}>{label}</option>)}</Select></FormField>
-                <FormField id="plan-categoryId" label="Danh mục" error={form.formState.errors.categoryId?.message}><Select id="plan-categoryId" {...form.register('categoryId')}><option value="">Chọn danh mục</option>{categories.data.map(c=><option key={c.id} value={c.id}>{catalogLabel(c.name)}</option>)}{content&&!categories.data.some(c=>c.id===content.categoryId)&&<option value={content.categoryId}>{categoryName} (ngừng sử dụng)</option>}</Select></FormField>
+                <FormField id="plan-organizerType" label={tr("Đơn vị tổ chức")} error={form.formState.errors.organizerType?.message}><Select id="plan-organizerType" disabled={kind==='campaign'} {...form.register('organizerType')}>{renderText(Object.entries(organizers).map(([value,label])=><option key={value} value={value}>{renderText(label)}</option>))}</Select></FormField>
+                <FormField id="plan-categoryId" label={tr("Danh mục")} error={form.formState.errors.categoryId?.message}><Select id="plan-categoryId" {...form.register('categoryId')}><option value="">{tr("Chọn danh mục")}</option>{renderText(categories.data.map(c=><option key={c.id} value={c.id}>{renderText(catalogLabel(c.name))}</option>))}{renderText(content&&!categories.data.some(c=>c.id===content.categoryId)&&<option value={content.categoryId}>{renderText(categoryName)}{tr("(ngừng sử dụng)")}</option>)}</Select></FormField>
             </div>
-            {organizer==='ORGANIZATION'&&<FormField id="plan-organizationId" label="Tổ chức đã xác minh (cần quyền sở hữu hoặc quản lý)" error={form.formState.errors.organizationId?.message}><Select id="plan-organizationId" disabled={kind==='campaign'} {...form.register('organizationId')}><option value="">Chọn tổ chức</option>{organizations.data.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}{content?.organizationId&&!organizations.data.some(o=>o.id===content.organizationId)&&<option value={content.organizationId}>{organizationName||'Tổ chức hiện tại'}</option>}</Select></FormField>}
-            {input('title','Tiêu đề','text',200)}{area('summary','Tóm tắt',500)}{area('description','Mô tả',20000)}{area('expectedImpact','Giá trị hướng đến',10000)}
-            <FormField id="plan-contributionMode" label="Hình thức đóng góp" error={form.formState.errors.contributionMode?.message}><Select id="plan-contributionMode" disabled={modeLocked} {...form.register('contributionMode')}>{Object.entries(modes).map(([value,label])=><option key={value} value={value}>{label}</option>)}</Select></FormField>
-            <div className="grid gap-4 sm:grid-cols-2">{input('startDate','Ngày bắt đầu','date')}{input('endDate','Ngày kết thúc','date')}</div>
-            {mode!=='DONATION_ONLY'&&<><h3 className="text-lg font-semibold">Chỉ tiêu tình nguyện</h3><div className="grid gap-4 sm:grid-cols-3">{input('targetVolunteerCount','Tổng tình nguyện viên')}{input('targetTechnicalCount','Chỉ tiêu kỹ thuật')}{input('targetLogisticsCount','Chỉ tiêu hậu cần')}</div>{input('applicationDeadline','Hạn đăng ký (giờ địa phương)','datetime-local')}{area('volunteerRequirements','Yêu cầu tình nguyện viên',10000)}</>}
-            {mode!=='VOLUNTEER_ONLY'&&<><h3 className="text-lg font-semibold">Kế hoạch gây quỹ</h3>{input('fundraisingGoal','Mục tiêu gây quỹ (VND)')}{input('fundraisingDeadline','Hạn gây quỹ (giờ địa phương)','datetime-local')}</>}
-            <h3 className="text-lg font-semibold">Tài trợ và ngân sách dự kiến</h3>
-            <div className="grid gap-4 sm:grid-cols-2">{input('institutionalFunding','Kinh phí nhà trường (VND)')}{input('sponsorFunding','Kinh phí tài trợ (VND)')}{input('sponsorName','Nhà tài trợ','text',200)}{input('estimatedBudget','Ngân sách dự kiến (VND)')}</div>
+            {renderText(organizer==='ORGANIZATION'&&<FormField id="plan-organizationId" label={tr("Tổ chức đã xác minh (cần quyền sở hữu hoặc quản lý)")} error={form.formState.errors.organizationId?.message}><Select id="plan-organizationId" disabled={kind==='campaign'} {...form.register('organizationId')}><option value="">{tr("Chọn tổ chức")}</option>{renderText(organizations.data.map(o=><option key={o.id} value={o.id}>{renderText(o.name)}</option>))}{renderText(content?.organizationId&&!organizations.data.some(o=>o.id===content.organizationId)&&<option value={content.organizationId}>{renderText(organizationName||tr("Tổ chức hiện tại"))}</option>)}</Select></FormField>)}
+            {renderText(input('title',tr("Tiêu đề"),'text',200))}{renderText(area('summary',tr("Tóm tắt"),500))}{renderText(area('description',tr("Mô tả"),20000))}{renderText(area('expectedImpact',tr("Giá trị hướng đến"),10000))}
+            <FormField id="plan-contributionMode" label={tr("Hình thức đóng góp")} error={form.formState.errors.contributionMode?.message}><Select id="plan-contributionMode" disabled={modeLocked} {...form.register('contributionMode')}>{renderText(Object.entries(modes).map(([value,label])=><option key={value} value={value}>{renderText(label)}</option>))}</Select></FormField>
+            <div className="grid gap-4 sm:grid-cols-2">{renderText(input('startDate',tr("Ngày bắt đầu"),'date'))}{renderText(input('endDate',tr("Ngày kết thúc"),'date'))}</div>
+            {renderText(mode!=='DONATION_ONLY'&&<><h3 className="text-lg font-semibold">{tr("Chỉ tiêu tình nguyện")}</h3><div className="grid gap-4 sm:grid-cols-3">{renderText(input('targetVolunteerCount',tr("Tổng tình nguyện viên")))}{renderText(input('targetTechnicalCount',tr("Chỉ tiêu kỹ thuật")))}{renderText(input('targetLogisticsCount',tr("Chỉ tiêu hậu cần")))}</div>{input('applicationDeadline',tr("Hạn đăng ký (giờ địa phương)"),'datetime-local')}{area('volunteerRequirements',tr("Yêu cầu tình nguyện viên"),10000)}</>)}
+            {renderText(mode!=='VOLUNTEER_ONLY'&&<><h3 className="text-lg font-semibold">{tr("Kế hoạch gây quỹ")}</h3>{input('fundraisingGoal',tr("Mục tiêu gây quỹ (VND)"))}{input('fundraisingDeadline',tr("Hạn gây quỹ (giờ địa phương)"),'datetime-local')}</>)}
+            <h3 className="text-lg font-semibold">{tr("Tài trợ và ngân sách dự kiến")}</h3>
+            <div className="grid gap-4 sm:grid-cols-2">{renderText(input('institutionalFunding',tr("Kinh phí nhà trường (VND)")))}{renderText(input('sponsorFunding',tr("Kinh phí tài trợ (VND)")))}{renderText(input('sponsorName',tr("Nhà tài trợ"),'text',200))}{renderText(input('estimatedBudget',tr("Ngân sách dự kiến (VND)")))}</div>
         </fieldset>
-        {form.formState.errors.root&&<ErrorState message={form.formState.errors.root.message||'Chưa thể lưu'}/>}
-        {mutation.isSuccess&&id&&<p role="status" className="text-success">Đã lưu thay đổi.</p>}
-        <Button type="submit" disabled={mutation.isPending}>{mutation.isPending?'Đang lưu…':id?'Lưu thay đổi':'Gửi đề xuất'}</Button>
+        {renderText(form.formState.errors.root&&<ErrorState message={form.formState.errors.root.message||tr("Chưa thể lưu")}/>)}
+        {renderText(mutation.isSuccess&&id&&<p role="status" className="text-success">{tr("Đã lưu thay đổi.")}</p>)}
+        <Button type="submit" disabled={mutation.isPending}>{renderText(mutation.isPending?tr("Đang lưu…"):id?tr("Lưu thay đổi"):tr("Gửi đề xuất"))}</Button>
     </form>;
 }

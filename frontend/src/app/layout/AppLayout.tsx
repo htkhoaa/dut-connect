@@ -1,3 +1,4 @@
+import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
 import {Link, NavLink, Outlet, useLocation} from 'react-router-dom';
 import {Suspense, useEffect, useRef, useState} from 'react';
 import {useAuth} from '../../features/auth/store';
@@ -6,6 +7,8 @@ import {Button} from '../../shared/components/Button';
 import {Icon, type IconName} from '../../shared/components/Icon';
 import {LoadingState} from '../../shared/components/LoadingState';
 import {errorMessage} from '../../shared/api/errors';
+import {UserAvatar} from '../../features/profile/avatar';
+import {LanguageSwitch} from '../../shared/components/LanguageSwitch';
 
 type Item = {to: string; label: string; icon: IconName};
 const student: Item[] = [
@@ -28,9 +31,11 @@ const admin: Item[] = [
     {to: '/admin/categories', label: 'Danh mục', icon: 'grid'},
 ];
 function Brand() {
-    return <Link to="/" className="brand" aria-label="DUT Connect – Trang chủ"><span className="brand-symbol"><Icon name="leaf" size={25}/></span><span>DUT<span className="font-normal"> Connect</span><small>KẾT NỐI ĐỂ CỐNG HIẾN</small></span></Link>;
+    useLanguage();
+    return <Link to="/" className="brand" aria-label={tr("DUT Connect – Trang chủ")}><img className="brand-logo" src="/images/dut-logo-51.png" alt={tr("Logo kỷ niệm 51 năm Đại học Bách khoa Đà Nẵng")}/><span>DUT<span className="font-normal"> Connect</span><small>{tr("KẾT NỐI ĐỂ CỐNG HIẾN")}</small></span></Link>;
 }
 export function AppLayout() {
+    useLanguage();
     useInitializeAuth();
     const {user, initialized} = useAuth();
     const logout = useLogout();
@@ -64,34 +69,35 @@ export function AppLayout() {
     useEffect(() => {const close = (event: KeyboardEvent) => {if (event.key === 'Escape') setMenu(false);}; window.addEventListener('keydown', close); return () => window.removeEventListener('keydown', close);}, []);
     const privatePage = !!user && (/^\/(me|manage|admin|proposals|donations|payment|dev)(\/|$)/.test(pathname) || pathname === '/organizations/new');
     const items = user?.role === 'ADMIN' ? admin : student;
-    const title = [...admin, ...student].find(i => pathname === i.to)?.label || 'Không gian làm việc';
-    const links = (values: Item[]) => values.map(i => <NavLink key={i.to} to={i.to} end={i.to === '/admin'} className={({isActive}) => 'sidebar-link ' + (isActive ? 'is-active' : '')}><Icon name={i.icon}/>{i.label}</NavLink>);
+    const title = [...admin, ...student].find(i => pathname === i.to)?.label || tr("Không gian làm việc");
+    const links = (values: Item[]) => values.map(i => <NavLink key={i.to} to={i.to} end={i.to === '/admin'} className={({isActive}) => 'sidebar-link ' + (isActive ? 'is-active' : '')}><Icon name={i.icon}/>{renderText(i.label)}</NavLink>);
     return <div className={privatePage ? 'workspace-shell' : 'public-shell'}>
-        <a className="skip-link" href="#main-content">Chuyển đến nội dung</a>
-        {privatePage && <>
-            {menu && !desktop && <button className="sidebar-overlay" aria-label="Đóng điều hướng" onClick={() => setMenu(false)}/>}
+        <a className="skip-link" href="#main-content">{tr("Chuyển đến nội dung")}</a>
+        {renderText(privatePage && <>
+            {menu && !desktop && <button className="sidebar-overlay" aria-label={tr("Đóng điều hướng")} onClick={() => setMenu(false)}/>}
             <aside id="workspace-navigation" ref={sidebar} inert={!desktop && !menu} className={'sidebar ' + (menu ? 'is-open' : '')}>
-                <div className="flex items-center justify-between"><Brand/><button className="ui-button ui-button-ghost px-2 lg:hidden" aria-label="Đóng menu" onClick={() => setMenu(false)}><Icon name="close"/></button></div>
-                <div className="sidebar-heading">{user.role === 'ADMIN' ? 'QUẢN TRỊ HỆ THỐNG' : 'KHÔNG GIAN CỦA BẠN'}</div>
-                <nav aria-label="Điều hướng không gian làm việc">{links(items)}</nav>
-                {user.role === 'ADMIN' && <details className="mt-5"><summary className="sidebar-heading cursor-pointer">HOẠT ĐỘNG CÁ NHÂN</summary><nav aria-label="Hoạt động cá nhân">{links(student)}</nav></details>}
-                <div className="sidebar-bottom"><div className="rounded-2xl bg-primary-light p-4"><Icon name="spark" className="mb-2 text-primary"/><p className="text-sm font-semibold">Một đóng góp nhỏ.<br/>Một thay đổi lớn.</p><Link to="/campaigns" className="mt-3 inline-flex items-center gap-2 text-sm text-primary">Khám phá chiến dịch <Icon name="arrow" size={16}/></Link></div><Link to="/" className="sidebar-link mt-3"><Icon name="home"/>Về trang chủ</Link></div>
+                <div className="flex items-center justify-between"><Brand/><button className="ui-button ui-button-ghost px-2 lg:hidden" aria-label={tr("Đóng menu")} onClick={() => setMenu(false)}><Icon name="close"/></button></div>
+                <div className="sidebar-heading">{renderText(user.role === 'ADMIN' ? 'QUẢN TRỊ HỆ THỐNG' : tr("KHÔNG GIAN CỦA BẠN"))}</div>
+                <nav aria-label={tr("Điều hướng không gian làm việc")}>{renderText(links(items))}</nav>
+                {renderText(user.role === 'ADMIN' && <details className="mt-5"><summary className="sidebar-heading cursor-pointer">{tr("HOẠT ĐỘNG CÁ NHÂN")}</summary><nav aria-label={tr("Hoạt động cá nhân")}>{renderText(links(student))}</nav></details>)}
+                <div className="sidebar-bottom"><div className="rounded-2xl bg-primary-light p-4"><Icon name="spark" className="mb-2 text-primary"/><p className="text-sm font-semibold">{tr("Một đóng góp nhỏ.")}<br/>{tr("Một thay đổi lớn.")}</p><Link to="/campaigns" className="mt-3 inline-flex items-center gap-2 text-sm text-primary">{tr("Khám phá chiến dịch")}<Icon name="arrow" size={16}/></Link></div><Link to="/" className="sidebar-link mt-3"><Icon name="home"/>{tr("Về trang chủ")}</Link></div>
             </aside>
-        </>}
+        </>)}
         <div className={privatePage ? 'workspace-body' : ''}>
             <header className={privatePage ? 'workspace-header' : 'public-header'}>
                 <div className="header-content">
-                    {privatePage ? <div className="flex min-w-0 items-center gap-3"><button ref={menuButton} className="ui-button ui-button-ghost px-2 lg:hidden" aria-label="Mở menu" aria-expanded={menu} aria-controls="workspace-navigation" onClick={() => setMenu(!menu)}><Icon name="menu"/></button><div><p className="text-xs text-text-secondary">DUT Connect / {user.role === 'ADMIN' ? 'Quản trị' : 'Cá nhân'}</p><p className="font-semibold">{title}</p></div></div> : <Brand/>}
-                    {!privatePage && <nav className="public-nav" aria-label="Điều hướng chính"><NavLink to="/" end>Trang chủ</NavLink><NavLink to="/campaigns">Chiến dịch</NavLink><NavLink to="/organizations">Tổ chức</NavLink></nav>}
-                    <div className="header-actions">{initialized && (user ? <><Link className="user-chip" to={user.role === 'ADMIN' ? '/admin' : '/me/profile'}><span className="avatar">{user.fullName.slice(0, 1).toUpperCase()}</span><span className="hidden max-w-44 truncate sm:block">{user.fullName}<small>{user.role === 'ADMIN' ? 'Quản trị viên' : 'Thành viên DUT'}</small></span></Link><Button variant="ghost" disabled={logout.isPending} onClick={() => logout.mutate()} aria-label="Đăng xuất"><Icon name="logout"/><span className="hidden sm:inline">{logout.isPending ? 'Đang thoát…' : 'Đăng xuất'}</span></Button></> : <><Link className="hidden text-sm font-semibold sm:inline" to="/login">Đăng nhập</Link><Link className="button-link" to="/register">Tham gia ngay <Icon name="arrow" size={16}/></Link></>)}</div>
+                    <LanguageSwitch/>
+                    {renderText(privatePage ? <div className="flex min-w-0 items-center gap-3"><button ref={menuButton} className="ui-button ui-button-ghost px-2 lg:hidden" aria-label={tr("Mở menu")} aria-expanded={menu} aria-controls="workspace-navigation" onClick={() => setMenu(!menu)}><Icon name="menu"/></button><div><p className="text-xs text-text-secondary">DUT Connect / {renderText(user.role === 'ADMIN' ? tr("Quản trị") : tr("Cá nhân"))}</p><p className="font-semibold">{renderText(title)}</p></div></div> : <Brand/>)}
+                    {renderText(!privatePage && <nav className="public-nav" aria-label={tr("Điều hướng chính")}><NavLink to="/" end>{tr("Trang chủ")}</NavLink><NavLink to="/campaigns">{tr("Chiến dịch")}</NavLink><NavLink to="/organizations">{tr("Tổ chức")}</NavLink></nav>)}
+                    <div className="header-actions">{renderText(initialized && (user ? <><Link className="user-chip" to={user.role === 'ADMIN' ? '/admin' : '/me/profile'}><UserAvatar/><span className="hidden max-w-44 truncate sm:block">{renderText(user.fullName)}<small>{renderText(user.role === 'ADMIN' ? tr("Quản trị viên") : tr("Thành viên DUT"))}</small></span></Link><Button variant="ghost" disabled={logout.isPending} onClick={() => logout.mutate()} aria-label={tr("Đăng xuất")}><Icon name="logout"/><span className="hidden sm:inline">{renderText(logout.isPending ? tr("Đang thoát…") : tr("Đăng xuất"))}</span></Button></> : <><Link className="hidden text-sm font-semibold sm:inline" to="/login">{tr("Đăng nhập")}</Link><Link className="button-link" to="/register">Tham gia ngay <Icon name="arrow" size={16}/></Link></>))}</div>
                 </div>
-                {!privatePage && <nav className="mobile-public-nav" aria-label="Điều hướng trên điện thoại"><NavLink to="/" end>Trang chủ</NavLink><NavLink to="/campaigns">Chiến dịch</NavLink><NavLink to="/organizations">Tổ chức</NavLink><Link to={user ? '/me/profile' : '/login'}>{user ? 'Cá nhân' : 'Đăng nhập'}</Link></nav>}
+                {renderText(!privatePage && <nav className="mobile-public-nav" aria-label={tr("Điều hướng trên điện thoại")}><NavLink to="/" end>{tr("Trang chủ")}</NavLink><NavLink to="/campaigns">{tr("Chiến dịch")}</NavLink><NavLink to="/organizations">{tr("Tổ chức")}</NavLink><Link to={user ? '/me/profile' : '/login'}>{renderText(user ? tr("Cá nhân") : tr("Đăng nhập"))}</Link></nav>)}
             </header>
             <main id="main-content" className={privatePage ? 'workspace-content' : 'public-content'}>
-                {logout.isError && <p role="alert" className="mb-4 text-danger">{errorMessage(logout.error)}</p>}
-                <Suspense fallback={<LoadingState message="Đang tải trang…"/>}><Outlet/></Suspense>
+                {renderText(logout.isError && <p role="alert" className="mb-4 text-danger">{renderText(errorMessage(logout.error))}</p>)}
+                <Suspense fallback={<LoadingState message={tr("Đang tải trang…")}/>}><Outlet/></Suspense>
             </main>
-            {!privatePage && <footer className="public-footer"><div className="footer-inner"><div><Brand/><p className="mt-4 max-w-sm">Cùng sinh viên Bách khoa kết nối tri thức, sẻ chia thời gian và lan tỏa những điều tốt đẹp.</p></div><div><p className="mb-4 font-semibold text-text-primary">Cùng hành động</p><div className="grid gap-3"><Link to="/campaigns">Khám phá chiến dịch</Link><Link to="/organizations">Cộng đồng tổ chức</Link><Link to={user ? '/proposals/new' : '/register'}>Bắt đầu hành trình</Link></div></div><div><p className="mb-4 font-semibold text-text-primary">DUT Connect</p><p>Đại học Bách khoa<br/>Đại học Đà Nẵng</p><p className="mt-3 text-xs">Kết nối để cống hiến.</p></div></div><p className="photo-credits">Ảnh hoạt động: <a href="https://dut.udn.vn/TrangSinhvien/Tintuc/id/12281" target="_blank" rel="noreferrer">BK START</a> · <a href="https://dut.udn.vn/TrangSinhvien/Tintuc/id/12255" target="_blank" rel="noreferrer">Giao lưu công nghệ DUT</a>. Ảnh tư liệu không đại diện cho từng chiến dịch mẫu.</p><div className="footer-bottom"><small>© {new Date().getFullYear()} DUT Connect</small><small>Thời gian · Kỹ năng · Giá trị cộng đồng</small></div></footer>}
+            {renderText(!privatePage && <footer className="public-footer"><div className="footer-inner"><div><Brand/><p className="mt-4 max-w-sm">{tr("Cùng sinh viên Bách khoa kết nối tri thức, sẻ chia thời gian và lan tỏa những điều tốt đẹp.")}</p></div><div><p className="mb-4 font-semibold text-text-primary">{tr("Cùng hành động")}</p><div className="grid gap-3"><Link to="/campaigns">{tr("Khám phá chiến dịch")}</Link><Link to="/organizations">{tr("Cộng đồng tổ chức")}</Link><Link to={user ? '/proposals/new' : '/register'}>{tr("Bắt đầu hành trình")}</Link></div></div><div><p className="mb-4 font-semibold text-text-primary">DUT Connect</p><p>{tr("Đại học Bách khoa")}<br/>{tr("Đại học Đà Nẵng")}</p><p className="mt-3 text-xs">{tr("Kết nối để cống hiến.")}</p></div></div><div className="footer-bottom"><small>© {renderText(new Date().getFullYear())} DUT Connect</small><small>{tr("Thời gian · Kỹ năng · Giá trị cộng đồng")}</small></div></footer>)}
         </div>
     </div>;
 }

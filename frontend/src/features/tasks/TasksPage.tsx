@@ -1,3 +1,4 @@
+import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
 import type {TaskInput} from '../coordination/types';
 import {useState} from 'react';
 import {useParams, Link} from 'react-router-dom';
@@ -24,11 +25,13 @@ import type {Task, Track} from '../coordination/types';
 import * as api from './api';
 
 export function TasksPage({mine = false, detail = false}: { mine?: boolean; detail?: boolean }) {
+    useLanguage();
     const {campaignId = '', taskId = ''} = useParams();
     return <Tasks key={campaignId + taskId + mine} c={campaignId} id={detail ? taskId : ''} mine={mine}/>;
 }
 
 function Tasks({c, id, mine}: { c: string; id: string; mine: boolean }) {
+    useLanguage();
     const [page, setPage] = useState(0);
     const [status, setStatus] = useState('');
     const [edit, setEdit] = useState<Task | true | null>(null);
@@ -52,55 +55,55 @@ function Tasks({c, id, mine}: { c: string; id: string; mine: boolean }) {
     const pending = id ? detail.isPending : q.isPending;
     const error = id ? detail.error : q.error;
     return <div className="space-y-6"><h1
-        className="text-3xl font-semibold">{mine ? 'Nhiệm vụ của tôi' : id ? 'Chi tiết nhiệm vụ' : 'Nhiệm vụ chiến dịch'}</h1>{!mine && manager && (c || detail.data) &&
-        <WorkspaceLinks id={c || detail.data!.campaignId}/>}{!id &&
-        <Field label="Trạng thái"><Select value={status} onChange={e => {
+        className="text-3xl font-semibold">{renderText(mine ? tr("Nhiệm vụ của tôi") : id ? tr("Chi tiết nhiệm vụ") : tr("Nhiệm vụ chiến dịch"))}</h1>{renderText(!mine && manager && (c || detail.data) &&
+        <WorkspaceLinks id={c || detail.data!.campaignId}/>)}{renderText(!id &&
+        <Field label={tr("Trạng thái")}><Select value={status} onChange={e => {
             setStatus(e.target.value);
             setPage(0);
         }}>
-            <option value="">Tất cả trạng thái</option>
-            {Object.entries(taskStatuses).map(([v, l]) => <option value={v} key={v}>{l}</option>)}
-        </Select></Field>}{id && !manager &&
-        <div className="flex flex-wrap gap-4"><Link className="text-primary hover:underline" to="/me/tasks">Nhiệm vụ của tôi</Link>{detail.data &&
-            <Link className="text-primary hover:underline" to={'/me/campaigns/' + detail.data.campaignId + '/meetings'}>Lịch họp chiến dịch</Link>}</div>}{!mine && !id && mutable &&
-        <Button onClick={() => setEdit(true)}>Tạo nhiệm vụ</Button>}{feedback &&
-        <p role="status" className="text-success">{feedback}</p>}{mutation.isError &&
-        <ErrorState message={errorMessage(mutation.error)}/>} {pending ? <LoadingState/> : error ?
+            <option value="">{tr("Tất cả trạng thái")}</option>
+            {renderText(Object.entries(taskStatuses).map(([v, l]) => <option value={v} key={v}>{renderText(l)}</option>))}
+        </Select></Field>)}{renderText(id && !manager &&
+        <div className="flex flex-wrap gap-4"><Link className="text-primary hover:underline" to="/me/tasks">{tr("Nhiệm vụ của tôi")}</Link>{renderText(detail.data &&
+            <Link className="text-primary hover:underline" to={'/me/campaigns/' + detail.data.campaignId + '/meetings'}>{tr("Lịch họp chiến dịch")}</Link>)}</div>)}{renderText(!mine && !id && mutable &&
+        <Button onClick={() => setEdit(true)}>{tr("Tạo nhiệm vụ")}</Button>)}{renderText(feedback &&
+        <p role="status" className="text-success">{renderText(feedback)}</p>)}{renderText(mutation.isError &&
+        <ErrorState message={errorMessage(mutation.error)}/>)} {renderText(pending ? <LoadingState/> : error ?
         <ErrorState message={errorMessage(error)}/> : !data.length ?
-            <EmptyState message="Chưa có nhiệm vụ phù hợp."/> : data.map(t => <Card key={t.id}>
+            <EmptyState message={tr("Chưa có nhiệm vụ phù hợp.")}/> : data.map(t => <Card key={t.id}>
                 <div className="flex flex-wrap justify-between gap-3"><h2 className="break-words text-xl font-semibold">
-                    <Link className="text-primary hover:underline" to={'/tasks/' + t.id}>{t.title}</Link></h2><Badge
-                    tone={t.status === 'VERIFIED' ? 'success' : 'neutral'}>{taskStatuses[t.status]}</Badge></div>
-                <p>{t.campaignTitle} · {tracks[t.track]} · {priorities[t.priority]} mức ưu tiên</p><p
-                className="mt-3 whitespace-pre-wrap break-words">{t.description}</p><p>Hạn hoàn thành: {date(t.dueAt)}</p><p
-                className="break-words">Người được phân công: {t.assignees.map(a => a.fullName + ' (' + a.studentId + ', ' + tracks[a.assignedTrack] + ')').join('; ') || 'Chưa phân công'}</p>{t.verifiedAt &&
-                <p>Xác minh: {date(t.verifiedAt)}</p>}
-                <div className="mt-4 flex flex-wrap gap-3">{t.canProgress && t.status === 'TODO' &&
+                    <Link className="text-primary hover:underline" to={'/tasks/' + t.id}>{renderText(t.title)}</Link></h2><Badge
+                    tone={t.status === 'VERIFIED' ? 'success' : 'neutral'}>{renderText(taskStatuses[t.status])}</Badge></div>
+                <p>{renderText(t.campaignTitle)} · {renderText(tracks[t.track])} · {renderText(priorities[t.priority])}{tr("mức ưu tiên")}</p><p
+                className="mt-3 whitespace-pre-wrap break-words">{renderText(t.description)}</p><p>{tr("Hạn hoàn thành:")}{renderText(date(t.dueAt))}</p><p
+                className="break-words">{tr("Người được phân công:")}{renderText(t.assignees.map(a => a.fullName + ' (' + a.studentId + ', ' + tracks[a.assignedTrack] + ')').join('; ') || tr("Chưa phân công"))}</p>{renderText(t.verifiedAt &&
+                <p>{tr("Xác minh:")}{renderText(date(t.verifiedAt))}</p>)}
+                <div className="mt-4 flex flex-wrap gap-3">{renderText(t.canProgress && t.status === 'TODO' &&
                     <Button disabled={mutation.isPending} onClick={() => setAction({
                         task: t,
                         command: 'start'
-                    })}>Bắt đầu</Button>}{t.canProgress && t.status === 'IN_PROGRESS' &&
-                    <Button disabled={mutation.isPending} onClick={() => setAction({task: t, command: 'done'})}>Đánh dấu đã làm xong</Button>}{t.canManage && <><Button disabled={mutation.isPending}
-                                                                onClick={() => setEdit(t)}>Chỉnh sửa nhiệm vụ</Button>{t.status === 'DONE' &&
-                    <Button disabled={mutation.isPending} onClick={() => setAction({task: t, command: 'verify'})}>Xác minh nhiệm vụ</Button>}{t.status === 'IN_PROGRESS' &&
-                    <Button disabled={mutation.isPending} onClick={() => setAction({task: t, command: 'TODO'})}>Chuyển lại cần làm</Button>}{t.status === 'DONE' &&
-                    <Button disabled={mutation.isPending} onClick={() => setAction({task: t, command: 'IN_PROGRESS'})}>Chuyển lại đang thực hiện</Button>}<Button disabled={mutation.isPending} onClick={() => setAction({
+                    })}>{tr("Bắt đầu")}</Button>)}{renderText(t.canProgress && t.status === 'IN_PROGRESS' &&
+                    <Button disabled={mutation.isPending} onClick={() => setAction({task: t, command: 'done'})}>{tr("Đánh dấu đã làm xong")}</Button>)}{renderText(t.canManage && <><Button disabled={mutation.isPending}
+                                                                onClick={() => setEdit(t)}>{tr("Chỉnh sửa nhiệm vụ")}</Button>{t.status === 'DONE' &&
+                    <Button disabled={mutation.isPending} onClick={() => setAction({task: t, command: 'verify'})}>{tr("Xác minh nhiệm vụ")}</Button>}{t.status === 'IN_PROGRESS' &&
+                    <Button disabled={mutation.isPending} onClick={() => setAction({task: t, command: 'TODO'})}>{tr("Chuyển lại cần làm")}</Button>}{t.status === 'DONE' &&
+                    <Button disabled={mutation.isPending} onClick={() => setAction({task: t, command: 'IN_PROGRESS'})}>{tr("Chuyển lại đang thực hiện")}</Button>}<Button disabled={mutation.isPending} onClick={() => setAction({
                     task: t,
                     command: 'delete'
-                })}>Xóa</Button></>}</div>
-            </Card>)}{!id && q.data && <Pagination {...q.data} onPageChange={setPage}/>} {edit &&
+                })}>{tr("Xóa")}</Button></>)}</div>
+            </Card>))}{renderText(!id && q.data && <Pagination {...q.data} onPageChange={setPage}/>)} {renderText(edit &&
         <Card><TaskForm key={edit === true ? 'new' : edit.id} c={edit === true ? c : edit.campaignId}
                         value={edit === true ? undefined : edit} onClose={() => setEdit(null)} onSaved={() => {
-            setFeedback('Đã lưu nhiệm vụ.');
+            setFeedback(tr("Đã lưu nhiệm vụ."));
             setEdit(null);
-        }}/></Card>}<ConfirmDialog open={!!action} title="Xác nhận thay đổi nhiệm vụ?"
-                                   message={action?.command === 'verify' ? 'Xác minh là quyết định cuối cùng. Nhiệm vụ sẽ chỉ được xem.' : action?.command === 'delete' ? 'Nhiệm vụ và các phân công sẽ bị xóa.' : 'Xác nhận đổi trạng thái nhiệm vụ.'}
-                                   confirmLabel="Xác nhận" busy={mutation.isPending} onClose={() => setAction(null)}
+        }}/></Card>)}<ConfirmDialog open={!!action} title={tr("Xác nhận thay đổi nhiệm vụ?")}
+                                   message={action?.command === 'verify' ? tr("Xác minh là quyết định cuối cùng. Nhiệm vụ sẽ chỉ được xem.") : action?.command === 'delete' ? tr("Nhiệm vụ và các phân công sẽ bị xóa.") : tr("Xác nhận đổi trạng thái nhiệm vụ.")}
+                                   confirmLabel={tr("Xác nhận")} busy={mutation.isPending} onClose={() => setAction(null)}
                                    onConfirm={() => {
                                        if (action) mutation.mutate(action, {
                                            onSuccess: () => {
                                                setAction(null);
-                                               setFeedback('Đã cập nhật nhiệm vụ.');
+                                               setFeedback(tr("Đã cập nhật nhiệm vụ."));
                                            },
                                            onError: () => setAction(null)
                                        });
@@ -117,6 +120,7 @@ interface Values {
 }
 
 function TaskForm({c, value, onClose, onSaved}: { c: string; value?: Task; onClose: () => void; onSaved: () => void }) {
+    useLanguage();
     const f = useForm<Values>({
         defaultValues: {
             title: value?.title || '',
@@ -158,19 +162,19 @@ function TaskForm({c, value, onClose, onSaved}: { c: string; value?: Task; onClo
         setConfirmation(v);
     });
     return <form noValidate onSubmit={submit} className="space-y-4"><h2
-        className="text-xl font-semibold">{value ? 'Chỉnh sửa nhiệm vụ' : 'Tạo nhiệm vụ'}</h2><Field label="Tiêu đề"
+        className="text-xl font-semibold">{renderText(value ? tr("Chỉnh sửa nhiệm vụ") : tr("Tạo nhiệm vụ"))}</h2><Field label={tr("Tiêu đề")}
                                                                                            error={f.formState.errors.title?.message}><Input
-        autoFocus maxLength={200} {...f.register('title')}/></Field><Field label="Mô tả"
+        autoFocus maxLength={200} {...f.register('title')}/></Field><Field label={tr("Mô tả")}
                                                                            error={f.formState.errors.description?.message}><Textarea
         maxLength={10000} {...f.register('description')}/></Field><Field
-        label="Nhóm đóng góp"><Select {...f.register('track')}>{Object.entries(tracks).map(([v, l]) => <option
-        key={v} value={v}>{l}</option>)}</Select></Field><Field
-        label="Mức ưu tiên"><Select {...f.register('priority')}>{Object.entries(priorities).map(([v, l]) => <option key={v}
-                                                                                                                 value={v}>{l}</option>)}</Select></Field><Field
-        label="Hạn hoàn thành"><Input type="datetime-local" {...f.register('dueAt')}/></Field>
+        label={tr("Nhóm đóng góp")}><Select {...f.register('track')}>{renderText(Object.entries(tracks).map(([v, l]) => <option
+        key={v} value={v}>{renderText(l)}</option>))}</Select></Field><Field
+        label={tr("Mức ưu tiên")}><Select {...f.register('priority')}>{renderText(Object.entries(priorities).map(([v, l]) => <option key={v}
+                                                                                                                 value={v}>{renderText(l)}</option>))}</Select></Field><Field
+        label={tr("Hạn hoàn thành")}><Input type="datetime-local" {...f.register('dueAt')}/></Field>
         <fieldset className="space-y-3">
-            <legend className="font-medium">Tình nguyện viên được phân công ({selected.length} selected)</legend>
-            <p className="text-text-secondary">Có thể phân công khác nhóm đóng góp. Kiểm tra nhóm của từng tình nguyện viên trước khi xác nhận.</p><Roster campaignId={c} render={u => <label className="flex gap-3"><input type="checkbox"
+            <legend className="font-medium">{tr("Tình nguyện viên được phân công (")}{renderText(selected.length)} selected)</legend>
+            <p className="text-text-secondary">{tr("Có thể phân công khác nhóm đóng góp. Kiểm tra nhóm của từng tình nguyện viên trước khi xác nhận.")}</p><Roster campaignId={c} render={u => <label className="flex gap-3"><input type="checkbox"
                                                                                                         checked={selected.includes(u.userId)}
                                                                                                         onChange={e => {
                                                                                                             setSelected(ids => e.target.checked ? [...ids, u.userId] : ids.filter(id => id !== u.userId));
@@ -178,14 +182,14 @@ function TaskForm({c, value, onClose, onSaved}: { c: string; value?: Task; onClo
                                                                                                                 ...old,
                                                                                                                 [u.userId]: u.assignedTrack!
                                                                                                             }));
-                                                                                                        }}/><span>{u.fullName} · {u.studentId} · {u.assignedTrack ? tracks[u.assignedTrack] : ''}</span></label>}/>
+                                                                                                        }}/><span>{renderText(u.fullName)} · {renderText(u.studentId)} · {renderText(u.assignedTrack ? tracks[u.assignedTrack] : '')}</span></label>}/>
         </fieldset>
-        {m.isError && <ErrorState message={errorMessage(m.error)}/>}
-        <div className="flex gap-3"><Button type="submit" disabled={m.isPending}>Lưu nhiệm vụ</Button><Button
-            disabled={m.isPending} onClick={onClose}>Đóng</Button></div>
-        <ConfirmDialog open={!!confirmation} title="Lưu nhiệm vụ và phân công?"
-                       message={(warning ? 'Có người được phân công khác nhóm đóng góp. ' : '') + 'Xác nhận nhóm và tình nguyện viên được chọn; có thể phân công khác nhóm đóng góp.'}
-                       busy={m.isPending} confirmLabel="Lưu" onClose={() => setConfirmation(null)} onConfirm={() => {
+        {renderText(m.isError && <ErrorState message={errorMessage(m.error)}/>)}
+        <div className="flex gap-3"><Button type="submit" disabled={m.isPending}>{tr("Lưu nhiệm vụ")}</Button><Button
+            disabled={m.isPending} onClick={onClose}>{tr("Đóng")}</Button></div>
+        <ConfirmDialog open={!!confirmation} title={tr("Lưu nhiệm vụ và phân công?")}
+                       message={(warning ? tr("Có người được phân công khác nhóm đóng góp. ") : '') + tr("Xác nhận nhóm và tình nguyện viên được chọn; có thể phân công khác nhóm đóng góp.")}
+                       busy={m.isPending} confirmLabel={tr("Lưu")} onClose={() => setConfirmation(null)} onConfirm={() => {
             if (confirmation) save(confirmation);
         }}/></form>;
 }

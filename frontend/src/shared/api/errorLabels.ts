@@ -1,6 +1,6 @@
 const codes: Record<string, string> = {
     VALIDATION_ERROR: 'Vui lòng kiểm tra thông tin đã nhập.', AUTHENTICATION_REQUIRED: 'Vui lòng đăng nhập để tiếp tục.',
-    INVALID_CREDENTIALS: 'Email hoặc mật khẩu không đúng.', ACCESS_DENIED: 'Bạn không có quyền thực hiện thao tác này.',
+    INVALID_CREDENTIALS: 'Mã sinh viên hoặc mật khẩu không đúng.', ACCESS_DENIED: 'Bạn không có quyền thực hiện thao tác này.',
     RESOURCE_NOT_FOUND: 'Không tìm thấy thông tin bạn yêu cầu.', CONFLICT: 'Thông tin đã tồn tại hoặc vừa được thay đổi. Vui lòng kiểm tra lại.',
     INVALID_STATE_TRANSITION: 'Không thể thực hiện thao tác ở trạng thái hiện tại.', DUPLICATE_APPLICATION: 'Bạn đã đăng ký chiến dịch này.',
     ORGANIZATION_NOT_VERIFIED: 'Tổ chức cần được xác minh trước khi thực hiện thao tác.', NOT_ORGANIZATION_MEMBER: 'Bạn cần là thành viên được cấp quyền của tổ chức.',
@@ -20,6 +20,9 @@ export function validationLabel(message: string): string {
     if (/[^\x00-\x7F]/.test(message) && /[ăâđêôơư]/i.test(message)) return message;
     if (/unique|duplicate|already/i.test(message)) return /email/i.test(message) ? 'Email đã được sử dụng.' : /student/i.test(message) ? 'Mã sinh viên đã tồn tại.' : 'Thông tin đã tồn tại hoặc bị trùng lặp.';
     const limit = message.match(/(?:at most|max(?:imum)?|between \d+ and)\s+(\d+)/i);
+    if (/student email/i.test(message)) return 'Email phải khớp với mã sinh viên';
+    if (/Student ID must contain exactly 9 digits/i.test(message)) return 'Mã sinh viên phải gồm đúng 9 chữ số';
+    if (/faculty/i.test(message)) return 'Chọn khoa';
     if (/email/i.test(message)) return 'Nhập địa chỉ email hợp lệ.';
     if (/password|UTF-8/i.test(message)) return 'Mật khẩu cần từ 8 ký tự và tối đa 72 byte UTF-8.';
     if (/must not be (?:blank|null|empty)|required|notnull/i.test(message)) return limit ? 'Thông tin bắt buộc, tối đa ' + limit[1] + ' ký tự.' : 'Vui lòng nhập thông tin này.';

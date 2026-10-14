@@ -99,6 +99,7 @@ public class InfrastructureSecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/actuator/health", "/api/actuator/health/**").permitAll()
                         .requestMatchers(HttpMethod.HEAD, "/api/actuator/health", "/api/actuator/health/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/skills").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/activities", "/api/v1/activities/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/donation-settings").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/zalopay/callback").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/campaign-categories", "/api/v1/campaigns", "/api/v1/campaigns/*").permitAll()

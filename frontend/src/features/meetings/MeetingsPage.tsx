@@ -1,3 +1,4 @@
+import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
 import type {MeetingInput} from '../coordination/types';
 import {useState} from 'react';
 import {useParams} from 'react-router-dom';
@@ -22,11 +23,13 @@ import {LoadingState} from '../../shared/components/LoadingState';
 import {EmptyState} from '../../shared/components/EmptyState';
 
 export function MeetingsPage({student = false}: { student?: boolean }) {
+    useLanguage();
     const {campaignId = ''} = useParams();
     return <Meetings key={campaignId + student} c={campaignId} student={student}/>;
 }
 
 function Meetings({c, student}: { c: string; student: boolean }) {
+    useLanguage();
     const [feedback, setFeedback] = useState('');
     const [page, setPage] = useState(0);
     const [edit, setEdit] = useState<Meeting | true | null>(null);
@@ -37,31 +40,31 @@ function Meetings({c, student}: { c: string; student: boolean }) {
     const mutation = useCoordinationMutation((v: Meeting) => api.remove(v.id, v.version));
     const manager = !!campaign.data && (!!campaign.data.ownRole || user?.role === 'ADMIN');
     const mutable = manager && ['OPEN', 'ACTIVE'].includes(campaign.data?.status || '');
-    return <div className="space-y-6"><h1 className="text-3xl font-semibold">Lịch họp</h1>{!student && manager &&
-        <WorkspaceLinks id={c}/>}<p>{campaign.data?.content.title}</p>{mutable &&
-        <Button onClick={() => setEdit(true)}>Tạo lịch họp</Button>}{feedback &&
-        <p role="status" className="text-success">{feedback}</p>}{q.isPending ? <LoadingState/> : q.isError ?
+    return <div className="space-y-6"><h1 className="text-3xl font-semibold">{tr("Lịch họp")}</h1>{renderText(!student && manager &&
+        <WorkspaceLinks id={c}/>)}<p>{renderText(campaign.data?.content.title)}</p>{renderText(mutable &&
+        <Button onClick={() => setEdit(true)}>{tr("Tạo lịch họp")}</Button>)}{renderText(feedback &&
+        <p role="status" className="text-success">{renderText(feedback)}</p>)}{renderText(q.isPending ? <LoadingState/> : q.isError ?
         <ErrorState message={errorMessage(q.error)}/> : <>{!q.data.items.length &&
-            <EmptyState message="Chưa có lịch họp."/>}{q.data.items.map(v => <Card key={v.id}><h2
-            className="break-words text-xl font-semibold">{v.title}</h2>
-            <p>{meetingTypes[v.meetingType]} · {date(v.startsAt)} – {date(v.endsAt)}</p><p
-                className="whitespace-pre-wrap break-words">{v.description}</p>{v.location &&
-                <p className="break-words">Địa điểm: {v.location}</p>}{v.meetingUrl &&
-                <a className="break-all text-primary hover:underline" href={v.meetingUrl} target="_blank" rel="noreferrer">Tham gia cuộc họp</a>}{mutable &&
-                <div className="mt-4 flex gap-3"><Button onClick={() => setEdit(v)}>Chỉnh sửa</Button><Button
-                    onClick={() => setRemove(v)}>Xóa</Button></div>}</Card>)}<Pagination {...q.data}
-                                                                                            onPageChange={setPage}/></>}{edit &&
+            <EmptyState message={tr("Chưa có lịch họp.")}/>}{q.data.items.map(v => <Card key={v.id}><h2
+            className="break-words text-xl font-semibold">{renderText(v.title)}</h2>
+            <p>{renderText(meetingTypes[v.meetingType])} · {renderText(date(v.startsAt))} – {renderText(date(v.endsAt))}</p><p
+                className="whitespace-pre-wrap break-words">{renderText(v.description)}</p>{renderText(v.location &&
+                <p className="break-words">{tr("Địa điểm:")}{renderText(v.location)}</p>)}{renderText(v.meetingUrl &&
+                <a className="break-all text-primary hover:underline" href={v.meetingUrl} target="_blank" rel="noreferrer">{tr("Tham gia cuộc họp")}</a>)}{renderText(mutable &&
+                <div className="mt-4 flex gap-3"><Button onClick={() => setEdit(v)}>{tr("Chỉnh sửa")}</Button><Button
+                    onClick={() => setRemove(v)}>{tr("Xóa")}</Button></div>)}</Card>)}<Pagination {...q.data}
+                                                                                            onPageChange={setPage}/></>)}{renderText(edit &&
         <Card><MeetingForm key={edit === true ? 'new' : edit.id} c={c} value={edit === true ? undefined : edit}
                            onClose={() => setEdit(null)} onSaved={() => {
-            setFeedback('Đã lưu lịch họp.');
+            setFeedback(tr("Đã lưu lịch họp."));
             setEdit(null);
-        }}/></Card>}{mutation.isError && <ErrorState message={errorMessage(mutation.error)}/>}<ConfirmDialog
-        open={!!remove} title="Xóa lịch họp?" message="Lịch họp này sẽ bị xóa." confirmLabel="Xóa"
+        }}/></Card>)}{renderText(mutation.isError && <ErrorState message={errorMessage(mutation.error)}/>)}<ConfirmDialog
+        open={!!remove} title={tr("Xóa lịch họp?")} message={tr("Lịch họp này sẽ bị xóa.")} confirmLabel={tr("Xóa")}
         busy={mutation.isPending} onClose={() => setRemove(null)} onConfirm={() => {
         if (remove) mutation.mutate(remove, {
             onSuccess: () => {
                 setRemove(null);
-                setFeedback('Đã xóa lịch họp.');
+                setFeedback(tr("Đã xóa lịch họp."));
             },
             onError: () => setRemove(null)
         });
@@ -84,6 +87,7 @@ function MeetingForm({c, value, onClose, onSaved}: {
     onClose: () => void;
     onSaved: () => void
 }) {
+    useLanguage();
     const f = useForm<Values>({
         defaultValues: {
             title: value?.title || '',
@@ -111,15 +115,15 @@ function MeetingForm({c, value, onClose, onSaved}: {
             return;
         }
         if (new Date(v.endsAt) <= new Date(v.startsAt)) {
-            f.setError('endsAt', {message: 'Thời điểm kết thúc phải sau bắt đầu'});
+            f.setError('endsAt', {message: tr("Thời điểm kết thúc phải sau bắt đầu")});
             return;
         }
         if ((type === 'ONLINE' || v.meetingUrl.trim()) && !z.url({protocol: /^https?$/}).safeParse(v.meetingUrl.trim()).success) {
-            f.setError('meetingUrl', {message: 'Nhập địa chỉ HTTP(S) đầy đủ'});
+            f.setError('meetingUrl', {message: tr("Nhập địa chỉ HTTP(S) đầy đủ")});
             return;
         }
         if (type === 'OFFLINE' && !v.location.trim()) {
-            f.setError('location', {message: 'Nhập địa điểm'});
+            f.setError('location', {message: tr("Nhập địa điểm")});
             return;
         }
         m.mutate({
@@ -138,23 +142,23 @@ function MeetingForm({c, value, onClose, onSaved}: {
         });
     });
     return <form noValidate onSubmit={submit} className="space-y-4"><h2
-        className="text-xl font-semibold">{value ? 'Chỉnh sửa lịch họp' : 'Tạo lịch họp'}</h2><Field label="Tiêu đề"
+        className="text-xl font-semibold">{renderText(value ? tr("Chỉnh sửa lịch họp") : tr("Tạo lịch họp"))}</h2><Field label={tr("Tiêu đề")}
                                                                                                  error={f.formState.errors.title?.message}><Input
-        autoFocus maxLength={200} {...f.register('title')}/></Field><Field label="Mô tả"
+        autoFocus maxLength={200} {...f.register('title')}/></Field><Field label={tr("Mô tả")}
                                                                            error={f.formState.errors.description?.message}><Textarea
         maxLength={10000} {...f.register('description')}/></Field><Field
-        label="Hình thức họp"><Select {...f.register('meetingType')}>
-        {Object.entries(meetingTypes).map(([type, label]) => <option key={type} value={type}>{label}</option>)}
-    </Select></Field>{(['startsAt', 'endsAt'] as const).map(k => <Field key={k}
-                                                                        label={k === 'startsAt' ? 'Bắt đầu' : 'Kết thúc'}
+        label={tr("Hình thức họp")}><Select {...f.register('meetingType')}>
+        {renderText(Object.entries(meetingTypes).map(([type, label]) => <option key={type} value={type}>{renderText(label)}</option>))}
+    </Select></Field>{renderText((['startsAt', 'endsAt'] as const).map(k => <Field key={k}
+                                                                        label={k === 'startsAt' ? tr("Bắt đầu") : tr("Kết thúc")}
                                                                         error={f.formState.errors[k]?.message}><Input
-        type="datetime-local" {...f.register(k)}/></Field>)}<Field label="Địa điểm"
+        type="datetime-local" {...f.register(k)}/></Field>))}<Field label={tr("Địa điểm")}
                                                                    error={f.formState.errors.location?.message}><Input
-        maxLength={300} {...f.register('location')}/></Field><Field label="Liên kết cuộc họp"
+        maxLength={300} {...f.register('location')}/></Field><Field label={tr("Liên kết cuộc họp")}
                                                                     error={f.formState.errors.meetingUrl?.message}><Input
-        maxLength={1000} {...f.register('meetingUrl')}/></Field>{m.isError &&
-        <ErrorState message={errorMessage(m.error)}/>}
-        <div className="flex gap-3"><Button type="submit" disabled={m.isPending}>Lưu lịch họp</Button><Button
-            disabled={m.isPending} onClick={onClose}>Đóng</Button></div>
+        maxLength={1000} {...f.register('meetingUrl')}/></Field>{renderText(m.isError &&
+        <ErrorState message={errorMessage(m.error)}/>)}
+        <div className="flex gap-3"><Button type="submit" disabled={m.isPending}>{tr("Lưu lịch họp")}</Button><Button
+            disabled={m.isPending} onClick={onClose}>{tr("Đóng")}</Button></div>
     </form>;
 }

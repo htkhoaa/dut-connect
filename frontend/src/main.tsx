@@ -5,7 +5,13 @@ import { AppProviders } from './app/providers/AppProviders';
 import { router } from './app/router/router';
 import {z} from 'zod';
 import './index.css';
-z.config(z.locales.vi());
+import {useLanguage} from './shared/lib/i18n';
+function configureLanguage(language: 'vi' | 'en') {
+  document.documentElement.lang = language;
+  z.config(language === 'en' ? z.locales.en() : z.locales.vi());
+}
+configureLanguage(useLanguage.getState().language);
+useLanguage.subscribe(state => configureLanguage(state.language));
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

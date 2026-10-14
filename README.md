@@ -410,3 +410,17 @@ Subsequent corrections and verification: [Phase 10 audit](docs/phase-10-audit.md
 Executed verification is recorded in [docs/phase-6-verification.md](docs/phase-6-verification.md).
 
 The subsequent specification audit, corrections, and fresh verification are recorded in [docs/phase-6-audit.md](docs/phase-6-audit.md).
+
+## October 2026 product updates
+
+The owner's new requirements supersede the earlier optional-email-domain and no-avatar-upload scope: new students must use a nine-digit student ID and the matching ID@sv1.dut.udn.vn email, and choose one of the 16 supplied faculty entries. The list retains the supplied suffixes and excludes All, Training/Quality Assurance and AEC. Profile changes validate the catalog while preserving unchanged legacy faculties. Sign-in uses student ID, including existing administrator IDs such as ADMIN001; email login remains backward-compatible for existing integration scripts. Format checks do not verify mailbox ownership. Existing accounts are not rewritten.
+
+Avatar upload stores a bounded normalized JPEG in PostgreSQL through identity application services, so deployment restarts do not lose it. Authenticated own-avatar APIs accept PNG/JPEG up to 1 MB, at most 8 megapixels and 4096 pixels per dimension; stored images are 256×256, under 256 KiB. Re-encoding discards uploaded metadata and active formats; updates use the user version. No general file-storage service was added.
+
+VI/EN is a bundled dictionary and a Zustand language preference (only the preference is persisted), with reactive UI labels, accessibility text and locale formatting. Forms and sessions are retained on switching language. User-authored content remains in its original language. Public historical activity records include editorial Vietnamese and English content. No external translation service is used.
+
+Flyway V18 adds profile_avatars; V19 creates/seeds six published_activities from official DUT articles. This immutable public archive belongs to the campaign module and documents already-published events; it is separate from operational proposals/campaigns, manager assignments, verified hours and payment ledgers. No fake participants, donors, financial settlements or institutional approvals are created. History cards have real photos, source links, dates/periods and organizer descriptions. Articles with ambiguous event dates retain the known month; launch plans are not presented as verified programme results. Data definitions and references are in scripts/real-activity-content.mjs. Fresh installs receive the archive without requiring a seeded user; Flyway remains the only schema/data migration mechanism.
+
+[Database diagram script](docs/dut-connect.dbml) — 27 business tables and 48 foreign-key relationships, exported from PostgreSQL after V1–V19. Paste into dbdiagram.io; SQL constraints/index definitions are retained.
+
+[Concise system workflow report](docs/bao-cao-he-thong.md) explains roles, full workflows and the reason for the important rules. [Change verification](docs/october-product-verification.md) records builds, manual checks and deployment limits.

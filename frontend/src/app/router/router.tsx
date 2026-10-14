@@ -1,6 +1,7 @@
 import {createBrowserRouter} from 'react-router-dom';
 import {AppLayout} from '../layout/AppLayout';
 import {HomePage} from '../pages/HomePage';
+import {ActivityDetailPage} from '../../features/campaigns/ActivityGallery';
 import {NotFoundPage} from '../pages/NotFoundPage';
 import {lazy} from 'react';
 import {RouteGuard} from '../../features/auth/RouteGuard';
@@ -41,6 +42,7 @@ export const router = createBrowserRouter([
             {path: '/login', element: <AuthPage/>},
             {path: '/register', element: <AuthPage registration/>},
             {path: '/campaigns', element: <CampaignListPage/>},
+            {path: '/activities/:id', element: <ActivityDetailPage/>},
             {path: '/campaigns/:id', element: <CampaignDetailPage/>},
             {path: '/organizations', element: <OrganizationListPage/>},
             {path: '/organizations/:id', element: <OrganizationDetailPage/>},

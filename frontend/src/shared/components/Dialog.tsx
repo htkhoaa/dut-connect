@@ -1,8 +1,10 @@
+import {useLanguage, renderText} from "../lib/i18n";
 import {useEffect, useId, useRef, type ReactNode} from 'react';
 
 export function Dialog({open, title, children, onClose, busy = false}: {
     open: boolean; title: string; children: ReactNode; onClose: () => void; busy?: boolean;
 }) {
+    useLanguage();
     const ref = useRef<HTMLDialogElement>(null);
     const titleId = useId();
     useEffect(() => {
@@ -17,6 +19,6 @@ export function Dialog({open, title, children, onClose, busy = false}: {
                        const bounds = event.currentTarget.getBoundingClientRect();
                        if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) onClose();
                    }}}>
-        <h2 id={titleId} className="mb-4 text-xl font-semibold">{title}</h2>{children}
+        <h2 id={titleId} className="mb-4 text-xl font-semibold">{renderText(title)}</h2>{renderText(children)}
     </dialog>;
 }

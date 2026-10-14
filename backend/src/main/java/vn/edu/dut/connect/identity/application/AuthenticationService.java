@@ -35,6 +35,9 @@ public class AuthenticationService {
     public UserSummary register(RegisterRequest request) {
         RegistrationRules.password(request.password());
         String email = RegistrationRules.email(request.email()), studentId = RegistrationRules.studentId(request.studentId());
+        if (!studentId.matches("[0-9]{9}") || !email.equals(studentId + "@sv1.dut.udn.vn"))
+            throw new ApplicationFailure(400, "VALIDATION_ERROR", "Student email must match the 9-digit student ID at sv1.dut.udn.vn");
+        Faculties.require(request.faculty());
         if (users.findEmail(email).isPresent() || users.studentIdExists(studentId))
             throw ApplicationFailure.conflict("Email or student ID already registered");
         User user = users.saveUser(new User(studentId, email, passwords.encode(request.password()), request.fullName().trim(), GlobalRole.USER));
@@ -46,7 +49,12 @@ public class AuthenticationService {
     public Session login(LoginRequest request) {
         if (request.password().getBytes(StandardCharsets.UTF_8).length > 72)
             throw new ApplicationFailure(401, "INVALID_CREDENTIALS", "Invalid email or password");
-        User candidate = users.findEmail(RegistrationRules.email(request.email())).orElse(null);
+        User candidate;
+        if (request.studentId() != null && !request.studentId().isBlank() && request.email() == null)
+            candidate = users.findStudentId(RegistrationRules.studentId(request.studentId())).orElse(null);
+        else if (request.email() != null && !request.email().isBlank() && request.studentId() == null)
+            candidate = users.findEmail(RegistrationRules.email(request.email())).orElse(null);
+        else throw new ApplicationFailure(401, "INVALID_CREDENTIALS", "Invalid student ID or password");
         if (!passwords.matches(request.password(), candidate == null ? absentUserHash : candidate.passwordHash()) || candidate == null)
             throw new ApplicationFailure(401, "INVALID_CREDENTIALS", "Invalid email or password");
         User user = users.lockUser(candidate.id()).orElseThrow(() -> ApplicationFailure.missing("User not found"));

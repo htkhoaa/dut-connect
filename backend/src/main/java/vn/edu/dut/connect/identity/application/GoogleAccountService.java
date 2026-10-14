@@ -43,6 +43,9 @@ public class GoogleAccountService {
         if (google.userForSubject(identity.subject()).isPresent()) throw ApplicationFailure.conflict("Tài khoản Google đã được đăng ký. Vui lòng đăng nhập lại.");
         if (users.findEmail(identity.email()).isPresent()) throw linkRequired();
         String normalizedId = RegistrationRules.studentId(studentId);
+        if (!normalizedId.matches("[0-9]{9}") || !RegistrationRules.email(identity.email()).equals(normalizedId + "@sv1.dut.udn.vn"))
+            throw new ApplicationFailure(400, "VALIDATION_ERROR", "Student email must match the 9-digit student ID at sv1.dut.udn.vn");
+        Faculties.require(faculty);
         if (users.studentIdExists(normalizedId)) throw ApplicationFailure.conflict("Mã sinh viên đã được đăng ký.");
         consume(nonce);
         var user = users.saveUser(new User(normalizedId, identity.email(), passwords.encode(tokens.randomRefreshToken()), identity.fullName(), GlobalRole.USER));

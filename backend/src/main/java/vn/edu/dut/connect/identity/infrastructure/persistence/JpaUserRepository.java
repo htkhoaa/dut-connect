@@ -8,6 +8,7 @@ import vn.edu.dut.connect.identity.domain.User;
 
 interface JpaUserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
+    Optional<User> findByStudentId(String studentId);
 
     boolean existsByStudentId(String studentId);
 

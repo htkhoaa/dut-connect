@@ -34,6 +34,7 @@ public class ProfileService {
         StudentProfile profile = profile(id);
         RegistrationRules.version(user.version(), request.userVersion());
         RegistrationRules.version(profile.version(), request.version());
+        if (!profile.faculty().equals(request.faculty().trim())) Faculties.require(request.faculty());
         user.rename(request.fullName().trim());
         profile.update(request.faculty().trim(), trim(request.bio()), request.preferredTrack(), trim(request.experience()));
         users.saveUser(user);

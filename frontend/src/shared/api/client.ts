@@ -30,7 +30,7 @@ export async function loginSession(values: LoginValues) {
     try {
         // Cookie responses must finish in order, including a failed rotation.
         if (refreshRequest) await refreshRequest.catch(() => undefined);
-        const {data} = await apiClient.post<AuthResponse>('/auth/login', values);
+        const {data} = await apiClient.post<AuthResponse>('/auth/login', {studentId: values.studentId.trim(), password: values.password});
         queryClient.clear();
         useAuth.getState().accept(data);
         return data;

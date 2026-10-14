@@ -10,20 +10,22 @@ public final class IdentityContracts {
     private IdentityContracts() {
     }
 
-    public record RegisterRequest(@NotBlank @Size(max = 32) String studentId,
+    public record RegisterRequest(@NotBlank @Pattern(regexp = "[0-9]{9}", message = "Student ID must contain exactly 9 digits") String studentId,
                                   @NotBlank @Size(max = 150) String fullName,
                                   @NotBlank @Email @Size(max = 255) String email,
                                   @NotBlank @Size(min = 8, max = 72) String password,
                                   @NotBlank @Size(max = 150) String faculty) {
         public RegisterRequest {
             email = email == null ? null : email.trim();
+            studentId = studentId == null ? null : studentId.trim();
         }
     }
 
-    public record LoginRequest(@NotBlank @Email @Size(max = 255) String email,
+    public record LoginRequest(@Size(max = 32) String studentId, @Email @Size(max = 255) String email,
                                @NotBlank @Size(max = 72) String password) {
         public LoginRequest {
             email = email == null ? null : email.trim();
+            studentId = studentId == null ? null : studentId.trim();
         }
     }
 

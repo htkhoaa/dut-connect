@@ -26,6 +26,14 @@ import vn.edu.dut.connect.shared.application.ApplicationFailure;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    ResponseEntity<ApiError> uploadSize(org.springframework.web.multipart.MaxUploadSizeExceededException e, HttpServletRequest r) {
+        return error(r, 400, "VALIDATION_ERROR", "Avatar must not exceed 1 MB", List.of());
+    }
+    @ExceptionHandler(org.springframework.web.multipart.support.MissingServletRequestPartException.class)
+    ResponseEntity<ApiError> uploadPart(org.springframework.web.multipart.support.MissingServletRequestPartException e, HttpServletRequest r) {
+        return error(r, 400, "VALIDATION_ERROR", "Avatar image is required", List.of());
+    }
     @ExceptionHandler(vn.edu.dut.connect.finance.domain.ExpenseViolation.class)
     ResponseEntity<ApiError> expense(vn.edu.dut.connect.finance.domain.ExpenseViolation e,HttpServletRequest r){
         var fields=e.field()==null?List.<ApiError.FieldError>of():List.of(new ApiError.FieldError(e.field(),e.getMessage()));
