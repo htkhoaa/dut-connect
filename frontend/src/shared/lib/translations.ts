@@ -858,4 +858,4 @@ Object.assign(english, {
   "Tổ chức sự kiện": "Event operations"
 });
 
-Object.assign(english, {'Xóa ảnh đại diện?':'Remove profile picture?', 'Bạn có thể tải một ảnh mới sau khi xóa.':'You can upload a new picture after removal.'});
+Object.assign(english, {'Xóa ảnh đại diện?':'Remove profile picture?', 'Bạn có thể tải một ảnh mới sau khi xóa.':'You can upload a new picture after removal.', 'Lịch mô phỏng':'Simulated schedule'});

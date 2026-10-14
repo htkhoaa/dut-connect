@@ -22,6 +22,7 @@ export function CampaignCard({campaign: c, progress, financialPending, financial
             <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-primary"><Icon name={visual.icon} size={14}/>{renderText(catalogLabel(c.categoryName))}</p>
             <h2><Link to={path} className="hover:text-primary">{renderText(displayName(c.title))}</Link></h2>
             {renderText(isDemoName(c.title) && <span className="mt-1 text-[10px] text-text-secondary">{tr("Dữ liệu mẫu")}</span>)}
+            {c.summary.includes('mô phỏng') && <span className="mt-2 w-fit soft-tag">{tr('Lịch mô phỏng')}</span>}
             <p className="card-summary mt-2 text-sm text-text-secondary">{renderText(c.summary)}</p>
             <p className="mt-4 flex items-start gap-2 text-xs text-text-secondary"><Icon name="building" size={15}/><span>{renderText(displayName(c.organizerName))}</span></p>
             <div className="my-4 flex flex-wrap gap-2"><span className="soft-tag">{renderText(modes[c.contributionMode])}</span></div>

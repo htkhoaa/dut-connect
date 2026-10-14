@@ -1,0 +1,140 @@
+{
+  "organizations": [
+    {
+      "key": "dut-v1-org-union",
+      "name": "Đoàn Thanh niên Trường Đại học Bách khoa – Đại học Đà Nẵng",
+      "type": "UNIVERSITY_YOUTH_UNION",
+      "description": "Kết nối các đội hình Bách khoa với cộng đồng qua Mùa hè xanh, Xuân tình nguyện và hiến máu. Sinh viên góp sức trong tổ chức, hậu cần và hỗ trợ địa phương.\n\nNguồn hoạt động: https://dut.udn.vn/KhoaHoa/Tintuc/id/11414\n\nHồ sơ phục vụ trải nghiệm DUT Connect, do quản trị viên quản lý; không khẳng định đơn vị đã đăng ký trên nền tảng."
+    },
+    {
+      "key": "dut-v1-org-association",
+      "name": "Hội Sinh viên Trường Đại học Bách khoa – Đại học Đà Nẵng",
+      "type": "STUDENT_ASSOCIATION",
+      "description": "Đồng hành cùng sinh viên và Đoàn trường trong hoạt động cộng đồng. Bài ra quân Xuân tình nguyện 2026 ghi nhận sự tham gia của Hội Sinh viên cùng các liên chi đoàn, câu lạc bộ, đội và nhóm.\n\nNguồn hoạt động: https://dut.udn.vn/Fast/Tintuc/id/11702\n\nHồ sơ phục vụ trải nghiệm DUT Connect, do quản trị viên quản lý; không khẳng định đơn vị đã đăng ký trên nền tảng."
+    },
+    {
+      "key": "dut-v1-org-heat",
+      "name": "CLB Sức trẻ Khoa Công nghệ Nhiệt – Điện lạnh",
+      "type": "CLUB",
+      "description": "Cộng đồng sinh viên cùng hành động vì môi trường. Hoạt động Chủ nhật xanh tại biển Nguyễn Tất Thành ngày 29/03/2026 thể hiện tinh thần bảo vệ không gian biển.\n\nNguồn hoạt động: https://dut.udn.vn/KhoaNhietDL/Tintuc/id/11881\n\nHồ sơ phục vụ trải nghiệm DUT Connect, do quản trị viên quản lý; không khẳng định đơn vị đã đăng ký trên nền tảng."
+    },
+    {
+      "key": "dut-v1-org-project",
+      "name": "Liên Chi đoàn Khoa Quản lý Dự án",
+      "type": "FACULTY_YOUTH_UNION",
+      "description": "Tập hợp đoàn viên gìn giữ khuôn viên xanh. Bài FPM – Chủ nhật xanh ghi nhận đoàn viên tham gia dọn khu A ngày 18/01/2022.\n\nNguồn hoạt động: https://fpm.dut.udn.vn/tin-tuc/chi-tiet/FPM---Chu-nhat-xanh-1867\n\nHồ sơ phục vụ trải nghiệm DUT Connect, do quản trị viên quản lý; không khẳng định đơn vị đã đăng ký trên nền tảng."
+    },
+    {
+      "key": "dut-v1-org-advice",
+      "name": "Đội Tư vấn sinh viên Trường Đại học Bách khoa",
+      "type": "STUDENT_TEAM",
+      "description": "Đội sinh viên có đại diện phát biểu tại lễ ra quân Xuân tình nguyện 2026. Hồ sơ giới thiệu tinh thần sẻ chia và kết nối đội hình phục vụ cộng đồng.\n\nNguồn hoạt động: https://dut.udn.vn/Fast/Tintuc/id/11702\n\nHồ sơ phục vụ trải nghiệm DUT Connect, do quản trị viên quản lý; không khẳng định đơn vị đã đăng ký trên nền tảng."
+    }
+  ],
+  "campaigns": [
+    {
+      "key": "dut-v1-campaign-1",
+      "organization": "dut-v1-org-union",
+      "category": "community-support",
+      "title": "Mùa hè xanh 2025 – Sức trẻ Bách khoa tại xã Lìa",
+      "summary": "Hành trình 14 ngày tại vùng biên Quảng Trị, kết hợp công trình dân sinh và hỗ trợ kỹ năng số. Lịch và chỉ tiêu tuyển trên DUT Connect là mô phỏng.",
+      "description": "Hơn 100 chiến sĩ tham gia gần 30 công trình và hoạt động. Chương trình xây nhà tình nghĩa, nhà vệ sinh, sửa lớp học, tặng tủ sách và tổ chức phiên chợ 0 đồng. Các lớp Bình dân học vụ số hướng dẫn người dân sử dụng VNeID và tiện ích số. Lễ tổng kết diễn ra ngày 26/7; bài công bố ghi toàn chiến dịch kéo dài đến 27/7.\n\nNguồn sự kiện thật: https://dut.udn.vn/KhoaHoa/Tintuc/id/11414\nThời gian gốc: 14–27/07/2025\n\nLỊCH MÔ PHỎNG: Ngày tuyển, ngày hoạt động, trạng thái và số vị trí được bố trí lại để trải nghiệm DUT Connect. Đây không phải thông báo tuyển mới của nhà trường.\n\nNội dung tham gia: chuẩn bị dụng cụ và vật tư, phối hợp đội hình, tham gia hướng dẫn an toàn, thực hiện công việc theo phân công và tổng kết bài học. Không nhập người tham gia, giờ công hoặc khoản tiền giả.",
+      "status": "OPEN",
+      "startOffset": 150,
+      "endOffset": 300,
+      "deadlineOffset": 120,
+      "capacity": 100
+    },
+    {
+      "key": "dut-v1-campaign-2",
+      "organization": "dut-v1-org-association",
+      "category": "community-support",
+      "title": "Ra quân Xuân tình nguyện 2026 – Lan tỏa yêu thương",
+      "summary": "Lễ ra quân ngày 10/1 khởi động hành trình sẻ chia của 23 đơn vị trong trường. Lịch và chỉ tiêu tuyển trên DUT Connect là mô phỏng.",
+      "description": "Đại diện các liên chi đoàn, câu lạc bộ, đội và nhóm nhận khăn rằn, mũ và vật phẩm trước khi lên đường. Kế hoạch giới thiệu tại buổi lễ bao phủ 12 xã thuộc Đà Nẵng, Huế và Quảng Trị, với năm hướng: an sinh, công trình thanh niên, môi trường, sức khỏe và kết nối cộng đồng. Hồ sơ này ghi nhận lễ ra quân; thông tin kế hoạch không được coi là kết quả đã nghiệm thu.\n\nNguồn sự kiện thật: https://dut.udn.vn/Fast/Tintuc/id/11702\nThời gian gốc: 10/01/2026\n\nLỊCH MÔ PHỎNG: Ngày tuyển, ngày hoạt động, trạng thái và số vị trí được bố trí lại để trải nghiệm DUT Connect. Đây không phải thông báo tuyển mới của nhà trường.\n\nNội dung tham gia: chuẩn bị dụng cụ và vật tư, phối hợp đội hình, tham gia hướng dẫn an toàn, thực hiện công việc theo phân công và tổng kết bài học. Không nhập người tham gia, giờ công hoặc khoản tiền giả.",
+      "status": "OPEN",
+      "startOffset": 150,
+      "endOffset": 270,
+      "deadlineOffset": 120,
+      "capacity": 80
+    },
+    {
+      "key": "dut-v1-campaign-3",
+      "organization": "dut-v1-org-heat",
+      "category": "environment",
+      "title": "Chủ nhật xanh – Làm sạch biển Nguyễn Tất Thành",
+      "summary": "CLB Sức trẻ Khoa Nhiệt cùng sinh viên hành động vì hệ sinh thái biển. Lịch và chỉ tiêu tuyển trên DUT Connect là mô phỏng.",
+      "description": "Các thành viên thu gom rác dọc bãi biển, phân loại và xử lý theo quy định. Hoạt động gắn việc cải thiện cảnh quan với ý thức bảo vệ môi trường sống và trách nhiệm cộng đồng. Bài tổng kết của khoa nhấn mạnh tinh thần sống xanh và duy trì các chương trình thiết thực trong thời gian tới. Nguồn không công bố số người tham gia hoặc tổng khối lượng rác.\n\nNguồn sự kiện thật: https://dut.udn.vn/KhoaNhietDL/Tintuc/id/11881\nThời gian gốc: 29/03/2026\n\nLỊCH MÔ PHỎNG: Ngày tuyển, ngày hoạt động, trạng thái và số vị trí được bố trí lại để trải nghiệm DUT Connect. Đây không phải thông báo tuyển mới của nhà trường.\n\nNội dung tham gia: chuẩn bị dụng cụ và vật tư, phối hợp đội hình, tham gia hướng dẫn an toàn, thực hiện công việc theo phân công và tổng kết bài học. Không nhập người tham gia, giờ công hoặc khoản tiền giả.",
+      "status": "ACTIVE",
+      "startOffset": -30,
+      "endOffset": 180,
+      "deadlineOffset": -40,
+      "capacity": 40
+    },
+    {
+      "key": "dut-v1-campaign-5",
+      "organization": "dut-v1-org-union",
+      "category": "community-support",
+      "title": "Ngày hội hiến máu nhân đạo – Đợt 2 năm 2021",
+      "summary": "Tinh thần tương thân tương ái của sinh viên Bách khoa qua hoạt động hiến máu. Lịch và chỉ tiêu tuyển trên DUT Connect là mô phỏng.",
+      "description": "Ngày hội tại khu B ghi nhận hơn 400 đơn vị máu từ các tình nguyện viên theo thông tin Đoàn trường công bố ngày 20/4/2021. Hoạt động thể hiện sự sẻ chia với cộng đồng. Ngày cụ thể trong bài gốc bị ghi lỗi “180/4/2021”, nên hồ sơ chỉ thể hiện tháng. Số đơn vị máu là kết quả công bố, không phải số người tham gia hoặc giao dịch trong DUT Connect.\n\nNguồn sự kiện thật: https://dut.udn.vn/hoidongtruong/Tintuc/id/6213\nThời gian gốc: Tháng 04/2021\n\nLỊCH MÔ PHỎNG: Ngày tuyển, ngày hoạt động, trạng thái và số vị trí được bố trí lại để trải nghiệm DUT Connect. Đây không phải thông báo tuyển mới của nhà trường.\n\nNội dung tham gia: chuẩn bị dụng cụ và vật tư, phối hợp đội hình, tham gia hướng dẫn an toàn, thực hiện công việc theo phân công và tổng kết bài học. Không nhập người tham gia, giờ công hoặc khoản tiền giả.",
+      "status": "COMPLETED",
+      "startOffset": -150,
+      "endOffset": -120,
+      "deadlineOffset": -160,
+      "capacity": 60
+    },
+    {
+      "key": "dut-v1-campaign-fpm",
+      "organization": "dut-v1-org-project",
+      "category": "environment",
+      "title": "FPM – Chủ nhật xanh tại khu A",
+      "summary": "Cùng đoàn viên Quản lý Dự án chăm sóc khuôn viên Bách khoa. Lịch mô phỏng.",
+      "description": "Bài của Khoa Quản lý Dự án ghi nhận hoạt động dọn vệ sinh và phát quang khu A. Trên DUT Connect, chương trình được dùng làm kịch bản phối hợp tình nguyện vì môi trường.\n\nNguồn sự kiện thật: https://fpm.dut.udn.vn/tin-tuc/chi-tiet/FPM---Chu-nhat-xanh-1867\n\nLỊCH MÔ PHỎNG: Ngày tuyển, ngày hoạt động, trạng thái và số vị trí được bố trí lại để trải nghiệm DUT Connect. Đây không phải thông báo tuyển mới của nhà trường.\n\nNội dung tham gia: chuẩn bị dụng cụ và vật tư, phối hợp đội hình, tham gia hướng dẫn an toàn, thực hiện công việc theo phân công và tổng kết bài học. Không nhập người tham gia, giờ công hoặc khoản tiền giả.",
+      "status": "ACTIVE",
+      "startOffset": -20,
+      "endOffset": 200,
+      "deadlineOffset": -30,
+      "capacity": 35
+    },
+    {
+      "key": "dut-v1-campaign-environment",
+      "organization": "dut-v1-org-project",
+      "category": "environment",
+      "title": "Chủ nhật xanh – Không gian học tập xanh",
+      "summary": "Trải nghiệm tổ chức ngày hành động vì khuôn viên sạch. Lịch mô phỏng.",
+      "description": "Kịch bản dựa trên hoạt động Chủ nhật xanh do Liên Chi đoàn Khoa Quản lý Dự án công bố. Trạng thái hoàn thành phản ánh kịch bản trình diễn, không chứng nhận kết quả trong hệ thống.\n\nNguồn sự kiện thật: https://fpm.dut.udn.vn/tin-tuc/chi-tiet/FPM---Chu-nhat-xanh-1867\n\nLỊCH MÔ PHỎNG: Ngày tuyển, ngày hoạt động, trạng thái và số vị trí được bố trí lại để trải nghiệm DUT Connect. Đây không phải thông báo tuyển mới của nhà trường.\n\nNội dung tham gia: chuẩn bị dụng cụ và vật tư, phối hợp đội hình, tham gia hướng dẫn an toàn, thực hiện công việc theo phân công và tổng kết bài học. Không nhập người tham gia, giờ công hoặc khoản tiền giả.",
+      "status": "COMPLETED",
+      "startOffset": -90,
+      "endOffset": -60,
+      "deadlineOffset": -100,
+      "capacity": 35
+    },
+    {
+      "key": "dut-v1-campaign-advice",
+      "organization": "dut-v1-org-advice",
+      "category": "community-support",
+      "title": "Xuân tình nguyện – Cùng sẻ chia với cộng đồng",
+      "summary": "Kết nối đội hình sinh viên, chuẩn bị hậu cần và hỗ trợ cộng đồng. Lịch mô phỏng.",
+      "description": "Bài ra quân Xuân tình nguyện ghi nhận đại diện Đội Tư vấn sinh viên phát biểu. Kịch bản minh họa một đợt bị hủy; việc hủy là mô phỏng, không phải sự kiện lịch sử.\n\nNguồn sự kiện thật: https://dut.udn.vn/Fast/Tintuc/id/11702\n\nLỊCH MÔ PHỎNG: Ngày tuyển, ngày hoạt động, trạng thái và số vị trí được bố trí lại để trải nghiệm DUT Connect. Đây không phải thông báo tuyển mới của nhà trường.\n\nNội dung tham gia: chuẩn bị dụng cụ và vật tư, phối hợp đội hình, tham gia hướng dẫn an toàn, thực hiện công việc theo phân công và tổng kết bài học. Không nhập người tham gia, giờ công hoặc khoản tiền giả.",
+      "status": "CANCELLED",
+      "startOffset": 30,
+      "endOffset": 90,
+      "deadlineOffset": 20,
+      "capacity": 35
+    },
+    {
+      "key": "dut-v1-campaign-blood-draft",
+      "organization": "dut-v1-org-union",
+      "category": "community-support",
+      "title": "Ngày hội hiến máu – Kế hoạch đội hình hỗ trợ",
+      "summary": "Chuẩn bị hướng dẫn, đón tiếp và hỗ trợ ngày hội hiến máu. Lịch mô phỏng.",
+      "description": "Lấy cảm hứng từ Ngày hội hiến máu nhân đạo DUT đợt 2 năm 2021. Kế hoạch mô phỏng chưa công khai tuyển, không phải lịch hiến máu chính thức.\n\nNguồn sự kiện thật: https://dut.udn.vn/hoidongtruong/Tintuc/id/6213\n\nLỊCH MÔ PHỎNG: Ngày tuyển, ngày hoạt động, trạng thái và số vị trí được bố trí lại để trải nghiệm DUT Connect. Đây không phải thông báo tuyển mới của nhà trường.\n\nNội dung tham gia: chuẩn bị dụng cụ và vật tư, phối hợp đội hình, tham gia hướng dẫn an toàn, thực hiện công việc theo phân công và tổng kết bài học. Không nhập người tham gia, giờ công hoặc khoản tiền giả.",
+      "status": "DRAFT",
+      "startOffset": 180,
+      "endOffset": 210,
+      "deadlineOffset": 150,
+      "capacity": 35
+    }
+  ]
+}

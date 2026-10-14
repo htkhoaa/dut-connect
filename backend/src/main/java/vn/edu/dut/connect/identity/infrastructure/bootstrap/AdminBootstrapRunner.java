@@ -8,6 +8,7 @@ import jakarta.validation.constraints.*;
 import vn.edu.dut.connect.identity.application.AdminBootstrapService;
 
 @Component
+@org.springframework.core.annotation.Order(100)
 public class AdminBootstrapRunner implements ApplicationRunner {
     private record BootstrapInput(@NotBlank @Size(max = 32) String studentId,
                                   @NotBlank @Size(max = 150) String fullName,

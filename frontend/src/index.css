@@ -144,3 +144,24 @@
 .brand-logo{width:46px;height:58px;object-fit:contain;flex-shrink:0}.avatar-image{width:100%;height:100%;object-fit:cover;border-radius:inherit}.sidebar{padding:1rem .9rem}.sidebar-heading{margin:1.1rem .85rem .5rem}.sidebar-link{padding:.55rem .85rem}.sidebar-bottom{padding-top:1rem}.sidebar-bottom>div{display:none}@media(min-width:1024px){.workspace-shell{display:grid;grid-template-columns:262px minmax(0,1fr);align-items:start}.sidebar{position:sticky;height:auto;min-height:100dvh;max-height:none;overflow:visible;top:0}.workspace-body{margin-left:0}}
 
 .language-switch{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--color-border);background:white;border-radius:10px;flex-shrink:0}.language-switch button{padding:5px 7px;font-size:11px;font-weight:650;border-radius:7px}.language-switch .is-selected{background:var(--color-primary);color:white}.header-content>.language-switch{order:3}.header-actions{margin-left:auto}@media(max-width:639px){.header-content{gap:.5rem}.language-switch button{padding:4px}.user-chip{gap:4px}.header-actions .button-link{font-size:.75rem;padding:.6rem .7rem}}
+
+/* Symmetric header columns keep navigation centred regardless of account controls. */
+@media(min-width:1100px){
+ .public-header .header-content{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:1rem}
+ .public-header .header-actions{justify-self:end;margin-left:0;gap:.75rem}
+ .public-nav{justify-self:center;gap:1.5rem}
+}
+@media(min-width:768px) and (max-width:1099px){
+ .public-nav{display:none}
+ .mobile-public-nav{display:flex;justify-content:center;gap:2.5rem;padding:.65rem 1rem;font-size:.85rem}
+}
+.campaign-card,.organization-photo-card{
+ background:var(--color-surface);border:1px solid var(--color-border);border-radius:1.5rem;
+ box-shadow:0 8px 28px color-mix(in srgb,var(--color-primary) 10%,transparent);
+}
+.campaign-card:hover,.organization-photo-card:hover{box-shadow:0 18px 44px color-mix(in srgb,var(--color-primary) 18%,transparent)}
+.campaign-card .campaign-cover{display:block;flex-shrink:0;height:220px}
+.activity-card>div{background:linear-gradient(155deg,var(--color-surface) 65%,var(--color-primary-light));border-top:4px solid var(--color-primary)}
+.activity-card h3{line-height:1.5;color:var(--color-text-primary)}
+.organization-card-body{background:linear-gradient(160deg,var(--color-surface) 65%,var(--color-primary-light))}
+@media(max-width:374px){.public-header .brand-logo{width:32px;height:42px}.public-header .header-actions{gap:.35rem}.public-header .brand{font-size:.95rem}}

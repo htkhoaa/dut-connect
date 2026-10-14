@@ -1,5 +1,18 @@
-// Paste into dbdiagram.io. Exported from PostgreSQL 16 after Flyway V1–V19.
+// Paste into dbdiagram.io. Exported from PostgreSQL 16 after Flyway V1–V20.
 // Flyway remains authoritative; DBML is documentation, not a migration.
+Table dut_connect.catalogue_seed_records {
+ seed_key varchar(100) [pk, not null]
+ organization_id uuid
+ campaign_id uuid
+ imported_at timestamptz [not null, default: `now()`]
+ checks {
+  `(organization_id IS NOT NULL) <> (campaign_id IS NOT NULL)` [name: 'catalogue_seed_exactly_one_aggregate']
+ }
+ Note: 'V20: Idempotent operational catalogue import through application services.'
+}
+Ref: dut_connect.catalogue_seed_records.organization_id > dut_connect.organizations.id
+Ref: dut_connect.catalogue_seed_records.campaign_id > dut_connect.campaigns.id
+
 Project DUT_Connect {
  database_type: 'PostgreSQL'
  Note: 'Modular monolith. Money is integer VND. Historical public activities are separate from operational records.'

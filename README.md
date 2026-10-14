@@ -424,3 +424,11 @@ Flyway V18 adds profile_avatars; V19 creates/seeds six published_activities from
 [Database diagram script](docs/dut-connect.dbml) — 27 business tables and 48 foreign-key relationships, exported from PostgreSQL after V1–V19. Paste into dbdiagram.io; SQL constraints/index definitions are retained.
 
 [Concise system workflow report](docs/bao-cao-he-thong.md) explains roles, full workflows and the reason for the important rules. [Change verification](docs/october-product-verification.md) records builds, manual checks and deployment limits.
+
+## Danh mục DUT và lịch mô phỏng
+
+Khi khởi động, bộ import tạo thêm 5 hồ sơ tổ chức có nguồn DUT và 8 chiến dịch vận hành dựa trên hoạt động thật: 2 OPEN, 2 ACTIVE, 2 COMPLETED, 1 CANCELLED, 1 DRAFT. DRAFT chỉ có trong giao diện quản trị/quản lý theo quyền hiện hành. Ngày và chỉ tiêu là mô phỏng, có nhãn trên card và giải thích trong chi tiết; không phải thông báo tuyển của trường. OPEN tuyển thêm 120 ngày, ACTIVE chạy thêm 180–200 ngày tính từ lần import đầu tiên (UTC). Khởi động lại giữ lịch và mọi chỉnh sửa của quản trị viên.
+
+Import cần một ADMIN đang ACTIVE, chạy sau bootstrap admin và dùng các application service hiện hành để tạo/xác minh tổ chức, tạo/duyệt đề xuất và chuyển trạng thái chiến dịch. Không tạo tài khoản, quyên góp, người tham gia hay giờ công giả. Nếu chưa có ADMIN, import được hoãn đến lần khởi động sau khi có ADMIN. Hồ sơ tổ chức được quản trị viên quản lý phục vụ trải nghiệm, không khẳng định tổ chức đã đăng ký thực tế trên DUT Connect. Không tiếp quản hồ sơ trùng tên do người khác sở hữu.
+
+Bật mặc định theo yêu cầu seed; đặt APP_DUT_CATALOGUE_ENABLED=false để dừng các lần import tiếp theo (không xóa dữ liệu đã có). Flyway V20 chỉ tạo bảng theo dõi khóa import; transaction và advisory lock chống trùng, kể cả nhiều instance cùng khởi động. Không sửa migrations cũ. Nội dung ở backend/src/main/resources/catalogue/dut-catalogue.json; tái sinh bằng node scripts/build-real-catalogue.mjs. Nguồn gốc được ghi trong từng hồ sơ.

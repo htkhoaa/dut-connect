@@ -13,7 +13,7 @@ export function ActivityGallery({q = '', category = ''}: {q?: string; category?:
     const activities = useActivityList(q, category);
     return <section className="space-y-6"><div className="section-heading"><div><p className="eyebrow text-primary">{tr('Hoạt động đã diễn ra')}</p><h2>{tr('Hồ sơ hoạt động thực tế')}</h2></div></div>
         {activities.isPending ? <LoadingState/> : activities.isError ? <ErrorState message={errorMessage(activities.error)} onRetry={() => void activities.refetch()}/> : activities.data.items.length === 0 ? <EmptyState message={tr('Chưa tìm thấy hoạt động phù hợp.')}/> :
-        <div className="campaign-grid">{activities.data.items.map(a => <article key={a.id} className="campaign-card flex flex-col">
+        <div className="campaign-grid">{activities.data.items.map(a => <article key={a.id} className="campaign-card activity-card flex flex-col">
             <Link to={'/activities/'+a.id} className="campaign-cover" tabIndex={-1} aria-hidden="true"><img src={a.imageUrl} alt="" loading="lazy"/><span className="cover-badge"><Badge tone="success">{tr('Đã hoàn thành')}</Badge></span></Link>
             <div className="flex flex-1 flex-col p-5"><p className="mb-3 text-xs font-semibold text-primary">{tr(categories[a.category] || a.category)}</p><h3 className="mb-3 text-lg font-bold"><Link to={'/activities/'+a.id}>{a.title}</Link></h3><p className="mb-4 text-sm leading-relaxed text-text-secondary">{a.summary}</p>
                 <p className="mb-3 flex gap-2 text-xs text-text-secondary"><Icon name="building" size={15}/>{a.organizer}</p><p className="mb-5 flex gap-2 text-xs text-text-secondary"><Icon name="calendar" size={15}/>{a.period}</p>

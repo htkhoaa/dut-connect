@@ -57,3 +57,6 @@ Backend là modular monolith Java 21/Spring Boot 3.4.3: controller → applicati
 Local chạy PostgreSQL/backend/Nginx bằng Compose. Production dùng Neon, Render và Vercel; proxy `/api` giữ cookie dưới domain frontend, Origin được cấu hình rõ. Render Free có thời gian đánh thức, nên request đầu có thể cần thử lại. Khóa/mật khẩu nằm ở biến môi trường, không ở Git. [DBML](dut-connect.dbml) mô tả schema thực tế; Flyway vẫn là nguồn schema chính thức.
 
 Phạm vi không gồm chat, mạng xã hội, đồng bộ điểm công tác xã hội chính thức, email/SMS, SSO, PDF hay bộ kiểm thử tự động. Các giới hạn này giữ dự án tập trung vào điều phối, xác minh và minh bạch thay vì mở thêm hệ thống ngoài mục tiêu.
+
+
+Cập nhật danh mục: 5 hồ sơ tổ chức dựa trên nguồn DUT và 8 chiến dịch vận hành được tạo qua quy trình nghiệp vụ. Ngày, chỉ tiêu và trạng thái được mô phỏng, có phân biệt với sự kiện gốc. Lịch đang tuyển kéo dài 120 ngày, lịch đang hoạt động thêm 180–200 ngày; khởi động lại không tạo trùng và không sửa dữ liệu đang dùng. ADMIN quản lý các hồ sơ trải nghiệm, không có tài khoản hoặc giao dịch tài chính giả. Migration V20 bổ sung bảng theo dõi import; DBML hiện có 28 bảng nghiệp vụ.

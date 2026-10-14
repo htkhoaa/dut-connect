@@ -1,6 +1,9 @@
 import type {IconName} from '../../shared/components/Icon';
 import {dutPhotography} from '../../shared/lib/dutPhotography';
 export function organizationPhoto(name: string, type: string) {
+    if (/sức trẻ|nhiệt/i.test(name)) return {src: '/images/dut-volunteer-beach.jpg', alt: ''};
+    if (/hội sinh viên|tư vấn sinh viên/i.test(name)) return {src: '/images/dut-volunteer-spring.jpg', alt: ''};
+    if (/đoàn thanh niên/i.test(name)) return {src: '/images/dut-volunteer-summer.jpg', alt: ''};
     const icon = organizationIcon(name, type);
     if (icon === 'leaf') return dutPhotography.garden;
     if (icon === 'cpu' || icon === 'spark') return dutPhotography.technology;
