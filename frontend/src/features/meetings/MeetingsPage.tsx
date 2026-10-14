@@ -50,7 +50,7 @@ function Meetings({c, student}: { c: string; student: boolean }) {
             <p>{renderText(meetingTypes[v.meetingType])} · {renderText(date(v.startsAt))} – {renderText(date(v.endsAt))}</p><p
                 className="whitespace-pre-wrap break-words">{renderText(v.description)}</p>{renderText(v.location &&
                 <p className="break-words">{tr("Địa điểm:")}{renderText(v.location)}</p>)}{renderText(v.meetingUrl &&
-                <a className="break-all text-primary hover:underline" href={v.meetingUrl} target="_blank" rel="noreferrer">{tr("Tham gia cuộc họp")}</a>)}{renderText(mutable &&
+                <a className="ui-button ui-button-primary" href={v.meetingUrl} target="_blank" rel="noreferrer">{tr("Tham gia cuộc họp")}</a>)}{renderText(mutable &&
                 <div className="mt-4 flex gap-3"><Button onClick={() => setEdit(v)}>{tr("Chỉnh sửa")}</Button><Button
                     onClick={() => setRemove(v)}>{tr("Xóa")}</Button></div>)}</Card>)}<Pagination {...q.data}
                                                                                             onPageChange={setPage}/></>)}{renderText(edit &&

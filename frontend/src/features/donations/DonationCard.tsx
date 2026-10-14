@@ -26,10 +26,10 @@ export function DonationCard({donation: d}: { donation: Donation }) {
         <p>{tr("Đã thanh toán")}{renderText(new Date(p.paidAt).toLocaleString(locale()))}</p>)}{renderText(p?.failureReason &&
         <p role="status" className="break-words">{renderText(p.failureReason)}</p>)}{renderText(pending &&
         <p className="mt-3">{tr("Kết quả thanh toán được xác nhận từ hệ thống. Làm mới để xem trạng thái mới nhất.")}</p>)}
-        <div className="mt-4 flex flex-wrap gap-4"><Link className="text-primary hover:underline"
+        <div className="mt-4 flex flex-wrap gap-4"><Link className="ui-button ui-button-secondary"
                                                          to={'/payment/result?donationId=' + d.id}>{tr("Kết quả thanh toán")}</Link>{renderText(link && (link.startsWith('/') ?
-            <Link className="text-primary hover:underline" to={link}>{tr("Mở trang thanh toán")}</Link> :
-            <a className="text-primary hover:underline" href={link} rel="noreferrer">{tr("Mở thanh toán ZaloPay Sandbox")}</a>))}{renderText(pending && p && <Button disabled={refresh.isPending}
+            <Link className="ui-button ui-button-primary" to={link}>{tr("Mở trang thanh toán")}</Link> :
+            <a className="ui-button ui-button-primary" href={link} rel="noreferrer">{tr("Mở thanh toán ZaloPay Sandbox")}</a>))}{renderText(pending && p && <Button disabled={refresh.isPending}
                                                        onClick={() => refresh.mutate(p.id)}>{renderText(refresh.isPending ? tr("Đang làm mới…") : tr("Làm mới trạng thái"))}</Button>)}
         </div>
         {renderText(refresh.isError && <ErrorState message={errorMessage(refresh.error)}/>)}</Card>;

@@ -14,7 +14,7 @@ export function PaymentResultPage() {
     const id = route.donationId || params.get('donationId') || '';
     const q = useDonation(id);
     return <div className="space-y-6"><h1 className="text-3xl font-semibold">{tr("Kết quả thanh toán")}</h1><p>{tr("Trạng thái được xác nhận từ hệ thống thanh toán. Chuyển hướng hoặc tham số URL không xác nhận thanh toán.")}</p><Link
-        className="text-primary hover:underline" to="/me/donations">{tr("Khoản đóng góp của tôi")}</Link>{renderText(!validId(id) ?
+        className="ui-button ui-button-secondary" to="/me/donations">{tr("Khoản đóng góp của tôi")}</Link>{renderText(!validId(id) ?
         <ErrorState message={tr("Cần mã khoản đóng góp hợp lệ.")}/> : q.isPending ? <LoadingState/> : q.isError ?
             <ErrorState message={errorMessage(q.error)} onRetry={() => void q.refetch()}/> :
             <DonationCard donation={q.data}/>)}</div>;

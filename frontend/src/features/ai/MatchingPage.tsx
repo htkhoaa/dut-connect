@@ -53,7 +53,7 @@ function Matching({campaignId}:{campaignId:string}){
     return <div className="space-y-6">
         <h1 className="text-3xl font-semibold">{tr("Gợi ý tình nguyện viên với AI")}</h1>
         <p className="font-medium">{tr("Gợi ý AI — quyết định cuối cùng thuộc về bạn")}</p>
-        <div className="flex flex-wrap gap-4"><Link className="text-primary hover:underline" to={'/manage/campaigns/'+campaignId}>{tr("Không gian chiến dịch")}</Link><Link className="text-primary hover:underline" to={'/manage/campaigns/'+campaignId+'/applications'}>{tr("Xét duyệt đăng ký")}</Link></div>
+        <div className="flex flex-wrap gap-4"><Link className="ui-button ui-button-secondary" to={'/manage/campaigns/'+campaignId}>{tr("Không gian chiến dịch")}</Link><Link className="ui-button ui-button-secondary" to={'/manage/campaigns/'+campaignId+'/applications'}>{tr("Xét duyệt đăng ký")}</Link></div>
         <p className="text-text-secondary">{tr("Gợi ý dựa trên yêu cầu chiến dịch, kỹ năng, kinh nghiệm và thời gian tham gia. Việc tạo gợi ý không thay đổi trạng thái đăng ký.")}</p>
         {renderText(unavailable&&<Card><p role="status">{tr("Gợi ý AI chưa khả dụng. Bạn có thể tiếp tục xét duyệt đăng ký.")}</p></Card>)}
         {renderText(!eligible&&<p role="status">{tr("Gợi ý phù hợp dành cho chiến dịch tình nguyện đang mở hoặc đang hoạt động.")}</p>)}

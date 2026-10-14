@@ -32,7 +32,7 @@ export function OrganizationDetailPage() {
     const summary = detail.organization;
     const photo = organizationPhoto(summary.name, summary.organizationTypeName);
     return <div className="space-y-6">
-        <Link className="text-primary hover:underline" to="/organizations">{tr("Khám phá tổ chức")}</Link>
+        <Link className="ui-button ui-button-secondary" to="/organizations">{tr("Khám phá tổ chức")}</Link>
         <div className="organization-detail-photo"><img src={photo.src} alt={photo.alt}/></div>
         <div className="organization-heading"><span className="organization-mark"><Icon name="building" size={38}/></span><div className="min-w-0 flex-1"><p className="mb-2 text-sm text-primary">{renderText(catalogLabel(summary.organizationTypeName))}</p><h1 className="min-w-0 max-w-full break-words text-3xl font-bold">{renderText(displayName(summary.name))}</h1>{renderText(isDemoName(summary.name) && <p className="mt-2 text-xs text-text-secondary">{tr("Dữ liệu mẫu")}</p>)}</div>
             <Badge tone={organizationStatuses[summary.status].tone}>{renderText(organizationStatuses[summary.status].label)}</Badge>

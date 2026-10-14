@@ -28,7 +28,7 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
     const closed = !['OPEN', 'ACTIVE'].includes(campaign.status) ? tr("Chiến dịch hiện không nhận đóng góp tài chính.") : campaign.content.fundraisingDeadline && Date.now() >= new Date(campaign.content.fundraisingDeadline).getTime() ? tr("Đã hết hạn gây quỹ.") : null;
     return <Card><h2 className="mb-4 text-xl font-semibold">{tr("Tiếp sức cho chiến dịch")}</h2>{renderText(closed ?
         <p>{renderText(closed)}</p> : !initialized ? <LoadingState/> : !user ?
-            <Link className="text-primary hover:underline" to="/login" state={{from: '/campaigns/' + campaign.slug}}>{tr("Đăng nhập để ủng hộ")}</Link> : settings.isPending ? <LoadingState/> : settings.isError ?
+            <Link className="ui-button ui-button-primary" to="/login" state={{from: '/campaigns/' + campaign.slug}}>{tr("Đăng nhập để ủng hộ")}</Link> : settings.isPending ? <LoadingState/> : settings.isError ?
                 <ErrorState message={errorMessage(settings.error)}
                             onRetry={() => void settings.refetch()}/> : !settings.data.available ?
                     <p role="status">{tr("Thanh toán hiện chưa khả dụng. Bạn vẫn có thể tham gia các hoạt động khác.")}</p> : <><p

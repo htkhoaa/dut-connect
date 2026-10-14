@@ -26,7 +26,7 @@ export function MockCheckoutPage() {
             <ErrorState message={errorMessage(q.error)} onRetry={() => void q.refetch()}/> : p &&
             <Card><p className="text-xl font-semibold">{renderText(vnd(p.amount))}</p><Badge tone={paymentStatuses[p.status].tone}>{renderText(paymentStatuses[p.status].label)}</Badge>
                 <div className="mt-4 flex flex-wrap gap-4">{renderText(pending && <><Button disabled={m.isPending}
-                                                                                 onClick={() => setAction('success')}>{tr("Mô phỏng thành công")}</Button><Button disabled={m.isPending} onClick={() => setAction('fail')}>{tr("Mô phỏng thất bại")}</Button></>)}<Link className="text-primary hover:underline"
+                                                                                 onClick={() => setAction('success')}>{tr("Mô phỏng thành công")}</Button><Button disabled={m.isPending} onClick={() => setAction('fail')}>{tr("Mô phỏng thất bại")}</Button></>)}<Link className="ui-button ui-button-secondary"
                                                      to={'/payment/result?donationId=' + p.donationId}>{tr("Về kết quả thanh toán")}</Link></div>
             </Card>)}{renderText(m.isError && <ErrorState message={errorMessage(m.error)}/>)}<ConfirmDialog open={action !== null}
                                                                                                title={tr("Mô phỏng kết quả thanh toán?")}

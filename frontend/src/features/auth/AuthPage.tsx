@@ -107,7 +107,7 @@ export function AuthPage({registration = false}: { registration?: boolean }) {
                     className="w-full">{renderText(mutation.isPending ? tr("Vui lòng đợi…") : registration ? tr("Tạo tài khoản") : tr("Đăng nhập"))}</Button>
         </form>
         <p className="mt-5 text-sm">{renderText(registration ? tr("Bạn đã có tài khoản?") : tr("Bạn mới đến DUT Connect?"))}{renderText(' ')}
-            <Link className="text-primary hover:underline"
+            <Link className="ui-button ui-button-secondary"
                   to={registration ? '/login' : '/register'}>{renderText(registration ? tr("Đăng nhập") : tr("Đăng ký"))}</Link>
         </p>
         <p className="mt-6 border-t border-border pt-4 text-xs leading-relaxed text-text-secondary">{tr("Tài khoản dùng để đăng ký tình nguyện, theo dõi nhiệm vụ và các khoản đóng góp của bạn.")}</p>

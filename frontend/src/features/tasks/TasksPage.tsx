@@ -64,8 +64,8 @@ function Tasks({c, id, mine}: { c: string; id: string; mine: boolean }) {
             <option value="">{tr("Tất cả trạng thái")}</option>
             {renderText(Object.entries(taskStatuses).map(([v, l]) => <option value={v} key={v}>{renderText(l)}</option>))}
         </Select></Field>)}{renderText(id && !manager &&
-        <div className="flex flex-wrap gap-4"><Link className="text-primary hover:underline" to="/me/tasks">{tr("Nhiệm vụ của tôi")}</Link>{renderText(detail.data &&
-            <Link className="text-primary hover:underline" to={'/me/campaigns/' + detail.data.campaignId + '/meetings'}>{tr("Lịch họp chiến dịch")}</Link>)}</div>)}{renderText(!mine && !id && mutable &&
+        <div className="flex flex-wrap gap-4"><Link className="ui-button ui-button-secondary" to="/me/tasks">{tr("Nhiệm vụ của tôi")}</Link>{renderText(detail.data &&
+            <Link className="ui-button ui-button-secondary" to={'/me/campaigns/' + detail.data.campaignId + '/meetings'}>{tr("Lịch họp chiến dịch")}</Link>)}</div>)}{renderText(!mine && !id && mutable &&
         <Button onClick={() => setEdit(true)}>{tr("Tạo nhiệm vụ")}</Button>)}{renderText(feedback &&
         <p role="status" className="text-success">{renderText(feedback)}</p>)}{renderText(mutation.isError &&
         <ErrorState message={errorMessage(mutation.error)}/>)} {renderText(pending ? <LoadingState/> : error ?
