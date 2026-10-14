@@ -44,3 +44,5 @@ Hồ sơ lịch sử là nội dung tham khảo có nguồn, không phải đề
 Phê duyệt tự động từ chối gửi chuỗi giao diện tới Google Translate; bản dịch dùng bộ từ điển cục bộ. Không có dữ liệu được gửi tới endpoint đó.
 
 Production dùng Vercel proxy `/api` tới Render/Neon. Frontend/backend tự deploy theo commit nhưng có thể hoàn tất khác thời điểm; cần chờ backend mới Live để các API MSV, avatar và hoạt động thật sẵn sàng. Kiểm tra public API sau rollout; việc đăng nhập tài khoản quản trị production cần chủ tài khoản kiểm tra, vì không có mật khẩu production trong workspace. Thanh toán ZaloPay và AI vẫn phụ thuộc cấu hình riêng; mock không chạy trong prod.
+
+Sau khi push commit `13341d5`, logo mới trên domain Vercel trả 200/image/png; backend Render và API proxy tại `dutconnect.vercel.app/api/v1/activities` trả 200/application/json, đủ 6 hồ sơ ở VI/EN. Hai hệ thống đã phục vụ bản cập nhật; kiểm tra này là read-only, không tạo tài khoản/giao dịch production. Kiểm tra đăng ký, đăng nhập, avatar và các trường hợp lỗi ở trên được thực hiện trên Docker local.
