@@ -11,16 +11,16 @@ public class VolunteerPersistence implements VolunteerRepository {
     private final JdbcClient jdbc;
     public VolunteerPersistence(JpaVolunteerRepository registrations,JdbcClient jdbc){this.registrations=registrations;this.jdbc=jdbc;}
     public Optional<VolunteerRegistration> find(UUID id){return registrations.findById(id);}
-    public Optional<UUID> campaignOf(UUID id){return jdbc.sql("select campaign_id from dut_connect.volunteer_registrations where id=:id").param("id",id).query(UUID.class).optional();}
+    public Optional<UUID> campaignOf(UUID id){return jdbc.sql("select campaign_id from dut_connect_midterm.volunteer_registrations where id=:id").param("id",id).query(UUID.class).optional();}
     public Optional<VolunteerRegistration> lock(UUID id){return registrations.lockById(id);}
     public boolean exists(UUID campaign,UUID user){return registrations.existsByCampaignIdAndUserId(campaign,user);}
     public VolunteerRegistration save(VolunteerRegistration v){return registrations.saveAndFlush(v);}
     public Counts counts(UUID campaign) {
-        return jdbc.sql("select count(*) as accepted,count(*) filter(where assigned_track='TECHNICAL') as technical,count(*) filter(where assigned_track='LOGISTICS') as logistics from dut_connect.volunteer_registrations where campaign_id=:id and status='ACCEPTED'")
+        return jdbc.sql("select count(*) as accepted,count(*) filter(where assigned_track='TECHNICAL') as technical,count(*) filter(where assigned_track='LOGISTICS') as logistics from dut_connect_midterm.volunteer_registrations where campaign_id=:id and status='ACCEPTED'")
             .param("id",campaign).query(Counts.class).single();
     }
     public PageResult<VolunteerRegistration> list(UUID campaign,UUID user,VolunteerQuery query) {
-        String where=" from dut_connect.volunteer_registrations where 1=1";Map<String,Object> args=new HashMap<>();
+        String where=" from dut_connect_midterm.volunteer_registrations where 1=1";Map<String,Object> args=new HashMap<>();
         if(campaign!=null){where+=" and campaign_id=:campaign";args.put("campaign",campaign);}
         if(user!=null){where+=" and user_id=:user";args.put("user",user);}
         if(query.status()!=null){where+=" and status=:status";args.put("status",query.status().name());}

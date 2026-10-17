@@ -1,6 +1,6 @@
 import {useLanguage, tr, renderText, locale} from "../../../shared/lib/i18n";
 import type {Content} from '../types';
-import {modes, organizers, vnd, dateTime} from '../presentation';
+import {modes, organizers, dateTime} from '../presentation';
 import {catalogLabel} from '../../../shared/lib/catalogLabels';
 import {Icon} from '../../../shared/components/Icon';
 import {displayName} from '../../../shared/lib/demoPresentation';
@@ -11,7 +11,5 @@ export function PlanContent({content: c, organizerName, categoryName}: {content:
         <p className="font-medium leading-relaxed">{renderText(c.summary)}</p><p className="whitespace-pre-wrap text-sm leading-7 text-text-secondary">{renderText(c.description)}</p>
         {renderText(c.expectedImpact && <div><h3 className="mb-2 font-semibold">{tr("Giá trị hướng đến")}</h3><p className="whitespace-pre-wrap text-sm leading-relaxed text-text-secondary">{renderText(c.expectedImpact)}</p></div>)}
         {renderText(c.contributionMode !== 'DONATION_ONLY' && <div className="space-y-3 border-t border-border pt-5"><h3 className="font-semibold">{tr("Kế hoạch tình nguyện")}</h3><div className="grid grid-cols-3 gap-2">{renderText([[tr("Tổng vị trí"), c.targetVolunteerCount], [tr("Kỹ thuật"), c.targetTechnicalCount], ['Hậu cần', c.targetLogisticsCount]].map(([label, value]) => <div key={label} className="rounded-xl bg-primary-light p-3"><p className="text-xl font-semibold text-primary">{renderText(value ?? '—')}</p><p className="mt-1 text-xs text-text-secondary">{renderText(label)}</p></div>))}</div><p className="text-sm text-text-secondary">{tr("Hạn đăng ký:")}<span className="text-text-primary">{renderText(dateTime(c.applicationDeadline))}</span></p>{renderText(c.volunteerRequirements && <p className="whitespace-pre-wrap text-sm leading-relaxed text-text-secondary">{renderText(c.volunteerRequirements)}</p>)}</div>)}
-        {renderText(c.contributionMode !== 'VOLUNTEER_ONLY' && <div className="space-y-2 border-t border-border pt-5"><h3 className="font-semibold">{tr("Kế hoạch gây quỹ")}</h3><p className="text-sm text-text-secondary">{tr("Mục tiêu:")}<strong className="text-primary">{renderText(vnd(c.fundraisingGoal))}</strong></p><p className="text-sm text-text-secondary">{tr("Hạn gây quỹ:")}{renderText(dateTime(c.fundraisingDeadline))}</p></div>)}
-        <div className="space-y-2 border-t border-border pt-5"><h3 className="font-semibold">{tr("Nguồn tài trợ & dự toán")}</h3><dl className="grid gap-3 text-sm sm:grid-cols-2">{renderText([[tr("Kinh phí nhà trường"), vnd(c.institutionalFunding)], [tr("Tài trợ"), vnd(c.sponsorFunding)], [tr("Nhà tài trợ"), c.sponsorName || tr("Chưa có")], [tr("Dự toán ngân sách"), vnd(c.estimatedBudget)]].map(([label, value]) => <div key={label}><dt className="text-xs text-text-secondary">{renderText(label)}</dt><dd className="mt-1 font-medium">{renderText(value)}</dd></div>))}</dl></div>
     </div>;
 }

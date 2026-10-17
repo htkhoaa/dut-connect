@@ -111,6 +111,7 @@ public class CampaignContent {
         text("title", title, 200, true); text("summary", summary, 500, true);
         text("description", description, 20000, true); text("expectedImpact", expectedImpact, 10000, false);
         text("volunteerRequirements", volunteerRequirements, 10000, false); text("sponsorName", sponsorName, 200, false);
+        if (contributionMode != ContributionMode.VOLUNTEER_ONLY) invalid("contributionMode", "The midterm edition supports volunteer campaigns only");
         if (contributionMode == null) invalid("contributionMode", "Choose a contribution mode");
         if (startDate == null || endDate == null || endDate.isBefore(startDate))
             invalid("endDate", "End date must be on or after start date");
@@ -125,6 +126,8 @@ public class CampaignContent {
             invalid("targetTechnicalCount", "Technical and logistics targets cannot exceed the volunteer target");
         if (contributionMode == ContributionMode.VOLUNTEER_ONLY && (fundraisingGoal != null || fundraisingDeadline != null))
             invalid("fundraisingGoal", "Volunteer-only campaigns cannot configure fundraising");
+        if (fundraisingGoal != null || fundraisingDeadline != null || institutionalFunding.signum() != 0 || sponsorFunding.signum() != 0 || sponsorName != null || estimatedBudget != null)
+            invalid("institutionalFunding", "Financial planning is outside the midterm scope");
         money("fundraisingGoal", fundraisingGoal, true); money("institutionalFunding", institutionalFunding, false);
         money("sponsorFunding", sponsorFunding, false); money("estimatedBudget", estimatedBudget, false);
     }

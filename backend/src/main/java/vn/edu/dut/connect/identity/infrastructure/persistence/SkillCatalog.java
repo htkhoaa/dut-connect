@@ -10,7 +10,7 @@ public class SkillCatalog implements SkillCatalogPort {
     public SkillCatalog(JdbcClient jdbc) { this.jdbc = jdbc; }
     public Map<UUID, SkillSnapshot> findSkills(Set<UUID> ids) {
         if (ids.isEmpty()) return Map.of();
-        return jdbc.sql("select id,name,active from dut_connect.skills where id in (:ids)").param("ids", ids)
+        return jdbc.sql("select id,name,active from dut_connect_midterm.skills where id in (:ids)").param("ids", ids)
                 .query(SkillSnapshot.class).list().stream().collect(Collectors.toMap(SkillSnapshot::id, s -> s));
     }
 }

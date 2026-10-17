@@ -1,62 +1,88 @@
-# DUT Connect — Báo cáo chức năng và luồng xử lý
+# DUT Connect — Báo cáo bản giữa kỳ
 
-DUT Connect tổ chức hoạt động tình nguyện, điều phối sinh viên và theo dõi đóng góp tài chính của cộng đồng Bách khoa Đà Nẵng. Mục tiêu là thay các biểu mẫu, danh sách điểm danh và bảng tính rời rạc bằng một luồng có quyền hạn, trạng thái và dữ liệu kiểm chứng được.
+Bản giữa kỳ có **19 bảng ứng dụng**, tập trung quản lý chiến dịch tình nguyện. Giữ thiết kế UI, ảnh thật DUT, logo, background, card, nút, tìm kiếm động, responsive và VI/EN.
 
-## 1. Người dùng và quyền hạn
+Source bản đầy đủ 28 bảng nằm trên nhánh `archive/full-28-tables`; source giữa kỳ nằm trên `midterm/19-tables`. Nhánh `main` phục vụ triển khai. [DBML để dán vào dbdiagram.io](dut-connect-midterm.dbml).
 
-| Vai trò | Công việc | Vì sao cần |
+## 1. Giải thích 19 bảng
+
+| STT | Bảng | Chức năng và lý do tồn tại |
 |---|---|---|
-| Khách | Xem chiến dịch, tổ chức đã xác minh, hồ sơ hoạt động thực tế và tài chính công khai | Tiếp cận thông tin trước khi tham gia; hỗ trợ người xem và sinh viên trao đổi qua VI/EN |
-| Sinh viên USER | Quản lý hồ sơ/avatar/kỹ năng; đề xuất; tham gia tổ chức; đăng ký tình nguyện; thực hiện nhiệm vụ; đóng góp; xem lịch sử | Một hồ sơ xuyên suốt thay cho nhập lại thông tin ở từng chiến dịch |
-| OWNER/MANAGER tổ chức | Quản lý thành viên, chuyển chủ sở hữu, đại diện tổ chức đã xác minh để đề xuất | Có người chịu trách nhiệm và ngăn đại diện tổ chức tùy tiện |
-| OWNER/MANAGER chiến dịch | Điều phối chiến dịch cụ thể: tuyển người, phân công, họp, điểm danh, xác minh hoàn thành, gửi chi phí, AI, báo cáo | Quyền giới hạn theo chiến dịch; thành viên tổ chức không tự có quyền quản lý chiến dịch |
-| ADMIN | Xác minh tổ chức, duyệt đề xuất/chi phí, quản lý trạng thái tài khoản, danh mục, chiến dịch, dashboard và báo cáo | Tách người tổ chức hoạt động khỏi người xét duyệt các quyết định quan trọng |
+| 1 | `users` | Tài khoản, MSV/email duy nhất, tên, mật khẩu BCrypt, vai trò ADMIN/USER, trạng thái hoạt động/đình chỉ. Là định danh chung cho các nghiệp vụ. |
+| 2 | `student_profiles` | Khoa, giới thiệu, kinh nghiệm, nhóm đóng góp của sinh viên. Tách thông tin hồ sơ khỏi dữ liệu đăng nhập. Liên kết 1–1 với users. |
+| 3 | `refresh_tokens` | Hash của refresh token, hạn dùng, thu hồi và token thay thế. Giữ đăng nhập qua reload và đăng xuất có hiệu lực; không lưu token gốc. |
+| 4 | `profile_avatars` | Ảnh đại diện đã kiểm tra và chuẩn hóa, liên kết 1–1 với users. Lưu database để ảnh không mất khi backend restart; chỉ tài khoản đó được truy cập API ảnh của mình. |
+| 5 | `organization_types` | Danh mục Đoàn trường, Liên chi đoàn, Hội, CLB, Đội… Tránh nhập loại tổ chức thiếu thống nhất. |
+| 6 | `organizations` | Tên, mô tả, loại, slug, trạng thái và người tạo/xác minh tổ chức. Phục vụ trang tổ chức và kiểm tra điều kiện đại diện tổ chức. |
+| 7 | `organization_members` | Quan hệ nhiều–nhiều người dùng–tổ chức, vai trò OWNER/MANAGER/MEMBER. Cho phép phân quyền và chuyển chủ sở hữu; không tự cấp quyền quản lý chiến dịch. |
+| 8 | `campaign_categories` | Danh mục chiến dịch để phân loại, tìm/lọc và quản trị. Ngừng dùng danh mục không xóa lịch sử chiến dịch. |
+| 9 | `proposals` | Kế hoạch do cá nhân hoặc đại diện tổ chức gửi, trạng thái chờ/duyệt/từ chối và lý do. Giữ bước xét duyệt trước khi chiến dịch được mở tuyển. |
+| 10 | `campaigns` | Thông tin chiến dịch vận hành: nội dung, tổ chức, danh mục, ngày, hạn tuyển, chỉ tiêu, trạng thái. Liên kết duy nhất với đề xuất đã duyệt để ngăn tạo trùng. |
+| 11 | `campaign_managers` | Người quản lý theo từng chiến dịch và vai trò OWNER/MANAGER. Giữ quyền điều phối theo phạm vi, không tạo vai trò ORGANIZER toàn hệ thống. |
+| 12 | `skills` | Danh mục kỹ năng dùng chung, tránh mỗi sinh viên/chiến dịch đặt tên kỹ năng khác nhau. |
+| 13 | `student_skills` | Quan hệ nhiều–nhiều sinh viên–kỹ năng, thể hiện kỹ năng trong hồ sơ. |
+| 14 | `campaign_skill_requirements` | Kỹ năng cần cho chiến dịch, nhóm kỹ thuật/hậu cần và mức quan trọng. Hỗ trợ xét tuyển thủ công và tích hợp AI tùy chọn. |
+| 15 | `volunteer_registrations` | Hồ sơ ứng tuyển, nguyện vọng, lý do, thời gian rảnh, kết quả xét duyệt và nhóm được nhận. Ràng buộc mỗi người chỉ có một hồ sơ cho mỗi chiến dịch. |
+| 16 | `meetings` | Lịch họp chiến dịch, thời gian, online/offline, địa điểm hoặc URL. Người được nhận và quản lý xem được; quản lý mới được sửa. |
+| 17 | `attendance_sessions` | Từng buổi điểm danh với thời gian và người tạo. Không dùng một cờ điểm danh chung cho cả chiến dịch. |
+| 18 | `attendance_records` | Có mặt/vắng mặt của từng người trong từng buổi, người ghi và thời điểm. Chỉ ghi cho người đã được nhận; không tự quy đổi thành giờ tình nguyện. |
+| 19 | `published_activities` | Tư liệu hoạt động thực tế DUT: nội dung VI/EN, ảnh, nguồn, thời gian công bố. Giữ trang chủ sinh động mà không biến lịch sử thành đợt tuyển mới. |
 
-Hệ thống chỉ có hai vai trò toàn cục ADMIN/USER; quyền tổ chức và chiến dịch nằm ở bảng thành viên tương ứng.
+`flyway_schema_history` là bảng metadata phục vụ migration, **không phải bảng nghiệp vụ thứ 20**. DBML có 19 bảng và 33 khóa ngoại. Khóa `seed_key` trên organizations/campaigns thay thế bảng theo dõi import riêng.
 
-## 2. Luồng hoạt động chính
+Các cột kế hoạch kinh phí cũ trong proposals/campaigns được giữ để tương thích dữ liệu sao chép; không có UI tài chính, không có bảng thanh toán và backend từ chối nhập kế hoạch tài chính mới. Bản giữa kỳ chỉ hỗ trợ VOLUNTEER_ONLY.
 
-**Tài khoản → tổ chức/đề xuất → xét duyệt → mở chiến dịch → tuyển chọn → điều phối → xác minh → báo cáo.**
+## 2. Luồng hoạt động
 
-1. **Đăng ký:** mã sinh viên đúng 9 chữ số; email phải khớp `<mã>@sv1.dut.udn.vn`; chọn khoa từ danh sách được cung cấp. Backend kiểm tra lại, ngăn trùng email/MSV và mã hóa mật khẩu BCrypt. Kiểm tra định dạng không chứng minh sở hữu email; chưa tích hợp xác thực email/SSO.
-2. **Đăng nhập:** dùng MSV và mật khẩu. Tài khoản quản trị đã có như `ADMIN001` tiếp tục sử dụng mã đó; tài khoản cũ được giữ. Access JWT ở bộ nhớ; refresh token ở cookie HttpOnly/Secure trong production, chỉ hash được lưu trong database. Refresh xoay token, logout thu hồi phiên; tài khoản bị đình chỉ không được dùng chức năng bảo vệ. API đăng nhập bằng email cũ còn được giữ để tương thích công cụ hiện có, giao diện dùng MSV.
-3. **Hồ sơ:** sinh viên khai khoa, mô tả, kinh nghiệm, nhóm TECHNICAL/LOGISTICS và kỹ năng. Avatar PNG/JPEG tối đa 1 MB, giới hạn 8 megapixel/4096 px mỗi chiều, được backend kiểm tra và chuẩn hóa JPEG 256×256. Ảnh nhỏ lưu trong PostgreSQL, truy cập qua API của chính tài khoản; không mất khi Render restart và không cần dịch vụ lưu file riêng.
-4. **Tổ chức:** người tạo là OWNER; tổ chức ban đầu chờ xác minh. ADMIN xác minh/đình chỉ/khôi phục. OWNER phân vai thành viên và chuyển quyền sở hữu; không thể bỏ chủ sở hữu cuối cùng.
-5. **Đề xuất:** cá nhân hoặc đại diện có quyền của tổ chức VERIFIED gửi kế hoạch, thời gian, tuyển người, yêu cầu kỹ năng và kinh phí. Chỉ đề xuất PENDING được sửa. ADMIN duyệt hoặc từ chối có lý do; duyệt đồng thời tạo đúng một chiến dịch DRAFT và OWNER trong một transaction. Điều này ngăn duyệt thành công nhưng thiếu chiến dịch, hoặc tạo trùng khi thao tác lặp.
-6. **Chiến dịch:** OWNER hoàn thiện rồi chuyển `DRAFT → OPEN → ACTIVE → COMPLETED`; có thể CANCELLED trước khi hoàn thành. Trạng thái cuối không mở lại. Quy tắc tuyển/nhận tiền phụ thuộc trạng thái, hình thức VOLUNTEER_ONLY/DONATION_ONLY/HYBRID và thời hạn.
-7. **Tuyển tình nguyện:** mỗi sinh viên chỉ có một hồ sơ cho một chiến dịch. Đăng ký là PENDING, không tự được nhận. Người quản lý ACCEPT/REJECT; sinh viên chỉ hủy hồ sơ đang chờ. Khi nhận, quản lý chọn nhóm cuối cùng; vượt chỉ tiêu phải có cảnh báo và xác nhận.
-8. **Điều phối:** người đã ACCEPTED mới được phân công nhiệm vụ và điểm danh. Nhiệm vụ đi từ TODO tới IN_PROGRESS, DONE rồi VERIFIED; quản lý có thể trả lại để sửa trước khi VERIFIED. Họp ONLINE cần liên kết, OFFLINE cần địa điểm. Điểm danh theo từng buổi, lưu hàng loạt nguyên tử, không dùng một cờ cho toàn chiến dịch.
-9. **Hoàn thành:** điểm danh thể hiện hiện diện; hoàn thành thể hiện kết quả. Người quản lý ghi nhận và xác minh số giờ chính thức. Báo cáo chỉ cộng giờ VERIFIED để tránh biến việc có mặt thành thành tích được chứng nhận.
+**Tài khoản → tổ chức/đề xuất → ADMIN xét duyệt → mở chiến dịch → tuyển sinh viên → lịch họp → điểm danh → dashboard/Excel.**
 
-## 3. Thanh toán và tài chính
+1. Sinh viên đăng ký bằng MSV 9 chữ số và email tương ứng `MSV@sv1.dut.udn.vn`, chọn khoa; đăng nhập bằng MSV. Backend kiểm tra lại và ngăn trùng tài khoản.
+2. Sinh viên cập nhật hồ sơ, kỹ năng, avatar; tạo tổ chức hoặc tham gia tổ chức do chủ sở hữu quản lý. Tổ chức cần xác minh trước khi đại diện gửi đề xuất.
+3. Cá nhân hoặc người có quyền đại diện gửi đề xuất. ADMIN duyệt/từ chối; duyệt đồng thời tạo đúng một chiến dịch DRAFT và OWNER trong transaction.
+4. Quản lý hoàn thiện yêu cầu kỹ năng, thêm quản lý hợp lệ và chuyển chiến dịch OPEN. Sinh viên gửi đăng ký; quản lý nhận/từ chối và phân nhóm. Không cho đăng ký trùng hoặc người không có quyền tự nhận hồ sơ.
+5. Người được nhận xem lịch họp. Quản lý tạo buổi điểm danh và ghi có mặt/vắng mặt. Version cũ bị từ chối để tránh ghi đè kết quả người khác vừa lưu.
+6. Dashboard phản ánh đăng ký, nhóm, lịch họp và điểm danh. Excel xuất đúng danh sách chiến dịch, không có cột tài chính hoặc giờ công chưa được hỗ trợ.
 
-Sinh viên chọn số tiền; backend kiểm tra điều kiện rồi tạo Donation và PaymentTransaction. Gọi nhà cung cấp ngoài transaction, sau đó lưu kết quả. ZaloPay Sandbox callback phải có MAC hợp lệ, đúng đơn hàng/số tiền; backend khóa giao dịch và cập nhật PAID nguyên tử. Callback lặp không cộng tiền hai lần; trang kết quả đọc trạng thái từ server, không tin tham số “success”.
+## 3. Chức năng đã có và đã xác minh chạy được
 
-Mock chỉ hoạt động trong dev và vẫn đi qua luồng xác minh. Production không bật mock; cần thông tin ZaloPay để thanh toán sandbox hoạt động. Chưa có thu tiền thật hay quy trình hoàn tiền vận hành.
+Các lượt HTTP và kiểm tra trình duyệt được thực hiện trên môi trường cô lập, không tạo dữ liệu kiểm tra vào production.
 
-Quản lý gửi chi phí PENDING, ADMIN duyệt/từ chối có lý do. **Tổng kinh phí = kinh phí nhà trường + tài trợ + donation PAID. Số dư = tổng kinh phí − chi phí APPROVED.** Backend tính từ database, dùng `numeric`/BigDecimal cho VND. Khoản chờ/thất bại và chi phí chưa duyệt không ảnh hưởng tổng. Công khai chi phí đã duyệt; danh tính người đóng góp chỉ có trong màn hình/báo cáo có quyền.
-
-## 4. AI, dashboard và báo cáo
-
-| Chức năng | Xử lý và lý do |
+| Nhóm | Đã triển khai và kiểm tra |
 |---|---|
-| AI matching | Đối chiếu yêu cầu, kỹ năng, kinh nghiệm, thời gian; không gửi email/MSV/thanh toán. Trả gợi ý, không tự nhận người. AI lỗi/tắt không chặn xét duyệt thủ công |
-| Dashboard ADMIN | Tổng hợp hoạt động, việc chờ duyệt, giờ đã xác minh, tiền đã thanh toán. Không tính tỷ lệ tham gia toàn trường khi chưa biết tổng sinh viên |
-| Dashboard chiến dịch | Hồ sơ ứng tuyển, nhóm đã nhận, nhiệm vụ, điểm danh, hoàn thành và tài chính để quản lý theo dõi tiến độ |
-| Excel tình nguyện | Danh sách đúng chiến dịch, trạng thái, điểm danh và giờ VERIFIED phục vụ tổng kết |
-| Excel tài chính | Summary, Donations, Expenses; chỉ OWNER/MANAGER/ADMIN được tải. Giữ số tiền và định danh chính xác |
+| Tài khoản | Đăng ký, đăng nhập ADMIN/USER, refresh xoay vòng, logout thu hồi phiên, đình chỉ và khôi phục tài khoản |
+| Hồ sơ | Đọc/cập nhật thông tin, gắn kỹ năng; upload/đọc/xóa avatar, ảnh trả về JPEG chuẩn hóa |
+| Tổ chức | Danh sách/chi tiết, tạo, xác minh, đình chỉ/khôi phục, thêm thành viên và chuyển quyền sở hữu |
+| Đề xuất | Tạo đề xuất tổ chức; duyệt thành chiến dịch; duyệt lặp bị chặn và không tạo chiến dịch thứ hai |
+| Chiến dịch | Danh sách/chi tiết, lọc trạng thái, yêu cầu kỹ năng, thêm/bỏ quản lý; mở/bắt đầu/hoàn thành; chặn mở lại trạng thái cuối |
+| Tình nguyện | Gửi hồ sơ, chặn trùng, quản lý nhận/phân nhóm, hủy hồ sơ đang chờ; người ngoài không được xét duyệt |
+| Lịch họp | Tạo lịch offline; người được nhận xem được, người ngoài bị từ chối |
+| Điểm danh | Tạo buổi, ghi/đọc có mặt, chặn cập nhật bằng version cũ |
+| Quản trị | Dashboard theo phạm vi mới; tạo/ngừng dùng danh mục; chặn USER vào API ADMIN |
+| Báo cáo | Tải file Excel hợp lệ gồm thông tin đăng ký/nhóm/điểm danh; không có báo cáo tài chính |
+| UI | Trang chủ, chiến dịch, quản lý và form đề xuất giữ thiết kế; không còn link tới mảng đã hoãn; VI/EN hoạt động, 320/390/768/1440px không tràn ngang |
+| Tư liệu DUT | Card và ảnh thật tải được; hồ sơ công khai có nguồn và nội dung VI/EN |
+| Database | Khởi tạo mới 19 bảng; chuyển dữ liệu tương thích từ fixture 28 bảng; fingerprint cả 28 bảng nguồn không thay đổi |
 
-## 5. Dữ liệu thật, giao diện và vận hành
+Các thao tác sửa/xóa họp, sửa buổi điểm danh, từ chối hồ sơ/đề xuất và quản lý chi tiết vai trò vẫn được giữ trong code/UI. Bộ kiểm tra đã chạy các luồng đại diện nêu trên, không khẳng định mọi tổ hợp thao tác đã được kiểm tra toàn diện.
 
-Sáu hồ sơ công khai được tổng hợp từ website DUT, gồm Mùa hè xanh, lễ ra quân Xuân tình nguyện, hiến máu, Chủ nhật xanh và hỗ trợ hướng nghiệp. Hồ sơ có nội dung VI/EN, nguồn, thời gian, đơn vị và ảnh thật; ảnh campus dùng khi ảnh bài gốc không còn tải được. Chúng nằm trong `published_activities`, không tạo donation, giờ VERIFIED hay biên bản duyệt giả. Hoạt động quá khứ không nhận đăng ký/tiền. Ngày lỗi trong nguồn hiến máu được ghi theo tháng, không tự đoán ngày.
+## 4. Chưa có trong bản giữa kỳ
 
-Giao diện có ảnh nền nhẹ, logo do chủ dự án cung cấp, lọc sau 300 ms, phân trang và trạng thái tải/rỗng/lỗi. VI/EN áp dụng cho giao diện và hồ sơ lịch sử; nội dung người dùng nhập giữ nguyên ngôn ngữ gốc. Chọn ngôn ngữ không đăng xuất hoặc mất nội dung form. Danh sách khoa giữ các hậu tố trong ảnh để không tự suy diễn cơ cấu khoa mới.
+| Chức năng | Trạng thái |
+|---|---|
+| Google OAuth | Đã đưa khỏi bản giữa kỳ |
+| Quyên góp, ZaloPay, mock checkout, callback, lịch sử thanh toán | Hoãn cuối kỳ; không còn controller/route/entity/repository trong bản build |
+| Gửi/duyệt chi phí, tài trợ, tổng hợp và báo cáo tài chính | Hoãn cuối kỳ |
+| Tạo nhiệm vụ, phân công người làm, xác minh nhiệm vụ | Hoãn cuối kỳ |
+| Xác minh sinh viên hoàn thành và chứng nhận giờ công | Hoãn cuối kỳ; điểm danh không thay thế chứng nhận giờ |
+| AI matching gọi dịch vụ thật | Adapter và giao diện còn; mặc định disabled. Đã kiểm tra availability=false, chưa xác minh kết quả AI thật vì chưa có API key cấu hình cho lần kiểm tra này |
+| Email xác thực/khôi phục mật khẩu, SSO, thông báo, đồng bộ điểm công tác xã hội | Chưa triển khai trong phạm vi giữa kỳ |
 
-Backend là modular monolith Java 21/Spring Boot 3.4.3: controller → application use case → domain/repository port → infrastructure. Frontend React/TypeScript dùng TanStack Query cho dữ liệu server, Zustand cho phiên và ngôn ngữ; token không lưu vào localStorage. Flyway quản lý schema, Hibernate chỉ validate; khóa và version bảo vệ cập nhật đồng thời.
+“Chưa có trong bản giữa kỳ” không đồng nghĩa chưa từng viết: các phần bị hoãn đã được bảo toàn trong nhánh bản đầy đủ. AI không trả kết quả giả khi chưa cấu hình.
 
-Local chạy PostgreSQL/backend/Nginx bằng Compose. Production dùng Neon, Render và Vercel; proxy `/api` giữ cookie dưới domain frontend, Origin được cấu hình rõ. Render Free có thời gian đánh thức, nên request đầu có thể cần thử lại. Khóa/mật khẩu nằm ở biến môi trường, không ở Git. [DBML](dut-connect.dbml) mô tả schema thực tế; Flyway vẫn là nguồn schema chính thức.
+## 5. Dữ liệu và triển khai
 
-Phạm vi không gồm chat, mạng xã hội, đồng bộ điểm công tác xã hội chính thức, email/SMS, SSO, PDF hay bộ kiểm thử tự động. Các giới hạn này giữ dự án tập trung vào điều phối, xác minh và minh bạch thay vì mở thêm hệ thống ngoài mục tiêu.
-
-
-Cập nhật danh mục: 5 hồ sơ tổ chức dựa trên nguồn DUT và 8 chiến dịch vận hành được tạo qua quy trình nghiệp vụ. Ngày, chỉ tiêu và trạng thái được mô phỏng, có phân biệt với sự kiện gốc. Lịch đang tuyển kéo dài 120 ngày, lịch đang hoạt động thêm 180–200 ngày; khởi động lại không tạo trùng và không sửa dữ liệu đang dùng. ADMIN quản lý các hồ sơ trải nghiệm, không có tài khoản hoặc giao dịch tài chính giả. Migration V20 bổ sung bảng theo dõi import; DBML hiện có 28 bảng nghiệp vụ.
+- Có bộ seed 5 tổ chức, 8 chiến dịch đủ trạng thái và 6 hồ sơ hoạt động thực tế. DRAFT chỉ dành cho người có quyền; khách thấy 7 chiến dịch seed công khai.
+- Lịch/chỉ tiêu/trạng thái vận hành là mô phỏng theo yêu cầu, có nhãn; bài gốc và thời gian lịch sử được ghi riêng. Không seed tài khoản đại diện giả, tiền hoặc giờ công giả.
+- Vercel phục vụ frontend, Render phục vụ backend, Neon giữ PostgreSQL. Schema mới `dut_connect_midterm` có 19 bảng; schema `dut_connect` cũ được giữ để rollback, không tham gia các truy vấn nghiệp vụ bản giữa kỳ.
+- Tài khoản và dữ liệu tương thích được sao chép một lần. Người dùng đăng nhập lại vì không chuyển refresh token. Dữ liệu mới giữa kỳ không tự đồng bộ ngược vào bản đầy đủ.
+- Kiểm tra bản đang chạy bằng `GET /api/v1/system/edition`; số bảng trả về được đọc từ database thực tế, không phải số giả lập.

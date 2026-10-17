@@ -12,9 +12,9 @@ import {Icon} from '../../shared/components/Icon';
 import {LoadingState} from '../../shared/components/LoadingState';
 import {ErrorState} from '../../shared/components/ErrorState';
 import {ApplyPanel} from '../volunteers/ApplyPanel';
-import {DonationPanel} from '../donations/DonationPanel';
-import {FinancialSummaryCard} from '../finance/FinancialSummaryCard';
-import {PublicExpenses} from '../finance/PublicExpenses';
+
+
+
 import {displayName} from '../../shared/lib/demoPresentation';
 export function CampaignDetailPage() {
     useLanguage();
@@ -27,7 +27,7 @@ export function CampaignDetailPage() {
         <div className="flex flex-wrap items-center justify-between gap-3"><p className="flex items-center gap-2 text-sm text-text-secondary"><Icon name="users" size={17}/>{renderText(modes[c.content.contributionMode])}<span className="mx-1">·</span>{tr("Liên hệ:")}{renderText(c.primaryContactName)}</p>{renderText((c.canManage || c.ownRole) && <Link className="ui-button ui-button-secondary" to={'/manage/campaigns/' + c.id}><Icon name="grid" size={17}/>{tr("Quản lý chiến dịch")}</Link>)}</div>
         <div className="detail-grid"><div className="min-w-0 space-y-6"><Card><h2 className="mb-5 text-xl font-semibold">{tr("Về chiến dịch")}</h2><PlanContent content={c.content} organizerName={c.organizerName} categoryName={c.categoryName}/></Card>
             <Card><h2 className="mb-4 text-xl font-semibold">{tr("Kỹ năng cần có")}</h2>{renderText(c.skills.length ? <div className="flex flex-wrap gap-3">{renderText(c.skills.map(s => <div key={s.skillId + s.track} className="rounded-xl border border-border bg-surface-muted px-4 py-3"><p className="text-sm font-semibold">{renderText(catalogLabel(s.name))}</p><p className="mt-1 text-xs text-text-secondary">{renderText(s.track === 'TECHNICAL' ? tr("Kỹ thuật") : 'Hậu cần')}{tr("· Mức quan trọng")}{renderText(s.importance)}/5</p></div>))}</div> : <p className="text-sm text-text-secondary">{tr("Chưa có yêu cầu kỹ năng cụ thể.")}</p>)}</Card>
-            <FinancialSummaryCard campaignId={c.id}/><PublicExpenses campaignId={c.id}/>
-        </div><aside className="min-w-0 space-y-5">{renderText(c.content.contributionMode !== 'DONATION_ONLY' && <ApplyPanel key={c.id} campaign={c}/>)}<DonationPanel key={'donation-' + c.id} campaign={c}/><div className="rounded-2xl border border-primary-muted bg-primary-light p-5"><Icon name="shield" className="mb-3 text-primary"/><h2 className="text-sm font-semibold">{tr("Đóng góp có trách nhiệm")}</h2><p className="mt-2 text-sm text-text-secondary">{tr("Đăng ký sẽ được ban tổ chức xét duyệt. Các khoản đóng góp được xác nhận qua hệ thống và chi phí được công khai sau khi duyệt.")}</p></div></aside></div>
+
+        </div><aside className="min-w-0 space-y-5">{renderText(c.content.contributionMode !== 'DONATION_ONLY' && <ApplyPanel key={c.id} campaign={c}/>)}<div className="rounded-2xl border border-primary-muted bg-primary-light p-5"><Icon name="shield" className="mb-3 text-primary"/><h2 className="text-sm font-semibold">{tr("Đóng góp có trách nhiệm")}</h2><p className="mt-2 text-sm text-text-secondary">{tr("Đăng ký sẽ được ban tổ chức xét duyệt. Lịch họp và điểm danh được quản lý theo từng chiến dịch.")}</p></div></aside></div>
     </div>;
 }

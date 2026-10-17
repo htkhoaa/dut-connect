@@ -13,13 +13,14 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD}
     hikari:
       maximum-pool-size: 10
+      connection-init-sql: SET search_path TO dut_connect_midterm
       connection-timeout: 3000
       validation-timeout: 1000
   flyway:
     enabled: true
-    locations: classpath:db/migration
-    default-schema: dut_connect
-    schemas: dut_connect
+    locations: classpath:db/midterm
+    default-schema: dut_connect_midterm
+    schemas: dut_connect_midterm
     create-schemas: true
     clean-disabled: true
     validate-on-migrate: true
@@ -29,7 +30,7 @@ spring:
       ddl-auto: validate
     properties:
       hibernate:
-        default_schema: dut_connect
+        default_schema: dut_connect_midterm
         jdbc:
           time_zone: UTC
   sql:
@@ -68,8 +69,6 @@ management:
 
 # Identity, donation/payment and advisory AI configuration.
 app:
-  google:
-    client-id: ${APP_GOOGLE_CLIENT_ID:}
   jwt:
     secret: ${APP_JWT_SECRET:}
     access-token-ttl-minutes: ${APP_ACCESS_TOKEN_TTL_MINUTES:15}
@@ -81,19 +80,6 @@ app:
     student-id: ${APP_BOOTSTRAP_ADMIN_STUDENT_ID:}
     full-name: ${APP_BOOTSTRAP_ADMIN_FULL_NAME:}
     password: ${APP_BOOTSTRAP_ADMIN_PASSWORD:}
-  donation:
-    min-vnd: ${APP_DONATION_MIN_VND:10000}
-    max-vnd: ${APP_DONATION_MAX_VND:100000000}
-payment:
-  provider: ${PAYMENT_PROVIDER:mock}
-  zalopay:
-    app-id: ${ZALOPAY_APP_ID:}
-    key1: ${ZALOPAY_KEY1:}
-    key2: ${ZALOPAY_KEY2:}
-    create-order-url: ${ZALOPAY_CREATE_ORDER_URL:https://sb-openapi.zalopay.vn/v2/create}
-    query-order-url: ${ZALOPAY_QUERY_ORDER_URL:https://sb-openapi.zalopay.vn/v2/query}
-    callback-url: ${ZALOPAY_CALLBACK_URL:}
-    redirect-url: ${ZALOPAY_REDIRECT_URL:}
 ai:
   enabled: ${AI_ENABLED:false}
   base-url: ${AI_BASE_URL:}

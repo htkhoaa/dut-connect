@@ -1,18 +1,16 @@
 import {useLanguage, tr, renderText, locale} from "../../../shared/lib/i18n";
 import {Link} from 'react-router-dom';
 import type {CampaignSummary} from '../types';
-import type {FundraisingProgress} from '../../finance/types';
+
 import {campaignStatuses, modes} from '../presentation';
 import {campaignVisual} from '../visuals';
 import {catalogLabel} from '../../../shared/lib/catalogLabels';
 import {Card} from '../../../shared/components/Card';
 import {Icon} from '../../../shared/components/Icon';
 import {Badge} from '../../../shared/components/Badge';
-import {Fundraising} from '../../finance/Fundraising';
+
 import {displayName, isDemoName} from '../../../shared/lib/demoPresentation';
-export function CampaignCard({campaign: c, progress, financialPending, financialError, onRetry, managed = false}: {
-    campaign: CampaignSummary; progress?: FundraisingProgress; financialPending?: boolean; financialError?: boolean; onRetry?: () => void; managed?: boolean;
-}) {
+export function CampaignCard({campaign: c, managed = false}: {campaign: CampaignSummary; managed?: boolean}) {
     useLanguage();
     const visual = campaignVisual(c.categoryName, c.title);
     const path = managed ? '/manage/campaigns/' + c.id : '/campaigns/' + c.slug;
@@ -29,7 +27,7 @@ export function CampaignCard({campaign: c, progress, financialPending, financial
             <div className="mt-auto space-y-3 border-t border-border pt-4">
                 <p className="flex items-center gap-2 text-xs text-text-secondary"><Icon name="calendar" size={15}/>{renderText(new Date(c.startDate + 'T00:00:00').toLocaleDateString(locale()))} – {renderText(new Date(c.endDate + 'T00:00:00').toLocaleDateString(locale()))}</p>
                 {renderText(c.targetVolunteerCount != null && c.contributionMode !== 'DONATION_ONLY' && <p className="flex items-center gap-2 text-sm"><Icon name="users" size={16}/><strong>{renderText(c.targetVolunteerCount)}</strong><span className="text-text-secondary">{tr("vị trí tình nguyện")}</span></p>)}
-                {renderText(c.contributionMode !== 'VOLUNTEER_ONLY' && (progress ? <Fundraising raised={progress.verifiedDonations} goal={c.fundraisingGoal}/> : financialError ? <p className="text-xs text-danger">{tr("Chưa tải được tiến độ.")}<button className="ui-button ui-button-secondary mt-2" onClick={onRetry}>{tr("Thử lại")}</button></p> : financialPending ? <p role="status" className="text-xs text-text-secondary">{tr("Đang tải tiến độ…")}</p> : null))}
+
                 <Link to={path} className="card-link">{renderText(managed ? tr("Quản lý chiến dịch") : tr("Xem chiến dịch"))}<Icon name="arrow" size={17}/></Link>
             </div>
         </div>

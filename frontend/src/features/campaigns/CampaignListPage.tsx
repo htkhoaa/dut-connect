@@ -18,7 +18,7 @@ import {Pagination} from '../../shared/components/Pagination';
 import {LoadingState} from '../../shared/components/LoadingState';
 import {EmptyState} from '../../shared/components/EmptyState';
 import {ErrorState} from '../../shared/components/ErrorState';
-import {useFundraisingProgress} from '../finance/hooks';
+
 import {useDebouncedValue} from '../../shared/hooks/useDebouncedValue';
 import {ActivityGallery} from './ActivityGallery';
 const initial: CampaignFilters = {page: 0, q: '', status: '', categoryId: '', organizationId: '', contributionMode: '', sort: 'newest'};
@@ -35,7 +35,7 @@ export function CampaignListPage({scope = 'public'}: {scope?: 'public' | 'mine' 
     const list = useCampaigns(scope, filters);
     const categories = useCategoryCatalog();
     const organizations = useOrganizationOptions('public');
-    const progress = useFundraisingProgress((list.data?.items || []).filter(c => c.contributionMode !== 'VOLUNTEER_ONLY').map(c => c.id));
+
     function change<K extends keyof CampaignFilters>(key: K, value: CampaignFilters[K]) {setFilters(f => ({...f, page: 0, [key]: value}));}
     return <div className="space-y-7">
         <PageHeader eyebrow={scope === 'public' ? tr("KHÁM PHÁ & ĐÓNG GÓP") : tr("KHÔNG GIAN QUẢN LÝ")} title={scope === 'mine' ? tr("Chiến dịch của bạn") : scope === 'admin' ? tr("Quản lý chiến dịch") : tr("Tìm nơi bạn muốn góp sức.")} description={scope === 'public' ? tr("Dành thời gian cho điều bạn quan tâm. Khám phá những chiến dịch cùng cộng đồng sinh viên DUT.") : tr("Theo dõi chiến dịch, điều phối hoạt động và quản lý những đóng góp.")} actions={scope === 'mine' ? <Link to="/proposals/new" className="button-link"><Icon name="file" size={17}/>{tr("Đề xuất chiến dịch")}</Link> : undefined}/>
@@ -55,7 +55,7 @@ export function CampaignListPage({scope = 'public'}: {scope?: 'public' | 'mine' 
         {renderText((categories.isError || organizations.isError) && <ErrorState message={tr("Chưa tải được bộ lọc.")} onRetry={() => {void categories.refetch(); void organizations.refetch();}}/>)}
         <div className="flex flex-wrap items-center justify-between gap-3"><div className="status-tabs" aria-label={tr("Trạng thái chiến dịch")}><button className={filters.status === '' ? 'is-active' : ''} onClick={() => change('status', '')}>{tr("Tất cả")}</button>{renderText(Object.entries(campaignStatuses).filter(([key]) => scope !== 'public' || key !== 'DRAFT').map(([value, p]) => <button key={value} className={filters.status === value ? 'is-active' : ''} onClick={() => change('status', value as CampaignFilters['status'])}>{renderText(p.label)}</button>))}</div>{renderText(list.data && <p className="text-xs text-text-secondary">{renderText(list.data.totalElements)}{tr("chiến dịch")}</p>)}</div>
         {renderText(list.isPending ? <LoadingState/> : list.isError ? <ErrorState message={errorMessage(list.error)} onRetry={() => void list.refetch()}/> : <>
-            {list.data.items.length === 0 ? <EmptyState message={tr("Chưa tìm thấy chiến dịch phù hợp. Thử thay đổi bộ lọc nhé.")}/> : <div className="campaign-grid">{renderText(list.data.items.map(c => <CampaignCard key={c.id} campaign={c} managed={scope !== 'public'} progress={progress.data?.find(p => p.campaignId === c.id)} financialPending={progress.isPending} financialError={progress.isError} onRetry={() => void progress.refetch()}/>))}</div>}
+            {list.data.items.length === 0 ? <EmptyState message={tr("Chưa tìm thấy chiến dịch phù hợp. Thử thay đổi bộ lọc nhé.")}/> : <div className="campaign-grid">{renderText(list.data.items.map(c => <CampaignCard key={c.id} campaign={c} managed={scope !== 'public'}    />))}</div>}
             <Pagination {...list.data} onPageChange={page => setFilters(f => ({...f, page}))}/>
         </>)}
         {scope === 'public' && (!filters.status || filters.status === 'COMPLETED') && !filters.organizationId && (!filters.contributionMode || filters.contributionMode === 'VOLUNTEER_ONLY') &&

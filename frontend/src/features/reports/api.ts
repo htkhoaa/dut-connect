@@ -1,6 +1,6 @@
 import axios from 'axios';
 import {apiClient} from '../../shared/api/client';
-export type ReportKind='volunteers'|'financial';
+export type ReportKind='volunteers';
 export async function downloadReport(campaign:string,kind:ReportKind){
     try{
         const response=await apiClient.get<Blob>('/campaigns/'+campaign+'/reports/'+kind+'.xlsx',{responseType:'blob',timeout:60_000});

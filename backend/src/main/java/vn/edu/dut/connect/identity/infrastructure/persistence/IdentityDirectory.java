@@ -18,7 +18,7 @@ public class IdentityDirectory implements IdentityDirectoryPort {
         return lookup("id", id);
     }
     public Optional<Account> lockAccount(UUID id) {
-        return jdbc.sql("select id,student_id,full_name,status='ACTIVE' as active,global_role='ADMIN' as admin from dut_connect.users where id=:id for share")
+        return jdbc.sql("select id,student_id,full_name,status='ACTIVE' as active,global_role='ADMIN' as admin from dut_connect_midterm.users where id=:id for share")
                 .param("id", id).query(Account.class).optional();
     }
     public Optional<Account> findStudent(String studentId) {
@@ -26,11 +26,11 @@ public class IdentityDirectory implements IdentityDirectoryPort {
     }
     public Map<UUID, Account> findAccounts(Set<UUID> ids) {
         if (ids.isEmpty()) return Map.of();
-        return jdbc.sql("select id,student_id,full_name,status='ACTIVE' as active,global_role='ADMIN' as admin from dut_connect.users where id in (:ids)")
+        return jdbc.sql("select id,student_id,full_name,status='ACTIVE' as active,global_role='ADMIN' as admin from dut_connect_midterm.users where id in (:ids)")
                 .param("ids", ids).query(Account.class).list().stream().collect(Collectors.toMap(Account::id, Function.identity()));
     }
     private Optional<Account> lookup(String column, Object value) {
-        return jdbc.sql("select id,student_id,full_name,status='ACTIVE' as active,global_role='ADMIN' as admin from dut_connect.users where " + column + "=:value")
+        return jdbc.sql("select id,student_id,full_name,status='ACTIVE' as active,global_role='ADMIN' as admin from dut_connect_midterm.users where " + column + "=:value")
         .param("value", value).query(Account.class).optional();
     }
 }

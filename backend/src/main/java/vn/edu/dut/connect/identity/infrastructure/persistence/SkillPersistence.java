@@ -36,9 +36,9 @@ public class SkillPersistence implements SkillRepository {
     }
 
     public void replaceSkills(UUID id, Set<UUID> ids) {
-        jdbc.sql("delete from dut_connect.student_skills where user_id=:id").param("id", id).update();
+        jdbc.sql("delete from dut_connect_midterm.student_skills where user_id=:id").param("id", id).update();
         for (UUID skill : ids)
-            jdbc.sql("insert into dut_connect.student_skills(user_id,skill_id) values (:user,:skill)")
+            jdbc.sql("insert into dut_connect_midterm.student_skills(user_id,skill_id) values (:user,:skill)")
                     .param("user", id).param("skill", skill).update();
     }
 }

@@ -859,3 +859,14 @@ Object.assign(english, {
 });
 
 Object.assign(english, {'Xóa ảnh đại diện?':'Remove profile picture?', 'Bạn có thể tải một ảnh mới sau khi xóa.':'You can upload a new picture after removal.', 'Lịch mô phỏng':'Simulated schedule'});
+
+Object.assign(english, {
+ 'Lượt có mặt':'Attendance records marked present',
+ 'Số liệu tổng hợp từ đăng ký, lịch họp và điểm danh của chiến dịch.':'Figures summarize campaign applications, meetings and attendance.',
+ 'Theo dõi chiến dịch, tổ chức và đăng ký tình nguyện.':'Track campaigns, organizations and volunteer applications.',
+ 'Đăng ký tham gia, nhóm đóng góp và điểm danh theo từng buổi.':'Applications, contribution tracks and attendance by session.',
+ 'Mã sinh viên được giữ chính xác trong Excel. Báo cáo lấy dữ liệu tại thời điểm tải.':'Student IDs are preserved exactly. Reports reflect data at download time.',
+ 'Đăng ký sẽ được ban tổ chức xét duyệt. Lịch họp và điểm danh được quản lý theo từng chiến dịch.':'Organizers review applications. Meetings and attendance are managed for each campaign.',
+ 'Tham gia chiến dịch bạn quan tâm, kết nối đội hình và cùng thực hiện hoạt động cộng đồng.':'Join a campaign, meet your team and contribute to community activities.',
+ 'Tổ chức được xác minh, đăng ký được xét duyệt và điểm danh được ghi nhận theo từng buổi.':'Organizations are verified, applications reviewed and attendance recorded by session.'
+});

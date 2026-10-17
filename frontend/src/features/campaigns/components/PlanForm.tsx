@@ -63,7 +63,7 @@ function payload(v:FormValues,original?:Content):Content{
         applicationDeadline:volunteers&&v.applicationDeadline?instant(v.applicationDeadline,original?.applicationDeadline):null,
         fundraisingDeadline:donations&&v.fundraisingDeadline?instant(v.fundraisingDeadline,original?.fundraisingDeadline):null,
         fundraisingGoal:donations?v.fundraisingGoal||null:null,volunteerRequirements:volunteers?v.volunteerRequirements.trim()||null:null,
-        institutionalFunding:v.institutionalFunding||'0',sponsorFunding:v.sponsorFunding||'0',sponsorName:v.sponsorName.trim()||null,estimatedBudget:v.estimatedBudget||null};
+        institutionalFunding:'0',sponsorFunding:'0',sponsorName:null,estimatedBudget:null};
 }
 export function PlanForm({kind='proposal',id,content,version:initialVersion,categoryName,organizationName,modeLocked=false}:{kind?:'proposal'|'campaign';id?:string;content?:Content;version?:number;categoryName?:string;organizationName?:string;modeLocked?:boolean}){
     useLanguage();
@@ -103,9 +103,9 @@ export function PlanForm({kind='proposal',id,content,version:initialVersion,cate
             <FormField id="plan-contributionMode" label={tr("Hình thức đóng góp")} error={form.formState.errors.contributionMode?.message}><Select id="plan-contributionMode" disabled={modeLocked} {...form.register('contributionMode')}>{renderText(Object.entries(modes).map(([value,label])=><option key={value} value={value}>{renderText(label)}</option>))}</Select></FormField>
             <div className="grid gap-4 sm:grid-cols-2">{renderText(input('startDate',tr("Ngày bắt đầu"),'date'))}{renderText(input('endDate',tr("Ngày kết thúc"),'date'))}</div>
             {renderText(mode!=='DONATION_ONLY'&&<><h3 className="text-lg font-semibold">{tr("Chỉ tiêu tình nguyện")}</h3><div className="grid gap-4 sm:grid-cols-3">{renderText(input('targetVolunteerCount',tr("Tổng tình nguyện viên")))}{renderText(input('targetTechnicalCount',tr("Chỉ tiêu kỹ thuật")))}{renderText(input('targetLogisticsCount',tr("Chỉ tiêu hậu cần")))}</div>{input('applicationDeadline',tr("Hạn đăng ký (giờ địa phương)"),'datetime-local')}{area('volunteerRequirements',tr("Yêu cầu tình nguyện viên"),10000)}</>)}
-            {renderText(mode!=='VOLUNTEER_ONLY'&&<><h3 className="text-lg font-semibold">{tr("Kế hoạch gây quỹ")}</h3>{input('fundraisingGoal',tr("Mục tiêu gây quỹ (VND)"))}{input('fundraisingDeadline',tr("Hạn gây quỹ (giờ địa phương)"),'datetime-local')}</>)}
-            <h3 className="text-lg font-semibold">{tr("Tài trợ và ngân sách dự kiến")}</h3>
-            <div className="grid gap-4 sm:grid-cols-2">{renderText(input('institutionalFunding',tr("Kinh phí nhà trường (VND)")))}{renderText(input('sponsorFunding',tr("Kinh phí tài trợ (VND)")))}{renderText(input('sponsorName',tr("Nhà tài trợ"),'text',200))}{renderText(input('estimatedBudget',tr("Ngân sách dự kiến (VND)")))}</div>
+
+
+
         </fieldset>
         {renderText(form.formState.errors.root&&<ErrorState message={form.formState.errors.root.message||tr("Chưa thể lưu")}/>)}
         {renderText(mutation.isSuccess&&id&&<p role="status" className="text-success">{tr("Đã lưu thay đổi.")}</p>)}

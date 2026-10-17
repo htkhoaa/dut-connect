@@ -34,19 +34,8 @@ public class ApiExceptionHandler {
     ResponseEntity<ApiError> uploadPart(org.springframework.web.multipart.support.MissingServletRequestPartException e, HttpServletRequest r) {
         return error(r, 400, "VALIDATION_ERROR", "Avatar image is required", List.of());
     }
-    @ExceptionHandler(vn.edu.dut.connect.finance.domain.ExpenseViolation.class)
-    ResponseEntity<ApiError> expense(vn.edu.dut.connect.finance.domain.ExpenseViolation e,HttpServletRequest r){
-        var fields=e.field()==null?List.<ApiError.FieldError>of():List.of(new ApiError.FieldError(e.field(),e.getMessage()));
-        return error(r,"VALIDATION_ERROR".equals(e.code())?400:409,e.code(),e.getMessage(),fields);
-    }
     private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
-    @ExceptionHandler(vn.edu.dut.connect.donation.domain.PaymentViolation.class)
-    ResponseEntity<ApiError> payment(vn.edu.dut.connect.donation.domain.PaymentViolation e,HttpServletRequest r){
-        var fields=e.field()==null?List.<ApiError.FieldError>of():List.of(new ApiError.FieldError(e.field(),e.getMessage()));
-        int status="VALIDATION_ERROR".equals(e.code())||"PAYMENT_VERIFICATION_FAILED".equals(e.code())?400:"PAYMENT_PROVIDER_ERROR".equals(e.code())?502:409;
-        return error(r,status,e.code(),e.getMessage(),fields);
-    }
 
     @ExceptionHandler(vn.edu.dut.connect.volunteer.domain.VolunteerViolation.class)
     ResponseEntity<ApiError> volunteer(vn.edu.dut.connect.volunteer.domain.VolunteerViolation e, HttpServletRequest r) {

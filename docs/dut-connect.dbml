@@ -1,24 +1,11 @@
-// Paste into dbdiagram.io. Exported from PostgreSQL 16 after Flyway V1–V20.
-// Flyway remains authoritative; DBML is documentation, not a migration.
-Table dut_connect.catalogue_seed_records {
- seed_key varchar(100) [pk, not null]
- organization_id uuid
- campaign_id uuid
- imported_at timestamptz [not null, default: `now()`]
- checks {
-  `(organization_id IS NOT NULL) <> (campaign_id IS NOT NULL)` [name: 'catalogue_seed_exactly_one_aggregate']
- }
- Note: 'V20: Idempotent operational catalogue import through application services.'
-}
-Ref: dut_connect.catalogue_seed_records.organization_id > dut_connect.organizations.id
-Ref: dut_connect.catalogue_seed_records.campaign_id > dut_connect.campaigns.id
-
-Project DUT_Connect {
+// DUT Connect — midterm edition. 19 application tables; generated from the running database.
+// Flyway history is framework metadata and is not a business table.
+Project DUT_Connect_Midterm {
  database_type: 'PostgreSQL'
- Note: 'Modular monolith. Money is integer VND. Historical public activities are separate from operational records.'
+ Note: '19-table midterm scope. Full 28-table version is preserved on archive/full-28-tables.'
 }
 
-Table dut_connect.attendance_records {
+Table dut_connect_midterm.attendance_records {
  id uuid [pk, not null]
  session_id uuid [not null]
  user_id uuid [not null]
@@ -32,9 +19,10 @@ Table dut_connect.attendance_records {
  checks {
   `(((status)::text = ANY ((ARRAY['PRESENT'::character varying, 'ABSENT'::character varying])::text[])))` [name: 'attendance_records_status_check']
  }
+ Note: 'CREATE UNIQUE INDEX attendance_records_pkey ON dut_connect_midterm.attendance_records USING btree (id)\nCREATE UNIQUE INDEX uk_attendance_session_user ON dut_connect_midterm.attendance_records USING btree (session_id, user_id)'
 }
 
-Table dut_connect.attendance_sessions {
+Table dut_connect_midterm.attendance_sessions {
  id uuid [pk, not null]
  campaign_id uuid [not null]
  title varchar(200) [not null]
@@ -48,10 +36,10 @@ Table dut_connect.attendance_sessions {
   `((length(TRIM(BOTH FROM title)) > 0))` [name: 'attendance_sessions_title_check']
   `((ends_at > starts_at))` [name: 'attendance_sessions_check']
  }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE INDEX idx_attendance_campaign_start ON dut_connect.attendance_sessions USING btree (campaign_id, starts_at, id)'
+ Note: 'CREATE UNIQUE INDEX attendance_sessions_pkey ON dut_connect_midterm.attendance_sessions USING btree (id)\nCREATE INDEX idx_attendance_campaign_start ON dut_connect_midterm.attendance_sessions USING btree (campaign_id, starts_at, id)'
 }
 
-Table dut_connect.campaign_categories {
+Table dut_connect_midterm.campaign_categories {
  id uuid [pk, not null]
  name varchar(120) [not null]
  slug varchar(140) [not null]
@@ -64,41 +52,10 @@ Table dut_connect.campaign_categories {
   (slug) [unique, name: 'campaign_categories_slug_key']
   (name) [unique, name: 'campaign_categories_name_key']
  }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE UNIQUE INDEX uk_campaign_categories_name ON dut_connect.campaign_categories USING btree (lower((name)::text))'
+ Note: 'CREATE UNIQUE INDEX campaign_categories_pkey ON dut_connect_midterm.campaign_categories USING btree (id)\nCREATE UNIQUE INDEX campaign_categories_name_key ON dut_connect_midterm.campaign_categories USING btree (name)\nCREATE UNIQUE INDEX campaign_categories_slug_key ON dut_connect_midterm.campaign_categories USING btree (slug)\nCREATE UNIQUE INDEX uk_campaign_categories_name ON dut_connect_midterm.campaign_categories USING btree (lower((name)::text))'
 }
 
-Table dut_connect.campaign_expenses {
- id uuid [pk, not null]
- campaign_id uuid [not null]
- title varchar(200) [not null]
- category varchar(100) [not null]
- amount numeric(19,0) [not null]
- expense_date date [not null]
- description varchar(2000)
- proof_reference varchar(1000)
- status varchar(20) [not null]
- submitted_by_user_id uuid [not null]
- reviewed_by_user_id uuid
- reviewed_at timestamptz
- rejection_reason varchar(1000)
- created_at timestamptz [not null]
- updated_at timestamptz [not null]
- version bigint [not null]
- checks {
-  `((((status)::text <> 'REJECTED'::text) OR ((rejection_reason)::text ~ '[^[:space:]]'::text)))` [name: 'ck_expense_rejection_reason_text']
-  `((amount <> 'NaN'::numeric))` [name: 'ck_expense_finite_amount']
-  `(((expense_date >= '0001-01-01'::date) AND (expense_date <= '9999-12-31'::date)))` [name: 'ck_expense_calendar_date']
-  `((version >= 0))` [name: 'campaign_expenses_version_check']
-  `((length(TRIM(BOTH FROM title)) > 0))` [name: 'campaign_expenses_title_check']
-  `(((status)::text = ANY ((ARRAY['PENDING'::character varying, 'APPROVED'::character varying, 'REJECTED'::character varying])::text[])))` [name: 'campaign_expenses_status_check']
-  `(((((status)::text = 'PENDING'::text) AND (reviewed_by_user_id IS NULL) AND (reviewed_at IS NULL) AND (rejection_reason IS NULL)) OR (((status)::text = 'APPROVED'::text) AND (reviewed_by_user_id IS NOT NULL) AND (reviewed_at IS NOT NULL) AND (rejection_reason IS NULL)) OR (((status)::text = 'REJECTED'::text) AND (reviewed_by_user_id IS NOT NULL) AND (reviewed_at IS NOT NULL) AND (length(TRIM(BOTH FROM rejection_reason)) > 0) AND (rejection_reason IS NOT NULL))))` [name: 'campaign_expenses_check']
-  `((length(TRIM(BOTH FROM category)) > 0))` [name: 'campaign_expenses_category_check']
-  `((amount > (0)::numeric))` [name: 'campaign_expenses_amount_check']
- }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE INDEX idx_expenses_campaign_status ON dut_connect.campaign_expenses USING btree (campaign_id, status, created_at DESC, id)\nCREATE INDEX idx_expenses_status_created ON dut_connect.campaign_expenses USING btree (status, created_at DESC, id)'
-}
-
-Table dut_connect.campaign_managers {
+Table dut_connect_midterm.campaign_managers {
  campaign_id uuid [not null]
  user_id uuid [not null]
  manager_role varchar(20) [not null]
@@ -109,10 +66,10 @@ Table dut_connect.campaign_managers {
  checks {
   `(((manager_role)::text = ANY ((ARRAY['OWNER'::character varying, 'MANAGER'::character varying])::text[])))` [name: 'campaign_managers_manager_role_check']
  }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE UNIQUE INDEX uk_campaign_owner ON dut_connect.campaign_managers USING btree (campaign_id) WHERE ((manager_role)::text = \'OWNER\'::text)\nCREATE INDEX idx_campaign_managers_user ON dut_connect.campaign_managers USING btree (user_id)'
+ Note: 'CREATE UNIQUE INDEX campaign_managers_pkey ON dut_connect_midterm.campaign_managers USING btree (campaign_id, user_id)\nCREATE UNIQUE INDEX uk_campaign_owner ON dut_connect_midterm.campaign_managers USING btree (campaign_id) WHERE ((manager_role)::text = \'OWNER\'::text)\nCREATE INDEX idx_campaign_managers_user ON dut_connect_midterm.campaign_managers USING btree (user_id)'
 }
 
-Table dut_connect.campaign_skill_requirements {
+Table dut_connect_midterm.campaign_skill_requirements {
  campaign_id uuid [not null]
  skill_id uuid [not null]
  track varchar(20) [not null]
@@ -124,9 +81,10 @@ Table dut_connect.campaign_skill_requirements {
   `(((track)::text = ANY ((ARRAY['TECHNICAL'::character varying, 'LOGISTICS'::character varying])::text[])))` [name: 'campaign_skill_requirements_track_check']
   `(((importance >= 1) AND (importance <= 5)))` [name: 'campaign_skill_requirements_importance_check']
  }
+ Note: 'CREATE UNIQUE INDEX campaign_skill_requirements_pkey ON dut_connect_midterm.campaign_skill_requirements USING btree (campaign_id, skill_id, track)'
 }
 
-Table dut_connect.campaigns {
+Table dut_connect_midterm.campaigns {
  id uuid [pk, not null]
  proposal_id uuid [not null]
  slug varchar(240) [not null]
@@ -156,12 +114,13 @@ Table dut_connect.campaigns {
  created_at timestamptz [not null]
  updated_at timestamptz [not null]
  version bigint [not null]
+ seed_key varchar(100)
  indexes {
   (slug) [unique, name: 'campaigns_slug_key']
+  (seed_key) [unique, name: 'campaigns_seed_key_key']
   (proposal_id) [unique, name: 'campaigns_proposal_id_key']
  }
  checks {
-  `(((institutional_funding <> 'NaN'::numeric) AND (sponsor_funding <> 'NaN'::numeric) AND (fundraising_goal <> 'NaN'::numeric) AND (estimated_budget <> 'NaN'::numeric)))` [name: 'ck_campaign_finite_funding']
   `(((target_volunteer_count IS NULL) OR (target_volunteer_count >= 0)))` [name: 'campaigns_target_volunteer_count_check']
   `(((target_technical_count IS NULL) OR (target_technical_count >= 0)))` [name: 'campaigns_target_technical_count_check']
   `(((target_logistics_count IS NULL) OR (target_logistics_count >= 0)))` [name: 'campaigns_target_logistics_count_check']
@@ -169,7 +128,7 @@ Table dut_connect.campaigns {
   `(((organizer_type)::text = ANY ((ARRAY['INDIVIDUAL'::character varying, 'ORGANIZATION'::character varying])::text[])))` [name: 'campaigns_organizer_type_check']
   `(((fundraising_goal IS NULL) OR (fundraising_goal > (0)::numeric)))` [name: 'campaigns_fundraising_goal_check']
   `(((estimated_budget IS NULL) OR (estimated_budget >= (0)::numeric)))` [name: 'campaigns_estimated_budget_check']
-  `(((contribution_mode)::text = ANY ((ARRAY['VOLUNTEER_ONLY'::character varying, 'DONATION_ONLY'::character varying, 'HYBRID'::character varying])::text[])))` [name: 'campaigns_contribution_mode_check']
+  `(((contribution_mode)::text = 'VOLUNTEER_ONLY'::text))` [name: 'campaigns_contribution_mode_check']
   `(((target_technical_count IS NULL) OR (target_logistics_count IS NULL) OR (((target_technical_count)::bigint + target_logistics_count) <= target_volunteer_count)))` [name: 'campaigns_check6']
   `((((contribution_mode)::text <> 'VOLUNTEER_ONLY'::text) OR ((fundraising_goal IS NULL) AND (fundraising_deadline IS NULL))))` [name: 'campaigns_check5']
   `((((contribution_mode)::text <> 'DONATION_ONLY'::text) OR ((COALESCE(target_volunteer_count, 0) = 0) AND (COALESCE(target_technical_count, 0) = 0) AND (COALESCE(target_logistics_count, 0) = 0))))` [name: 'campaigns_check4']
@@ -178,48 +137,10 @@ Table dut_connect.campaigns {
   `((end_date >= start_date))` [name: 'campaigns_check1']
   `((((organizer_type)::text = 'ORGANIZATION'::text) = (organization_id IS NOT NULL)))` [name: 'campaigns_check']
  }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE INDEX idx_campaigns_status ON dut_connect.campaigns USING btree (status)\nCREATE INDEX idx_campaigns_category ON dut_connect.campaigns USING btree (category_id)\nCREATE INDEX idx_campaigns_organization ON dut_connect.campaigns USING btree (organization_id)\nCREATE INDEX idx_campaigns_mode ON dut_connect.campaigns USING btree (contribution_mode)\nCREATE INDEX idx_campaigns_start ON dut_connect.campaigns USING btree (start_date)'
+ Note: 'CREATE UNIQUE INDEX campaigns_pkey ON dut_connect_midterm.campaigns USING btree (id)\nCREATE UNIQUE INDEX campaigns_proposal_id_key ON dut_connect_midterm.campaigns USING btree (proposal_id)\nCREATE UNIQUE INDEX campaigns_slug_key ON dut_connect_midterm.campaigns USING btree (slug)\nCREATE INDEX idx_campaigns_status ON dut_connect_midterm.campaigns USING btree (status)\nCREATE INDEX idx_campaigns_category ON dut_connect_midterm.campaigns USING btree (category_id)\nCREATE INDEX idx_campaigns_organization ON dut_connect_midterm.campaigns USING btree (organization_id)\nCREATE INDEX idx_campaigns_mode ON dut_connect_midterm.campaigns USING btree (contribution_mode)\nCREATE INDEX idx_campaigns_start ON dut_connect_midterm.campaigns USING btree (start_date)\nCREATE UNIQUE INDEX campaigns_seed_key_key ON dut_connect_midterm.campaigns USING btree (seed_key)'
 }
 
-Table dut_connect.donations {
- id uuid [pk, not null]
- campaign_id uuid [not null]
- donor_user_id uuid [not null]
- amount numeric(19,0) [not null]
- status varchar(30) [not null]
- created_at timestamptz [not null]
- updated_at timestamptz [not null]
- version bigint [not null]
- checks {
-  `(((status)::text = ANY ((ARRAY['CREATED'::character varying, 'PENDING_PAYMENT'::character varying, 'PAID'::character varying, 'FAILED'::character varying, 'CANCELLED'::character varying, 'REFUNDED'::character varying])::text[])))` [name: 'donations_status_check']
-  `((amount > (0)::numeric))` [name: 'donations_amount_check']
-  `((amount <> 'NaN'::numeric))` [name: 'ck_donation_finite_amount']
- }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE INDEX idx_donations_campaign_status ON dut_connect.donations USING btree (campaign_id, status)\nCREATE INDEX idx_donations_donor_created ON dut_connect.donations USING btree (donor_user_id, created_at DESC, id)\nCREATE INDEX idx_donations_created ON dut_connect.donations USING btree (created_at)'
-}
-
-Table dut_connect.google_auth_challenges {
- id uuid [pk, not null]
- nonce_hash character(64) [not null]
- expires_at timestamptz [not null]
- used_at timestamptz
- created_at timestamptz [not null]
- indexes {
-  (nonce_hash) [unique, name: 'google_auth_challenges_nonce_hash_key']
- }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE INDEX idx_google_challenges_expiry ON dut_connect.google_auth_challenges USING btree (expires_at)'
-}
-
-Table dut_connect.google_identities {
- user_id uuid [pk, not null]
- subject varchar(255) [not null]
- created_at timestamptz [not null]
- indexes {
-  (subject) [unique, name: 'google_identities_subject_key']
- }
-}
-
-Table dut_connect.meetings {
+Table dut_connect_midterm.meetings {
  id uuid [pk, not null]
  campaign_id uuid [not null]
  title varchar(200) [not null]
@@ -240,10 +161,10 @@ Table dut_connect.meetings {
   `((((meeting_type)::text <> 'ONLINE'::text) OR ((length(TRIM(BOTH FROM meeting_url)) > 0) AND (meeting_url IS NOT NULL))))` [name: 'meetings_check1']
   `((ends_at > starts_at))` [name: 'meetings_check']
  }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE INDEX idx_meetings_campaign_start ON dut_connect.meetings USING btree (campaign_id, starts_at, id)'
+ Note: 'CREATE UNIQUE INDEX meetings_pkey ON dut_connect_midterm.meetings USING btree (id)\nCREATE INDEX idx_meetings_campaign_start ON dut_connect_midterm.meetings USING btree (campaign_id, starts_at, id)'
 }
 
-Table dut_connect.organization_members {
+Table dut_connect_midterm.organization_members {
  organization_id uuid [not null]
  user_id uuid [not null]
  member_role varchar(20) [not null]
@@ -254,10 +175,10 @@ Table dut_connect.organization_members {
  checks {
   `(((member_role)::text = ANY ((ARRAY['OWNER'::character varying, 'MANAGER'::character varying, 'MEMBER'::character varying])::text[])))` [name: 'organization_members_member_role_check']
  }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE INDEX idx_organization_members_user ON dut_connect.organization_members USING btree (user_id)'
+ Note: 'CREATE UNIQUE INDEX organization_members_pkey ON dut_connect_midterm.organization_members USING btree (organization_id, user_id)\nCREATE INDEX idx_organization_members_user ON dut_connect_midterm.organization_members USING btree (user_id)'
 }
 
-Table dut_connect.organization_types {
+Table dut_connect_midterm.organization_types {
  id uuid [pk, not null]
  code varchar(50) [not null]
  name varchar(120) [not null]
@@ -266,9 +187,10 @@ Table dut_connect.organization_types {
  indexes {
   (code) [unique, name: 'organization_types_code_key']
  }
+ Note: 'CREATE UNIQUE INDEX organization_types_pkey ON dut_connect_midterm.organization_types USING btree (id)\nCREATE UNIQUE INDEX organization_types_code_key ON dut_connect_midterm.organization_types USING btree (code)'
 }
 
-Table dut_connect.organizations {
+Table dut_connect_midterm.organizations {
  id uuid [pk, not null]
  name varchar(200) [not null]
  slug varchar(220) [not null]
@@ -281,58 +203,30 @@ Table dut_connect.organizations {
  created_at timestamptz [not null]
  updated_at timestamptz [not null]
  version bigint [not null]
+ seed_key varchar(100)
  indexes {
   (slug) [unique, name: 'organizations_slug_key']
+  (seed_key) [unique, name: 'organizations_seed_key_key']
  }
  checks {
   `(((status)::text = ANY ((ARRAY['PENDING_VERIFICATION'::character varying, 'VERIFIED'::character varying, 'SUSPENDED'::character varying])::text[])))` [name: 'organizations_status_check']
   `((((status)::text = 'PENDING_VERIFICATION'::text) OR (verified_at IS NOT NULL)))` [name: 'organizations_check1']
   `(((verified_by_user_id IS NULL) = (verified_at IS NULL)))` [name: 'organizations_check']
  }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE UNIQUE INDEX uk_organizations_name ON dut_connect.organizations USING btree (lower((name)::text))\nCREATE INDEX idx_organizations_status ON dut_connect.organizations USING btree (status)'
+ Note: 'CREATE UNIQUE INDEX organizations_pkey ON dut_connect_midterm.organizations USING btree (id)\nCREATE UNIQUE INDEX organizations_slug_key ON dut_connect_midterm.organizations USING btree (slug)\nCREATE UNIQUE INDEX uk_organizations_name ON dut_connect_midterm.organizations USING btree (lower((name)::text))\nCREATE INDEX idx_organizations_status ON dut_connect_midterm.organizations USING btree (status)\nCREATE UNIQUE INDEX organizations_seed_key_key ON dut_connect_midterm.organizations USING btree (seed_key)'
 }
 
-Table dut_connect.payment_transactions {
- id uuid [pk, not null]
- donation_id uuid [not null]
- provider varchar(30) [not null]
- status varchar(30) [not null]
- provider_order_id varchar(100) [not null]
- provider_transaction_id varchar(100)
- amount numeric(19,0) [not null]
- checkout_url varchar(2000)
- provider_response_code varchar(100)
- failure_reason varchar(1000)
- expires_at timestamptz
- paid_at timestamptz
- created_at timestamptz [not null]
- updated_at timestamptz [not null]
- version bigint [not null]
- indexes {
-  (provider_transaction_id) [unique, name: 'payment_transactions_provider_transaction_id_key']
-  (provider_order_id) [unique, name: 'payment_transactions_provider_order_id_key']
- }
- checks {
-  `(((status)::text = ANY ((ARRAY['CREATED'::character varying, 'PROVIDER_PENDING'::character varying, 'PAID'::character varying, 'FAILED'::character varying, 'CANCELLED'::character varying, 'REFUNDED'::character varying])::text[])))` [name: 'payment_transactions_status_check']
-  `(((provider)::text = ANY ((ARRAY['mock'::character varying, 'zalopay'::character varying])::text[])))` [name: 'payment_transactions_provider_check']
-  `((((status)::text = ANY ((ARRAY['PAID'::character varying, 'REFUNDED'::character varying])::text[])) = (provider_transaction_id IS NOT NULL)))` [name: 'payment_transactions_check1']
-  `((((status)::text = ANY ((ARRAY['PAID'::character varying, 'REFUNDED'::character varying])::text[])) = (paid_at IS NOT NULL)))` [name: 'payment_transactions_check']
-  `((amount > (0)::numeric))` [name: 'payment_transactions_amount_check']
-  `((amount <> 'NaN'::numeric))` [name: 'ck_payment_finite_amount']
- }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE INDEX idx_payments_donation ON dut_connect.payment_transactions USING btree (donation_id, created_at DESC, id)\nCREATE INDEX idx_payments_pending ON dut_connect.payment_transactions USING btree (status, expires_at)'
-}
-
-Table dut_connect.profile_avatars {
+Table dut_connect_midterm.profile_avatars {
  user_id uuid [pk, not null]
  image_data bytea [not null]
  updated_at timestamptz [not null]
  checks {
   `(((octet_length(image_data) >= 1) AND (octet_length(image_data) <= 262144)))` [name: 'ck_avatar_size']
  }
+ Note: 'CREATE UNIQUE INDEX profile_avatars_pkey ON dut_connect_midterm.profile_avatars USING btree (user_id)'
 }
 
-Table dut_connect.proposals {
+Table dut_connect_midterm.proposals {
  id uuid [pk, not null]
  proposer_user_id uuid [not null]
  organizer_type varchar(20) [not null]
@@ -371,7 +265,7 @@ Table dut_connect.proposals {
   `(((organizer_type)::text = ANY ((ARRAY['INDIVIDUAL'::character varying, 'ORGANIZATION'::character varying])::text[])))` [name: 'proposals_organizer_type_check']
   `(((fundraising_goal IS NULL) OR (fundraising_goal > (0)::numeric)))` [name: 'proposals_fundraising_goal_check']
   `(((estimated_budget IS NULL) OR (estimated_budget >= (0)::numeric)))` [name: 'proposals_estimated_budget_check']
-  `(((contribution_mode)::text = ANY ((ARRAY['VOLUNTEER_ONLY'::character varying, 'DONATION_ONLY'::character varying, 'HYBRID'::character varying])::text[])))` [name: 'proposals_contribution_mode_check']
+  `(((contribution_mode)::text = 'VOLUNTEER_ONLY'::text))` [name: 'proposals_contribution_mode_check']
   `(((target_technical_count IS NULL) OR (target_logistics_count IS NULL) OR (((target_technical_count)::bigint + target_logistics_count) <= target_volunteer_count)))` [name: 'proposals_check9']
   `((((contribution_mode)::text <> 'VOLUNTEER_ONLY'::text) OR ((fundraising_goal IS NULL) AND (fundraising_deadline IS NULL))))` [name: 'proposals_check8']
   `((((contribution_mode)::text <> 'DONATION_ONLY'::text) OR ((COALESCE(target_volunteer_count, 0) = 0) AND (COALESCE(target_technical_count, 0) = 0) AND (COALESCE(target_logistics_count, 0) = 0))))` [name: 'proposals_check7']
@@ -382,12 +276,11 @@ Table dut_connect.proposals {
   `((((status)::text <> 'REJECTED'::text) OR ((rejection_reason IS NOT NULL) AND (length(TRIM(BOTH FROM rejection_reason)) > 0))))` [name: 'proposals_check2']
   `((((status)::text = 'PENDING'::text) OR (reviewed_at IS NOT NULL)))` [name: 'proposals_check1']
   `(((reviewed_by_user_id IS NULL) = (reviewed_at IS NULL)))` [name: 'proposals_check']
-  `(((institutional_funding <> 'NaN'::numeric) AND (sponsor_funding <> 'NaN'::numeric) AND (fundraising_goal <> 'NaN'::numeric) AND (estimated_budget <> 'NaN'::numeric)))` [name: 'ck_proposal_finite_funding']
  }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE INDEX idx_proposals_status_created ON dut_connect.proposals USING btree (status, created_at)\nCREATE INDEX idx_proposals_proposer ON dut_connect.proposals USING btree (proposer_user_id)'
+ Note: 'CREATE UNIQUE INDEX proposals_pkey ON dut_connect_midterm.proposals USING btree (id)\nCREATE INDEX idx_proposals_status_created ON dut_connect_midterm.proposals USING btree (status, created_at)\nCREATE INDEX idx_proposals_proposer ON dut_connect_midterm.proposals USING btree (proposer_user_id)'
 }
 
-Table dut_connect.published_activities {
+Table dut_connect_midterm.published_activities {
  id uuid [pk, not null]
  category varchar(100) [not null]
  content jsonb [not null]
@@ -403,13 +296,13 @@ Table dut_connect.published_activities {
   `(((content ? 'vi'::text) AND (content ? 'en'::text)))` [name: 'ck_activity_languages']
   `(((image_url)::text ~~ '/images/%'::text))` [name: 'ck_activity_image']
  }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE INDEX idx_activities_publication ON dut_connect.published_activities USING btree (published_on DESC, id)\nCREATE INDEX idx_activities_category ON dut_connect.published_activities USING btree (category)'
+ Note: 'CREATE UNIQUE INDEX published_activities_pkey ON dut_connect_midterm.published_activities USING btree (id)\nCREATE UNIQUE INDEX published_activities_source_url_key ON dut_connect_midterm.published_activities USING btree (source_url)\nCREATE INDEX idx_activities_publication ON dut_connect_midterm.published_activities USING btree (published_on DESC, id)\nCREATE INDEX idx_activities_category ON dut_connect_midterm.published_activities USING btree (category)'
 }
 
-Table dut_connect.refresh_tokens {
+Table dut_connect_midterm.refresh_tokens {
  id uuid [pk, not null]
  user_id uuid [not null]
- token_hash character(64) [not null]
+ token_hash char(64) [not null]
  expires_at timestamptz [not null]
  revoked_at timestamptz
  replaced_by_token_id uuid
@@ -417,10 +310,10 @@ Table dut_connect.refresh_tokens {
  indexes {
   (token_hash) [unique, name: 'refresh_tokens_token_hash_key']
  }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE INDEX idx_refresh_tokens_user ON dut_connect.refresh_tokens USING btree (user_id)\nCREATE INDEX idx_refresh_tokens_expiry ON dut_connect.refresh_tokens USING btree (expires_at)'
+ Note: 'CREATE UNIQUE INDEX refresh_tokens_pkey ON dut_connect_midterm.refresh_tokens USING btree (id)\nCREATE UNIQUE INDEX refresh_tokens_token_hash_key ON dut_connect_midterm.refresh_tokens USING btree (token_hash)\nCREATE INDEX idx_refresh_tokens_user ON dut_connect_midterm.refresh_tokens USING btree (user_id)\nCREATE INDEX idx_refresh_tokens_expiry ON dut_connect_midterm.refresh_tokens USING btree (expires_at)'
 }
 
-Table dut_connect.skills {
+Table dut_connect_midterm.skills {
  id uuid [pk, not null]
  name varchar(100) [not null]
  active boolean [not null, default: `true`]
@@ -428,9 +321,10 @@ Table dut_connect.skills {
  indexes {
   (name) [unique, name: 'skills_name_key']
  }
+ Note: 'CREATE UNIQUE INDEX skills_pkey ON dut_connect_midterm.skills USING btree (id)\nCREATE UNIQUE INDEX skills_name_key ON dut_connect_midterm.skills USING btree (name)'
 }
 
-Table dut_connect.student_profiles {
+Table dut_connect_midterm.student_profiles {
  user_id uuid [pk, not null]
  faculty varchar(150) [not null]
  bio varchar(500)
@@ -442,28 +336,19 @@ Table dut_connect.student_profiles {
  checks {
   `(((preferred_track)::text = ANY ((ARRAY['TECHNICAL'::character varying, 'LOGISTICS'::character varying])::text[])))` [name: 'student_profiles_preferred_track_check']
  }
+ Note: 'CREATE UNIQUE INDEX student_profiles_pkey ON dut_connect_midterm.student_profiles USING btree (user_id)'
 }
 
-Table dut_connect.student_skills {
+Table dut_connect_midterm.student_skills {
  user_id uuid [not null]
  skill_id uuid [not null]
  indexes {
   (user_id, skill_id) [pk, name: 'student_skills_pkey']
  }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE INDEX idx_student_skills_skill ON dut_connect.student_skills USING btree (skill_id)'
+ Note: 'CREATE UNIQUE INDEX student_skills_pkey ON dut_connect_midterm.student_skills USING btree (user_id, skill_id)\nCREATE INDEX idx_student_skills_skill ON dut_connect_midterm.student_skills USING btree (skill_id)'
 }
 
-Table dut_connect.task_assignees {
- task_id uuid [not null]
- user_id uuid [not null]
- assigned_at timestamptz [not null]
- indexes {
-  (task_id, user_id) [pk, name: 'task_assignees_pkey']
- }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE INDEX idx_task_assignees_user ON dut_connect.task_assignees USING btree (user_id, task_id)'
-}
-
-Table dut_connect.users {
+Table dut_connect_midterm.users {
  id uuid [pk, not null]
  student_id varchar(32) [not null]
  email varchar(255) [not null]
@@ -482,35 +367,10 @@ Table dut_connect.users {
   `(((status)::text = ANY ((ARRAY['ACTIVE'::character varying, 'SUSPENDED'::character varying])::text[])))` [name: 'users_status_check']
   `(((global_role)::text = ANY ((ARRAY['ADMIN'::character varying, 'USER'::character varying])::text[])))` [name: 'users_global_role_check']
  }
+ Note: 'CREATE UNIQUE INDEX users_pkey ON dut_connect_midterm.users USING btree (id)\nCREATE UNIQUE INDEX users_student_id_key ON dut_connect_midterm.users USING btree (student_id)\nCREATE UNIQUE INDEX users_email_key ON dut_connect_midterm.users USING btree (email)'
 }
 
-Table dut_connect.volunteer_completions {
- id uuid [pk, not null]
- campaign_id uuid [not null]
- user_id uuid [not null]
- status varchar(20) [not null]
- verified_hours numeric(8,2)
- note varchar(1000)
- verified_by_user_id uuid
- verified_at timestamptz
- created_at timestamptz [not null]
- updated_at timestamptz [not null]
- version bigint [not null]
- indexes {
-  (campaign_id, user_id) [unique, name: 'uk_completion_campaign_user']
- }
- checks {
-  `((verified_hours >= (0)::numeric))` [name: 'volunteer_completions_verified_hours_check']
-  `(((status)::text = ANY ((ARRAY['PENDING'::character varying, 'COMPLETED'::character varying, 'VERIFIED'::character varying])::text[])))` [name: 'volunteer_completions_status_check']
-  `(((verified_at IS NULL) = (verified_by_user_id IS NULL)))` [name: 'volunteer_completions_check2']
-  `((((status)::text = 'VERIFIED'::text) = (verified_by_user_id IS NOT NULL)))` [name: 'volunteer_completions_check1']
-  `((((status)::text <> 'VERIFIED'::text) OR (verified_hours IS NOT NULL)))` [name: 'volunteer_completions_check']
-  `((verified_hours <> 'NaN'::numeric))` [name: 'ck_completion_finite_hours']
- }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE INDEX idx_completion_campaign_status ON dut_connect.volunteer_completions USING btree (campaign_id, status)\nCREATE INDEX idx_completion_user ON dut_connect.volunteer_completions USING btree (user_id, created_at DESC, id)'
-}
-
-Table dut_connect.volunteer_registrations {
+Table dut_connect_midterm.volunteer_registrations {
  id uuid [pk, not null]
  campaign_id uuid [not null]
  user_id uuid [not null]
@@ -539,81 +399,39 @@ Table dut_connect.volunteer_registrations {
   `((((status)::text = 'ACCEPTED'::text) = (assigned_track IS NOT NULL)))` [name: 'volunteer_registrations_check']
   `(((assigned_track)::text = ANY ((ARRAY['TECHNICAL'::character varying, 'LOGISTICS'::character varying])::text[])))` [name: 'volunteer_registrations_assigned_track_check']
  }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE INDEX idx_volunteer_campaign_status ON dut_connect.volunteer_registrations USING btree (campaign_id, status)\nCREATE INDEX idx_volunteer_user_created ON dut_connect.volunteer_registrations USING btree (user_id, created_at DESC, id)'
+ Note: 'CREATE UNIQUE INDEX volunteer_registrations_pkey ON dut_connect_midterm.volunteer_registrations USING btree (id)\nCREATE UNIQUE INDEX uk_volunteer_campaign_user ON dut_connect_midterm.volunteer_registrations USING btree (campaign_id, user_id)\nCREATE INDEX idx_volunteer_campaign_status ON dut_connect_midterm.volunteer_registrations USING btree (campaign_id, status)\nCREATE INDEX idx_volunteer_user_created ON dut_connect_midterm.volunteer_registrations USING btree (user_id, created_at DESC, id)'
 }
 
-Table dut_connect.volunteer_tasks {
- id uuid [pk, not null]
- campaign_id uuid [not null]
- title varchar(200) [not null]
- description text [not null]
- track varchar(20) [not null]
- priority varchar(20) [not null]
- due_at timestamptz
- status varchar(20) [not null]
- created_by_user_id uuid [not null]
- verified_by_user_id uuid
- verified_at timestamptz
- created_at timestamptz [not null]
- updated_at timestamptz [not null]
- version bigint [not null]
- checks {
-  `(((track)::text = ANY ((ARRAY['TECHNICAL'::character varying, 'LOGISTICS'::character varying])::text[])))` [name: 'volunteer_tasks_track_check']
-  `((length(TRIM(BOTH FROM title)) > 0))` [name: 'volunteer_tasks_title_check']
-  `(((status)::text = ANY ((ARRAY['TODO'::character varying, 'IN_PROGRESS'::character varying, 'DONE'::character varying, 'VERIFIED'::character varying])::text[])))` [name: 'volunteer_tasks_status_check']
-  `(((priority)::text = ANY ((ARRAY['LOW'::character varying, 'MEDIUM'::character varying, 'HIGH'::character varying])::text[])))` [name: 'volunteer_tasks_priority_check']
-  `((length(TRIM(BOTH FROM description)) > 0))` [name: 'volunteer_tasks_description_check']
-  `(((verified_at IS NULL) = (verified_by_user_id IS NULL)))` [name: 'volunteer_tasks_check1']
-  `((((status)::text = 'VERIFIED'::text) = (verified_by_user_id IS NOT NULL)))` [name: 'volunteer_tasks_check']
- }
- Note: 'PostgreSQL indexes (including partial/expression indexes):\nCREATE INDEX idx_tasks_campaign_status ON dut_connect.volunteer_tasks USING btree (campaign_id, status, created_at DESC, id)'
-}
-
-Ref attendance_records_session_id_fkey: dut_connect.attendance_records.session_id > dut_connect.attendance_sessions.id [delete: cascade]
-Ref attendance_records_user_id_fkey: dut_connect.attendance_records.user_id > dut_connect.users.id [delete: no action]
-Ref attendance_records_recorded_by_user_id_fkey: dut_connect.attendance_records.recorded_by_user_id > dut_connect.users.id [delete: no action]
-Ref attendance_sessions_campaign_id_fkey: dut_connect.attendance_sessions.campaign_id > dut_connect.campaigns.id [delete: cascade]
-Ref attendance_sessions_created_by_user_id_fkey: dut_connect.attendance_sessions.created_by_user_id > dut_connect.users.id [delete: no action]
-Ref campaign_expenses_campaign_id_fkey: dut_connect.campaign_expenses.campaign_id > dut_connect.campaigns.id [delete: cascade]
-Ref campaign_expenses_submitted_by_user_id_fkey: dut_connect.campaign_expenses.submitted_by_user_id > dut_connect.users.id [delete: no action]
-Ref campaign_expenses_reviewed_by_user_id_fkey: dut_connect.campaign_expenses.reviewed_by_user_id > dut_connect.users.id [delete: no action]
-Ref campaign_managers_campaign_id_fkey: dut_connect.campaign_managers.campaign_id > dut_connect.campaigns.id [delete: cascade]
-Ref campaign_managers_user_id_fkey: dut_connect.campaign_managers.user_id > dut_connect.users.id [delete: no action]
-Ref campaign_skill_requirements_campaign_id_fkey: dut_connect.campaign_skill_requirements.campaign_id > dut_connect.campaigns.id [delete: cascade]
-Ref campaign_skill_requirements_skill_id_fkey: dut_connect.campaign_skill_requirements.skill_id > dut_connect.skills.id [delete: no action]
-Ref campaigns_primary_contact_user_id_fkey: dut_connect.campaigns.primary_contact_user_id > dut_connect.users.id [delete: no action]
-Ref campaigns_organization_id_fkey: dut_connect.campaigns.organization_id > dut_connect.organizations.id [delete: no action]
-Ref campaigns_proposal_id_fkey: dut_connect.proposals.id - dut_connect.campaigns.proposal_id [delete: no action]
-Ref campaigns_category_id_fkey: dut_connect.campaigns.category_id > dut_connect.campaign_categories.id [delete: no action]
-Ref donations_campaign_id_fkey: dut_connect.donations.campaign_id > dut_connect.campaigns.id [delete: no action]
-Ref donations_donor_user_id_fkey: dut_connect.donations.donor_user_id > dut_connect.users.id [delete: no action]
-Ref google_identities_user_id_fkey: dut_connect.users.id - dut_connect.google_identities.user_id [delete: cascade]
-Ref meetings_campaign_id_fkey: dut_connect.meetings.campaign_id > dut_connect.campaigns.id [delete: cascade]
-Ref meetings_created_by_user_id_fkey: dut_connect.meetings.created_by_user_id > dut_connect.users.id [delete: no action]
-Ref organization_members_user_id_fkey: dut_connect.organization_members.user_id > dut_connect.users.id [delete: cascade]
-Ref organization_members_organization_id_fkey: dut_connect.organization_members.organization_id > dut_connect.organizations.id [delete: cascade]
-Ref organizations_verified_by_user_id_fkey: dut_connect.organizations.verified_by_user_id > dut_connect.users.id [delete: no action]
-Ref organizations_created_by_user_id_fkey: dut_connect.organizations.created_by_user_id > dut_connect.users.id [delete: no action]
-Ref organizations_organization_type_id_fkey: dut_connect.organizations.organization_type_id > dut_connect.organization_types.id [delete: no action]
-Ref payment_transactions_donation_id_fkey: dut_connect.payment_transactions.donation_id > dut_connect.donations.id [delete: cascade]
-Ref profile_avatars_user_id_fkey: dut_connect.users.id - dut_connect.profile_avatars.user_id [delete: cascade]
-Ref proposals_reviewed_by_user_id_fkey: dut_connect.proposals.reviewed_by_user_id > dut_connect.users.id [delete: no action]
-Ref proposals_proposer_user_id_fkey: dut_connect.proposals.proposer_user_id > dut_connect.users.id [delete: no action]
-Ref proposals_organization_id_fkey: dut_connect.proposals.organization_id > dut_connect.organizations.id [delete: no action]
-Ref proposals_category_id_fkey: dut_connect.proposals.category_id > dut_connect.campaign_categories.id [delete: no action]
-Ref refresh_tokens_user_id_fkey: dut_connect.refresh_tokens.user_id > dut_connect.users.id [delete: cascade]
-Ref refresh_tokens_replaced_by_token_id_fkey: dut_connect.refresh_tokens.replaced_by_token_id > dut_connect.refresh_tokens.id [delete: no action]
-Ref student_profiles_user_id_fkey: dut_connect.users.id - dut_connect.student_profiles.user_id [delete: cascade]
-Ref student_skills_user_id_fkey: dut_connect.student_skills.user_id > dut_connect.users.id [delete: cascade]
-Ref student_skills_skill_id_fkey: dut_connect.student_skills.skill_id > dut_connect.skills.id [delete: no action]
-Ref task_assignees_user_id_fkey: dut_connect.task_assignees.user_id > dut_connect.users.id [delete: no action]
-Ref task_assignees_task_id_fkey: dut_connect.task_assignees.task_id > dut_connect.volunteer_tasks.id [delete: cascade]
-Ref volunteer_completions_campaign_id_fkey: dut_connect.volunteer_completions.campaign_id > dut_connect.campaigns.id [delete: cascade]
-Ref volunteer_completions_verified_by_user_id_fkey: dut_connect.volunteer_completions.verified_by_user_id > dut_connect.users.id [delete: no action]
-Ref volunteer_completions_user_id_fkey: dut_connect.volunteer_completions.user_id > dut_connect.users.id [delete: no action]
-Ref volunteer_registrations_campaign_id_fkey: dut_connect.volunteer_registrations.campaign_id > dut_connect.campaigns.id [delete: cascade]
-Ref volunteer_registrations_user_id_fkey: dut_connect.volunteer_registrations.user_id > dut_connect.users.id [delete: no action]
-Ref volunteer_registrations_reviewed_by_user_id_fkey: dut_connect.volunteer_registrations.reviewed_by_user_id > dut_connect.users.id [delete: no action]
-Ref volunteer_tasks_campaign_id_fkey: dut_connect.volunteer_tasks.campaign_id > dut_connect.campaigns.id [delete: cascade]
-Ref volunteer_tasks_verified_by_user_id_fkey: dut_connect.volunteer_tasks.verified_by_user_id > dut_connect.users.id [delete: no action]
-Ref volunteer_tasks_created_by_user_id_fkey: dut_connect.volunteer_tasks.created_by_user_id > dut_connect.users.id [delete: no action]
+Ref attendance_records_session_id_fkey: dut_connect_midterm.attendance_records.session_id > dut_connect_midterm.attendance_sessions.id [delete: cascade]
+Ref attendance_records_user_id_fkey: dut_connect_midterm.attendance_records.user_id > dut_connect_midterm.users.id
+Ref attendance_records_recorded_by_user_id_fkey: dut_connect_midterm.attendance_records.recorded_by_user_id > dut_connect_midterm.users.id
+Ref attendance_sessions_campaign_id_fkey: dut_connect_midterm.attendance_sessions.campaign_id > dut_connect_midterm.campaigns.id [delete: cascade]
+Ref attendance_sessions_created_by_user_id_fkey: dut_connect_midterm.attendance_sessions.created_by_user_id > dut_connect_midterm.users.id
+Ref campaign_managers_campaign_id_fkey: dut_connect_midterm.campaign_managers.campaign_id > dut_connect_midterm.campaigns.id [delete: cascade]
+Ref campaign_managers_user_id_fkey: dut_connect_midterm.campaign_managers.user_id > dut_connect_midterm.users.id
+Ref campaign_skill_requirements_campaign_id_fkey: dut_connect_midterm.campaign_skill_requirements.campaign_id > dut_connect_midterm.campaigns.id [delete: cascade]
+Ref campaign_skill_requirements_skill_id_fkey: dut_connect_midterm.campaign_skill_requirements.skill_id > dut_connect_midterm.skills.id
+Ref campaigns_organization_id_fkey: dut_connect_midterm.campaigns.organization_id > dut_connect_midterm.organizations.id
+Ref campaigns_primary_contact_user_id_fkey: dut_connect_midterm.campaigns.primary_contact_user_id > dut_connect_midterm.users.id
+Ref campaigns_proposal_id_fkey: dut_connect_midterm.proposals.id - dut_connect_midterm.campaigns.proposal_id
+Ref campaigns_category_id_fkey: dut_connect_midterm.campaigns.category_id > dut_connect_midterm.campaign_categories.id
+Ref meetings_campaign_id_fkey: dut_connect_midterm.meetings.campaign_id > dut_connect_midterm.campaigns.id [delete: cascade]
+Ref meetings_created_by_user_id_fkey: dut_connect_midterm.meetings.created_by_user_id > dut_connect_midterm.users.id
+Ref organization_members_organization_id_fkey: dut_connect_midterm.organization_members.organization_id > dut_connect_midterm.organizations.id [delete: cascade]
+Ref organization_members_user_id_fkey: dut_connect_midterm.organization_members.user_id > dut_connect_midterm.users.id [delete: cascade]
+Ref organizations_verified_by_user_id_fkey: dut_connect_midterm.organizations.verified_by_user_id > dut_connect_midterm.users.id
+Ref organizations_created_by_user_id_fkey: dut_connect_midterm.organizations.created_by_user_id > dut_connect_midterm.users.id
+Ref organizations_organization_type_id_fkey: dut_connect_midterm.organizations.organization_type_id > dut_connect_midterm.organization_types.id
+Ref profile_avatars_user_id_fkey: dut_connect_midterm.users.id - dut_connect_midterm.profile_avatars.user_id [delete: cascade]
+Ref proposals_organization_id_fkey: dut_connect_midterm.proposals.organization_id > dut_connect_midterm.organizations.id
+Ref proposals_reviewed_by_user_id_fkey: dut_connect_midterm.proposals.reviewed_by_user_id > dut_connect_midterm.users.id
+Ref proposals_proposer_user_id_fkey: dut_connect_midterm.proposals.proposer_user_id > dut_connect_midterm.users.id
+Ref proposals_category_id_fkey: dut_connect_midterm.proposals.category_id > dut_connect_midterm.campaign_categories.id
+Ref refresh_tokens_user_id_fkey: dut_connect_midterm.refresh_tokens.user_id > dut_connect_midterm.users.id [delete: cascade]
+Ref refresh_tokens_replaced_by_token_id_fkey: dut_connect_midterm.refresh_tokens.replaced_by_token_id > dut_connect_midterm.refresh_tokens.id
+Ref student_profiles_user_id_fkey: dut_connect_midterm.users.id - dut_connect_midterm.student_profiles.user_id [delete: cascade]
+Ref student_skills_user_id_fkey: dut_connect_midterm.student_skills.user_id > dut_connect_midterm.users.id [delete: cascade]
+Ref student_skills_skill_id_fkey: dut_connect_midterm.student_skills.skill_id > dut_connect_midterm.skills.id
+Ref volunteer_registrations_campaign_id_fkey: dut_connect_midterm.volunteer_registrations.campaign_id > dut_connect_midterm.campaigns.id [delete: cascade]
+Ref volunteer_registrations_user_id_fkey: dut_connect_midterm.volunteer_registrations.user_id > dut_connect_midterm.users.id
+Ref volunteer_registrations_reviewed_by_user_id_fkey: dut_connect_midterm.volunteer_registrations.reviewed_by_user_id > dut_connect_midterm.users.id
