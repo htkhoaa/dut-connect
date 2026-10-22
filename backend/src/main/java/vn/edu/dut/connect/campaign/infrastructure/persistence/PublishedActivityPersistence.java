@@ -11,7 +11,7 @@ public class PublishedActivityPersistence implements PublishedActivityRepository
     private static final String SELECT = "select id, content->:lang->>'title' title, content->:lang->>'summary' summary, " +
         "content->:lang->>'description' description, content->:lang->>'organizer' organizer, " +
         "content->:lang->>'location' location, category, content->:lang->>'period' period, " +
-        "published_on, image_url, source_url from dut_connect_midterm.published_activities";
+        "published_on, image_url, source_url from dut_connect.published_activities";
     public PublishedActivityPersistence(JdbcClient jdbc) {this.jdbc = jdbc;}
     private static final org.springframework.jdbc.core.RowMapper<Activity> MAPPER = (rs, row) -> new Activity(
         rs.getObject("id", UUID.class), rs.getString("title"), rs.getString("summary"), rs.getString("description"),
@@ -19,7 +19,7 @@ public class PublishedActivityPersistence implements PublishedActivityRepository
         rs.getDate("published_on").toLocalDate(), rs.getString("image_url"), rs.getString("source_url"));
     public PageResult<Activity> list(String lang, String q, String category, int page, int size) {
         String where = " where content::text ilike :query and (:category='' or category=:category)";
-        long total = jdbc.sql("select count(*) from dut_connect_midterm.published_activities" + where)
+        long total = jdbc.sql("select count(*) from dut_connect.published_activities" + where)
             .param("query", "%" + q + "%").param("category", category).query(Long.class).single();
         var items = jdbc.sql(SELECT + where + " order by published_on desc,id limit :size offset :offset")
             .param("lang", lang).param("query", "%" + q + "%").param("category", category)

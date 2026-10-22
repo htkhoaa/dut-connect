@@ -12,6 +12,7 @@ public class ReportController {
     private final ReportExportService service;
     public ReportController(ReportExportService service) { this.service=service; }
     @GetMapping("/volunteers.xlsx") public ResponseEntity<byte[]> volunteers(@PathVariable UUID id, Authentication actor) { return download(service.volunteers(id,UUID.fromString(actor.getName())),"volunteers-"+id+".xlsx"); }
+    @GetMapping("/financial.xlsx") public ResponseEntity<byte[]> financial(@PathVariable UUID id, Authentication actor) { return download(service.financial(id,UUID.fromString(actor.getName())),"financial-"+id+".xlsx"); }
     private ResponseEntity<byte[]> download(byte[] bytes,String filename) {
         return ResponseEntity.ok().contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
             .header(HttpHeaders.CONTENT_DISPOSITION,ContentDisposition.attachment().filename(filename).build().toString())

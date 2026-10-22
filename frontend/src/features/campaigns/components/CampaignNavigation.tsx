@@ -3,8 +3,9 @@ import {NavLink} from 'react-router-dom';
 import {Icon, type IconName} from '../../../shared/components/Icon';
 const items: {path: string; label: string; icon: IconName}[] = [
     {path: 'applications', label: 'Đăng ký tình nguyện', icon: 'users'}, {path: 'team', label: 'Đội tình nguyện', icon: 'users'},
-    {path: 'meetings', label: 'Lịch họp', icon: 'calendar'},
-    {path: 'attendance', label: 'Điểm danh', icon: 'calendar'}, {path: 'ai', label: 'Gợi ý AI', icon: 'spark'}, {path: 'reports', label: 'Báo cáo', icon: 'file'},
+    {path: 'meetings', label: 'Lịch họp', icon: 'calendar'}, {path: 'tasks', label: 'Nhiệm vụ', icon: 'check'},
+    {path: 'attendance', label: 'Điểm danh', icon: 'calendar'}, {path: 'completions', label: 'Xác minh hoàn thành', icon: 'shield'},
+    {path: 'finance', label: 'Tài chính', icon: 'heart'}, {path: 'ai', label: 'Gợi ý AI', icon: 'spark'}, {path: 'reports', label: 'Báo cáo', icon: 'file'},
 ];
 export function CampaignNavigation({id}: {id: string}) {
     useLanguage();

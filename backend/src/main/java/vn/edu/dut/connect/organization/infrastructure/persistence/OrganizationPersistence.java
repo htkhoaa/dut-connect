@@ -22,7 +22,7 @@ public class OrganizationPersistence implements OrganizationRepository {
     }
     public Map<UUID, String> names(Set<UUID> ids) {
         if (ids.isEmpty()) return Map.of();
-        return jdbc.sql("select id,name from dut_connect_midterm.organizations where id in (:ids)").param("ids", ids)
+        return jdbc.sql("select id,name from dut_connect.organizations where id in (:ids)").param("ids", ids)
                 .query((row, number) -> Map.entry(row.getObject("id", UUID.class), row.getString("name")))
                 .list().stream().collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
@@ -40,16 +40,16 @@ public class OrganizationPersistence implements OrganizationRepository {
                 .param("base", base).query((row, number) -> true).single();
     }
     public Optional<TypeSummary> type(UUID id) {
-        return jdbc.sql("select id,code,name,active from dut_connect_midterm.organization_types where id=:id").param("id", id).query(TypeSummary.class).optional();
+        return jdbc.sql("select id,code,name,active from dut_connect.organization_types where id=:id").param("id", id).query(TypeSummary.class).optional();
     }
     public PageResult<TypeSummary> types(OrganizationQuery query) {
-        long count=jdbc.sql("select count(*) from dut_connect_midterm.organization_types where active").query(Long.class).single();
-        var items=jdbc.sql("select id,code,name,active from dut_connect_midterm.organization_types where active order by name,id limit :size offset :offset")
+        long count=jdbc.sql("select count(*) from dut_connect.organization_types where active").query(Long.class).single();
+        var items=jdbc.sql("select id,code,name,active from dut_connect.organization_types where active order by name,id limit :size offset :offset")
         .param("size", query.size()).param("offset", (long)query.page()*query.size()).query(TypeSummary.class).list();
         return page(items, query, count);
     }
     public PageResult<Summary> browse(OrganizationQuery query, OrganizationStatus status, UUID member) {
-        String from=" from dut_connect_midterm.organizations o join dut_connect_midterm.organization_types t on t.id=o.organization_type_id where o.name ilike :q escape '\\'";
+        String from=" from dut_connect.organizations o join dut_connect.organization_types t on t.id=o.organization_type_id where o.name ilike :q escape '\\'";
         Map<String, Object> params=new HashMap<>();
         params.put("q", "%"+query.q().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")+"%");
         if (!catalog.organizations().isEmpty()) {from+=" and o.id not in (:hidden)"; params.put("hidden",catalog.organizations());}
@@ -58,7 +58,7 @@ public class OrganizationPersistence implements OrganizationRepository {
             params.put("status", status.name());
         }
         if (member!=null) {
-            from+=" and exists(select 1 from dut_connect_midterm.organization_members m where m.organization_id=o.id and m.user_id=:user)";
+            from+=" and exists(select 1 from dut_connect.organization_members m where m.organization_id=o.id and m.user_id=:user)";
             params.put("user", member);
         }
         long count=jdbc.sql("select count(*)"+from).params(params).query(Long.class).single();
@@ -67,15 +67,15 @@ public class OrganizationPersistence implements OrganizationRepository {
         return page(items, query, count);
     }
     public Optional<MemberRole> role(UUID id, UUID user) {
-        return jdbc.sql("select member_role from dut_connect_midterm.organization_members where organization_id=:id and user_id=:user")
+        return jdbc.sql("select member_role from dut_connect.organization_members where organization_id=:id and user_id=:user")
         .param("id", id).param("user", user).query(String.class).optional().map(MemberRole::valueOf);
     }
     public long ownerCount(UUID id) {
-        return jdbc.sql("select count(*) from dut_connect_midterm.organization_members where organization_id=:id and member_role='OWNER'").param("id", id).query(Long.class).single();
+        return jdbc.sql("select count(*) from dut_connect.organization_members where organization_id=:id and member_role='OWNER'").param("id", id).query(Long.class).single();
     }
-    private static final String MEMBERS="select m.user_id,m.member_role,m.joined_at from dut_connect_midterm.organization_members m where m.organization_id=:id";
+    private static final String MEMBERS="select m.user_id,m.member_role,m.joined_at from dut_connect.organization_members m where m.organization_id=:id";
     public PageResult<OrganizationMembership> members(UUID id, OrganizationQuery query) {
-        long count=jdbc.sql("select count(*) from dut_connect_midterm.organization_members where organization_id=:id").param("id", id).query(Long.class).single();
+        long count=jdbc.sql("select count(*) from dut_connect.organization_members where organization_id=:id").param("id", id).query(Long.class).single();
         var items=jdbc.sql(MEMBERS+" order by m.joined_at,m.user_id limit :size offset :offset").param("id", id)
         .param("size", query.size()).param("offset", (long)query.page()*query.size()).query(OrganizationMembership.class).list();
         return page(items, query, count);
@@ -84,15 +84,15 @@ public class OrganizationPersistence implements OrganizationRepository {
         return jdbc.sql(MEMBERS+" and m.user_id=:user").param("id", id).param("user", user).query(OrganizationMembership.class).optional();
     }
     public void addMember(UUID id, UUID user, MemberRole role) {
-        jdbc.sql("insert into dut_connect_midterm.organization_members(organization_id,user_id,member_role,joined_at) values(:id,:user,:role,:joined)")
+        jdbc.sql("insert into dut_connect.organization_members(organization_id,user_id,member_role,joined_at) values(:id,:user,:role,:joined)")
         .param("id", id).param("user", user).param("role", role.name()).param("joined", java.sql.Timestamp.from(java.time.Instant.now())).update();
     }
     public void changeRole(UUID id, UUID user, MemberRole role) {
-        jdbc.sql("update dut_connect_midterm.organization_members set member_role=:role where organization_id=:id and user_id=:user")
+        jdbc.sql("update dut_connect.organization_members set member_role=:role where organization_id=:id and user_id=:user")
         .param("id", id).param("user", user).param("role", role.name()).update();
     }
     public void removeMember(UUID id, UUID user) {
-        jdbc.sql("delete from dut_connect_midterm.organization_members where organization_id=:id and user_id=:user").param("id", id).param("user", user).update();
+        jdbc.sql("delete from dut_connect.organization_members where organization_id=:id and user_id=:user").param("id", id).param("user", user).update();
     }
     private static <T> PageResult<T> page(List<T> items, OrganizationQuery query, long total) {
         int pages=(int)Math.min(Integer.MAX_VALUE, (total+query.size()-1)/query.size());

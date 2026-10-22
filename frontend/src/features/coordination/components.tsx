@@ -11,7 +11,7 @@ import {errorMessage} from '../../shared/api/errors';
 export function WorkspaceLinks({id}: { id: string }) {
     useLanguage();
     return <nav
-        className="flex flex-wrap gap-4">{renderText([['', tr("Không gian làm việc")], ['/team', tr("Đội tình nguyện")], ['/meetings', tr("Lịch họp")], ['/attendance', tr("Điểm danh")]].map(([suffix, label]) =>
+        className="flex flex-wrap gap-4">{renderText([['', tr("Không gian làm việc")], ['/team', tr("Đội tình nguyện")], ['/meetings', tr("Lịch họp")], ['/tasks', tr("Nhiệm vụ")], ['/attendance', tr("Điểm danh")], ['/completions', tr("Hoàn thành")], ['/finance', tr("Tài chính")]].map(([suffix, label]) =>
         <Link className="ui-button ui-button-secondary" key={suffix}
               to={'/manage/campaigns/' + id + suffix}>{renderText(label)}</Link>))}</nav>;
 }

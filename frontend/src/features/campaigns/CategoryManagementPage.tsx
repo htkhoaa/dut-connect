@@ -22,7 +22,7 @@ export function CategoryManagementPage(){
     useLanguage();
     const [page,setPage]=useState(0);const [selected,setSelected]=useState<Category|undefined>();const [feedback,setFeedback]=useState('');const [confirm,setConfirm]=useState<{id?:string;values:CategoryWrite}|null>(null);
     const list=useCategories(page,true);const mutation=useSaveCategory();const form=useForm<{name:string;description:string;active:boolean}>({defaultValues:{name:'',description:'',active:true}});
-    useEffect(()=>{form.reset({name:selected?.name||'',description:selected?.description||'',active:selected?.active??true});mutation.reset();},[selected,form]);
+    useEffect(()=>{form.reset({name:selected?.name||'',description:selected?.description||'',active:selected?.active??true});mutation.reset();},[selected,form]); 
     return <div className="space-y-6"><h1 className="text-3xl font-semibold">{tr("Danh mục chiến dịch")}</h1><Card><h2 className="mb-4 text-xl font-semibold">{renderText(selected?tr("Chỉnh sửa danh mục"):tr("Tạo danh mục"))}</h2><form noValidate className="space-y-4" onSubmit={form.handleSubmit(async input=>{
         setFeedback('');const parsed=schema.safeParse(input);if(!parsed.success){for(const issue of parsed.error.issues)form.setError(issue.path[0] as 'name'|'description'|'active',{message:issue.message});return;}
         const values={...parsed.data,version:selected?.version};

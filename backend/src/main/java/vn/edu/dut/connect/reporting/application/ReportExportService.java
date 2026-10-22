@@ -10,4 +10,5 @@ public class ReportExportService {
     private final ExcelReportWriter writer;
     public ReportExportService(ReportService reports, ExcelReportWriter writer) { this.reports=reports; this.writer=writer; }
     public byte[] volunteers(UUID id, UUID actor) { return writer.write(reports.volunteers(id,actor)); }
+    public byte[] financial(UUID id, UUID actor) { return writer.write(reports.financial(id,actor)); }
 }

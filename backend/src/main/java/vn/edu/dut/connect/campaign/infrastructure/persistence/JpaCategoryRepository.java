@@ -8,5 +8,5 @@ interface JpaCategoryRepository extends JpaRepository<CampaignCategory,UUID> {
     @Query("select e from CampaignCategory e where e.id=:id")
     Optional<CampaignCategory> lockById(UUID id);
     boolean existsBySlug(String slug);
-
+    
 }

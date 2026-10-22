@@ -11,6 +11,6 @@ interface JpaSkillRepository extends JpaRepository<Skill, UUID> {
 
     long countByIdInAndActiveTrue(Set<UUID> ids);
 
-    @Query(value = "select s.* from dut_connect_midterm.skills s join dut_connect_midterm.student_skills us on s.id=us.skill_id where us.user_id=:userId order by s.name", nativeQuery = true)
+    @Query(value = "select s.* from dut_connect.skills s join dut_connect.student_skills us on s.id=us.skill_id where us.user_id=:userId order by s.name", nativeQuery = true)
     List<Skill> forUser(UUID userId);
 }

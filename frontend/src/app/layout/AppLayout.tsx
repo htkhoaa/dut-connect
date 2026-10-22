@@ -14,6 +14,9 @@ type Item = {to: string; label: string; icon: IconName};
 const student: Item[] = [
     {to: '/me/profile', label: 'Hồ sơ & kỹ năng', icon: 'users'},
     {to: '/me/applications', label: 'Đăng ký tình nguyện', icon: 'heart'},
+    {to: '/me/tasks', label: 'Nhiệm vụ của tôi', icon: 'check'},
+    {to: '/me/history', label: 'Lịch sử đóng góp', icon: 'calendar'},
+    {to: '/me/donations', label: 'Khoản ủng hộ', icon: 'heart'},
     {to: '/me/organizations', label: 'Tổ chức của tôi', icon: 'building'},
     {to: '/proposals', label: 'Đề xuất chiến dịch', icon: 'file'},
     {to: '/manage/campaigns', label: 'Quản lý chiến dịch', icon: 'grid'},
@@ -22,6 +25,7 @@ const admin: Item[] = [
     {to: '/admin', label: 'Tổng quan', icon: 'grid'},
     {to: '/admin/proposals', label: 'Duyệt đề xuất', icon: 'file'},
     {to: '/admin/organizations', label: 'Xác minh tổ chức', icon: 'shield'},
+    {to: '/admin/expenses', label: 'Duyệt chi phí', icon: 'file'},
     {to: '/admin/campaigns', label: 'Tất cả chiến dịch', icon: 'heart'},
     {to: '/admin/users', label: 'Người dùng', icon: 'users'},
     {to: '/admin/categories', label: 'Danh mục', icon: 'grid'},
@@ -63,7 +67,7 @@ export function AppLayout() {
         return () => {document.body.style.overflow = overflow; window.removeEventListener('keydown', trap); menuButton.current?.focus();};
     }, [menu, desktop]);
     useEffect(() => {const close = (event: KeyboardEvent) => {if (event.key === 'Escape') setMenu(false);}; window.addEventListener('keydown', close); return () => window.removeEventListener('keydown', close);}, []);
-    const privatePage = !!user && (/^\/(me|manage|admin|proposals)(\/|$)/.test(pathname) || pathname === '/organizations/new');
+    const privatePage = !!user && (/^\/(me|manage|admin|proposals|donations|payment|dev)(\/|$)/.test(pathname) || pathname === '/organizations/new');
     const items = user?.role === 'ADMIN' ? admin : student;
     const title = [...admin, ...student].find(i => pathname === i.to)?.label || tr("Không gian làm việc");
     const links = (values: Item[]) => values.map(i => <NavLink key={i.to} to={i.to} end={i.to === '/admin'} className={({isActive}) => 'sidebar-link ' + (isActive ? 'is-active' : '')}><Icon name={i.icon}/>{renderText(i.label)}</NavLink>);

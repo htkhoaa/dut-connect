@@ -27,7 +27,7 @@ public class MeetingPersistence implements MeetingRepository {
     }
 
     public Optional<UUID> meetingCampaign(UUID id) {
-        return jdbc.sql("select campaign_id from dut_connect_midterm.meetings where id=:id").param("id", id).query(UUID.class).optional();
+        return jdbc.sql("select campaign_id from dut_connect.meetings where id=:id").param("id", id).query(UUID.class).optional();
     }
 
     public Meeting saveMeeting(Meeting v) {
@@ -46,8 +46,8 @@ public class MeetingPersistence implements MeetingRepository {
     }
 
     private PageResult<UUID> pageIds(String where, Map<String, Object> args, Pagination p) {
-        long total = jdbc.sql("select count(*) from dut_connect_midterm.meetings where " + where).params(args).query(Long.class).single();
-        var ids = jdbc.sql("select id from dut_connect_midterm.meetings where " + where + " order by starts_at,id limit :size offset :offset").params(args).param("size", p.size()).param("offset", (long) p.page() * p.size()).query(UUID.class).list();
+        long total = jdbc.sql("select count(*) from dut_connect.meetings where " + where).params(args).query(Long.class).single();
+        var ids = jdbc.sql("select id from dut_connect.meetings where " + where + " order by starts_at,id limit :size offset :offset").params(args).param("size", p.size()).param("offset", (long) p.page() * p.size()).query(UUID.class).list();
         int pages = (int) Math.min(Integer.MAX_VALUE, (total + p.size() - 1) / p.size());
         return new PageResult<>(ids, p.page(), p.size(), total, pages, p.page() + 1L < pages, p.page() > 0);
     }
