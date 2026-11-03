@@ -14,6 +14,7 @@ import vn.edu.dut.connect.campaign.domain.ContributionMode;
 import vn.edu.dut.connect.identity.application.IdentityDirectoryPort;
 import vn.edu.dut.connect.shared.application.*;
 import static vn.edu.dut.connect.volunteer.application.VolunteerContracts.*;
+import vn.edu.dut.connect.shared.application.EmailNotificationService;
 
 @Service @Transactional(readOnly=true)
 public class VolunteerService {
@@ -21,8 +22,9 @@ public class VolunteerService {
     private final VolunteerRepository registrations;
     private final CampaignAccessPort campaigns;
     private final IdentityDirectoryPort identities;
-    public VolunteerService(VolunteerRepository registrations,CampaignAccessPort campaigns,IdentityDirectoryPort identities) {
-        this.registrations=registrations;this.campaigns=campaigns;this.identities=identities;
+    private final EmailNotificationService email;
+    public VolunteerService(VolunteerRepository registrations,CampaignAccessPort campaigns,IdentityDirectoryPort identities, EmailNotificationService email) {
+        this.registrations=registrations;this.campaigns=campaigns;this.identities=identities;this.email=email;
     }
     @Transactional
     public ApplicationDto apply(UUID campaignId,UUID actor,ApplyRequest request) {
@@ -39,7 +41,10 @@ public class VolunteerService {
     @Transactional
     public ApplicationDto accept(UUID id,UUID actor,AcceptRequest request) {
         var v=reviewable(id,actor);v.requireVersion(request.version());activeLocked(v.userId());
-        v.accept(request.assignedTrack(),actor);registrations.save(v);logTransition(v,actor);return dto(v);
+        v.accept(request.assignedTrack(),actor);registrations.save(v);logTransition(v,actor);
+        var account = identities.findAccount(v.userId()).orElseThrow();
+        email.participationAccepted(account.email(), account.fullName(), campaigns.getCampaign(v.campaignId()).title());
+        return dto(v);
     }
     @Transactional
     public ApplicationDto reject(UUID id,UUID actor,RejectRequest request) {

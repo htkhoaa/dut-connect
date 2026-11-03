@@ -12,6 +12,7 @@ import static vn.edu.dut.connect.volunteer.application.CoordinationContracts.*;
 
 import vn.edu.dut.connect.identity.application.IdentityDirectoryPort;
 import vn.edu.dut.connect.campaign.application.CampaignAccessPort;
+import vn.edu.dut.connect.shared.application.EmailNotificationService;
 
 @Service
 @Transactional(readOnly = true)
@@ -22,14 +23,16 @@ public class CompletionService {
     private final CoordinationAuthorization access;
     private final IdentityDirectoryPort identities;
     private final CampaignAccessPort campaigns;
+    private final EmailNotificationService email;
 
-    public CompletionService(CompletionRepository repository, AcceptedVolunteerRepository volunteers, AttendanceRepository attendance, CoordinationAuthorization access, IdentityDirectoryPort identities, CampaignAccessPort campaigns) {
+    public CompletionService(CompletionRepository repository, AcceptedVolunteerRepository volunteers, AttendanceRepository attendance, CoordinationAuthorization access, IdentityDirectoryPort identities, CampaignAccessPort campaigns, EmailNotificationService email) {
         this.repository = repository;
         this.volunteers = volunteers;
         this.attendance = attendance;
         this.access = access;
         this.identities = identities;
         this.campaigns = campaigns;
+        this.email = email;
     }
 
     public PageResult<CompletionDto> list(UUID c, UUID actor, Pagination p) {
@@ -48,6 +51,11 @@ public class CompletionService {
         if (existing.isPresent()) v.requireVersion(r.version());
         v.record(r.status(), r.verifiedHours(), r.note(), actor);
         repository.saveCompletion(v);
+        if (v.status() == CompletionStatus.VERIFIED) {
+            var account = identities.findAccount(user).orElseThrow();
+            email.completionCertificate(account.email(), account.fullName(), campaigns.getCampaign(c).title(),
+                    v.verifiedHours() == null ? "0" : v.verifiedHours().toPlainString());
+        }
         org.slf4j.LoggerFactory.getLogger(CompletionService.class).info("Completion recorded actor={} campaign={} volunteer={} status={}", actor, c, user, v.status());
         return completionDto(v, user, identities.findAccount(user).orElseThrow(), volunteers.accepted(c, Set.of(user)).get(user), attendance.presentCounts(c, Set.of(user)).getOrDefault(user, 0L), attendance.sessionCount(c));
     }

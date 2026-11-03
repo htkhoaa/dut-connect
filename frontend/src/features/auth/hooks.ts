@@ -1,6 +1,6 @@
 import {useMutation} from '@tanstack/react-query';
 import {useEffect} from 'react';
-import {login, register, logout} from './api';
+import {login, register, logout, requestLoginLink, verifyLoginLink} from './api';
 import {refreshSession} from '../../shared/api/client';
 
 let initialization: Promise<void> | undefined;
@@ -21,4 +21,10 @@ export function useRegister() {
 
 export function useLogout() {
     return useMutation({mutationFn: logout});
+}
+export function useRequestLoginLink() {
+    return useMutation({mutationFn: requestLoginLink});
+}
+export function useVerifyLoginLink() {
+    return useMutation({mutationFn: verifyLoginLink});
 }

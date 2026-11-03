@@ -89,7 +89,7 @@ public class AuthenticationService {
         refreshTokens.revokeSession(userId, tokens.hash(raw), Instant.now());
     }
 
-    Session issue(User user, Instant now) {
+    public Session issue(User user, Instant now) {
         String raw = tokens.randomRefreshToken();
         refreshTokens.insertToken(new RefreshToken(UUID.randomUUID(), user.id(), tokens.hash(raw), now.plusSeconds(tokens.refreshSeconds()), null), now);
         return session(user, raw, now);

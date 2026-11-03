@@ -18,11 +18,23 @@ public class AuthenticationController {
     private final AuthenticationService service;
     private final IdentityAccess access;
     private final RefreshCookie cookies;
+    private final PasswordlessLoginService passwordless;
 
-    public AuthenticationController(AuthenticationService service, IdentityAccess access, RefreshCookie cookies) {
-        this.service = service;
-        this.access = access;
-        this.cookies = cookies;
+    public AuthenticationController(AuthenticationService service, IdentityAccess access, RefreshCookie cookies, PasswordlessLoginService passwordless) {
+        this.service = service; this.access = access; this.cookies = cookies; this.passwordless = passwordless;
+    }
+
+    @PostMapping("/login-link")
+    public ResponseEntity<Void> loginLink(@Valid @RequestBody LoginLinkRequest request) {
+        passwordless.request(request);
+        return ResponseEntity.accepted().build();
+    }
+
+    @PostMapping("/login-link/verify")
+    public AuthResponse verifyLoginLink(@RequestParam String token, HttpServletResponse response) {
+        Session session = passwordless.verify(token);
+        cookies.set(response, session.refreshToken());
+        return session.response();
     }
 
     @PostMapping("/register")

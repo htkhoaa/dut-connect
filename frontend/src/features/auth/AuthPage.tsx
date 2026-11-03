@@ -4,7 +4,7 @@ import {dutPhotography} from '../../shared/lib/dutPhotography';
 import {z} from 'zod';
 import {Link, Navigate, useLocation, useNavigate} from 'react-router-dom';
 import {useAuth} from './store';
-import {useLogin, useRegister} from './hooks';
+import {useLogin, useRegister, useRequestLoginLink, useVerifyLoginLink} from './hooks';
 import type {RegisterValues} from './types';
 import {apiError, errorMessage} from '../../shared/api/errors';
 import {FormField} from '../../shared/components/FormField';
@@ -14,6 +14,7 @@ import {Input} from '../../shared/components/Input';
 import {Select} from '../../shared/components/Select';
 import {faculties} from '../../shared/lib/faculties';
 import {LoadingState} from '../../shared/components/LoadingState';
+import {useToast} from '../../shared/components/ToastProvider';
 
 const loginSchema = z.object({studentId: z.string().trim().min(1).max(32), password: z.string().min(1).max(72)});
 function isPaymentReturn(path?: string): boolean {
@@ -36,9 +37,20 @@ export function AuthPage({registration = false}: { registration?: boolean }) {
     const [showPassword, setShowPassword] = useState(false);
     const login = useLogin();
     const register = useRegister();
+    const requestLink = useRequestLoginLink();
+    const verifyLink = useVerifyLoginLink();
+    const [passwordless, setPasswordless] = useState(!registration);
+    const [linkEmail, setLinkEmail] = useState('');
+    const [linkName, setLinkName] = useState('');
+    const [linkFaculty, setLinkFaculty] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
     const {initialized, user} = useAuth();
+    const {show} = useToast();
+    useEffect(() => {
+        const token = new URLSearchParams(location.search).get('token');
+        if (token) void verifyLink.mutateAsync(token).then(() => navigate('/me/profile', {replace: true}));
+    }, []);
     const mutation = registration ? register : login;
     if (!initialized) return <LoadingState message={tr("Đang khôi phục phiên đăng nhập…")}/>;
     if (initialized && user) return <Navigate to={user.role === 'ADMIN' ? '/admin' : '/me/profile'} replace/>;
@@ -51,9 +63,11 @@ export function AuthPage({registration = false}: { registration?: boolean }) {
         try {
             if (registration) {
                 await register.mutateAsync(registerSchema.parse(values));
+                show('Tạo tài khoản thành công.', 'success');
                 navigate('/login', {state: {registered: true}, replace: true});
             } else {
                 const session = await login.mutateAsync(values);
+                show('Đăng nhập thành công.', 'success');
                 const state = location.state as { from?: string } | null;
                 const target = (state?.from === '/me/profile' && session.user.role === 'USER') ||
                     ['/me/organizations', '/me/applications', '/me/tasks', '/me/history', '/me/donations', '/organizations/new', '/proposals', '/proposals/new', '/manage/campaigns'].includes(state?.from || '') ||
@@ -94,7 +108,19 @@ export function AuthPage({registration = false}: { registration?: boolean }) {
         <p className="mb-6 text-sm text-text-secondary">{renderText(registration ? tr("Tạo tài khoản sinh viên để cùng cộng đồng DUT cống hiến.") : tr("Đăng nhập để tiếp tục những điều bạn đang góp sức."))}</p>
         {renderText(!registration && (location.state as { registered?: boolean } | null)?.registered &&
             <p role="status" className="mb-4 text-success">{tr("Tạo tài khoản thành công. Bạn có thể đăng nhập ngay.")}</p>)}
-        <form noValidate onSubmit={submit} className="space-y-4">
+        {!registration && passwordless ? <form className="space-y-4" onSubmit={(event) => {
+            event.preventDefault();
+            void requestLink.mutateAsync({email: linkEmail, ...(linkName ? {fullName: linkName, faculty: linkFaculty} : {})});
+        }}>
+            <p className="rounded-xl bg-primary-light p-3 text-sm text-text-secondary">{tr("Nhập email sinh viên DUT để nhận liên kết đăng nhập một lần. Không nhập mật khẩu Microsoft vào DUT Connect.")}</p>
+            <FormField id="link-email" label={tr("Email sinh viên")}><Input id="link-email" type="email" value={linkEmail} onChange={event => setLinkEmail(event.target.value)} placeholder="123456789@sv1.dut.udn.vn"/></FormField>
+            <FormField id="link-name" label={tr("Họ và tên (chỉ cần khi tạo tài khoản mới)") }><Input id="link-name" value={linkName} onChange={event => setLinkName(event.target.value)}/></FormField>
+            {linkName && <FormField id="link-faculty" label="Khoa"><Select id="link-faculty" value={linkFaculty} onChange={event => setLinkFaculty(event.target.value)}><option value="">{tr("Chọn khoa")}</option>{faculties.map(f => <option key={f} value={f}>{f}</option>)}</Select></FormField>}
+            {requestLink.isSuccess && <p role="status" className="text-success">{tr("Nếu email hợp lệ, liên kết đăng nhập đã được gửi.")}</p>}
+            {requestLink.isError && <p role="alert" className="text-danger">{renderText(errorMessage(requestLink.error))}</p>}
+            <Button type="submit" disabled={requestLink.isPending} className="w-full">{tr("Gửi liên kết đăng nhập")}</Button>
+            <Button type="button" variant="secondary" onClick={() => setPasswordless(false)} className="w-full">{tr("Đăng nhập bằng mật khẩu quản trị")}</Button>
+        </form> : <form noValidate onSubmit={submit} className="space-y-4">
             {renderText(fields.map((field) => <FormField key={field.name} id={field.name} label={field.label}
                                               error={form.formState.errors[field.name]?.message}>
                 {renderText(field.name === 'faculty' ? <Select id="faculty" {...form.register('faculty')} aria-invalid={!!form.formState.errors.faculty}><option value="">{tr("Chọn khoa")}</option>{renderText(faculties.map(f => <option key={f} value={f}>{renderText(f)}</option>))}</Select> : <div className="relative"><Input id={field.name} type={field.name === 'password' && showPassword ? 'text' : field.type} autoComplete={field.autocomplete} maxLength={field.max}
@@ -105,7 +131,7 @@ export function AuthPage({registration = false}: { registration?: boolean }) {
             {renderText(mutation.isError && <p role="alert" className="text-danger">{renderText(errorMessage(mutation.error))}</p>)}
             <Button type="submit" disabled={mutation.isPending}
                     className="w-full">{renderText(mutation.isPending ? tr("Vui lòng đợi…") : registration ? tr("Tạo tài khoản") : tr("Đăng nhập"))}</Button>
-        </form>
+        </form>}
         <p className="mt-5 text-sm">{renderText(registration ? tr("Bạn đã có tài khoản?") : tr("Bạn mới đến DUT Connect?"))}{renderText(' ')}
             <Link className="ui-button ui-button-secondary"
                   to={registration ? '/login' : '/register'}>{renderText(registration ? tr("Đăng nhập") : tr("Đăng ký"))}</Link>
@@ -113,4 +139,4 @@ export function AuthPage({registration = false}: { registration?: boolean }) {
         <p className="mt-6 border-t border-border pt-4 text-xs leading-relaxed text-text-secondary">{tr("Tài khoản dùng để đăng ký tình nguyện, theo dõi nhiệm vụ và các khoản đóng góp của bạn.")}</p>
     </div></div>;
 }
-import {useState} from 'react';
+import {useEffect, useState} from 'react';

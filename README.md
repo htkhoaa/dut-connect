@@ -28,6 +28,8 @@ Phase 10 adds Admin and campaign dashboards, private volunteer and financial Exc
 
 Phase 11 reviews the complete core against the final Definition of Done, hardens logout during refresh rotation, enforces finite verified hours, completes JSON media-type error handling and callback diagnostics, and consolidates final verification and demo documentation. Stretch features remain out of scope.
 
+The current authentication extension supports passwordless DUT student email login without collecting a Microsoft password. It sends a one-time link to `*@sv1.dut.udn.vn`; local password login remains available for the provisioned Admin/emergency account. This is email ownership verification, not Microsoft Entra SSO: real Entra SSO requires an App Registration from the university tenant. In local development, `docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build` includes Mailpit at `http://localhost:8025`.
+
 The subsequent user-authorized UI update uses Vietnamese, a Tailwind CSS component system, responsive public pages and workspace sidebars, campaign/organization cards, and real campus photographs supplied in image/ and credited photographs from DUT news. The public URL is now **http://localhost:80** (equivalent to **http://localhost**), overriding the original spec's suggested public port 8080; backend-to-Nginx traffic and backend health checks still use internal port 8080. Google OAuth is disabled and does not appear in the interface.
 
 For the new UI and DUT demonstration data, see [UI verification and demo guide](docs/ui-redesign-verification.md). This is a refinement of the existing core, not a new roadmap phase.
@@ -206,6 +208,12 @@ ZaloPay Sandbox requires app ID, creation/callback keys, provider URLs, and a pu
 The AI adapter requires an OpenAI-compatible API prefix URL, API key, and model. Disabled/missing configuration returns graceful unavailability without blocking campaign workflows. Only the backend receives the AI key.
 
 ## Manual verification and demo
+
+## Email notifications and payment sandbox setup
+
+Set `APP_MAIL_ENABLED=true`, `APP_MAIL_FROM` and the `SPRING_MAIL_*` variables in deployment secrets. Never put SMTP credentials in `VITE_*` variables or source control. Accepted volunteer notifications and verified-completion certificate messages are sent only when mail is enabled; otherwise the backend logs an explicit skipped message and core workflows continue.
+
+For ZaloPay Sandbox, create a sandbox merchant account, copy the App ID/Key1/Key2, configure `PAYMENT_PROVIDER=zalopay`, set `ZALOPAY_CALLBACK_URL` to an HTTPS endpoint forwarding `/api/v1/payments/zalopay/callback`, and set the frontend redirect URL. For VNPay, use the merchant Terminal Code and Hash Secret from the sandbox portal and implement its return/IPN signature contract server-side; never trust the browser return URL as payment proof. For VietQR, use a sandbox-capable bank/aggregator API and verify the server webhook signature and amount before marking a donation paid. Keep the existing mock provider for local demos and do not mix sandbox secrets with production.
 
 Follow the current [manual smoke checklist](docs/manual-smoke-checklist.md). Current build, hardening findings and runtime observations are recorded in the [Phase 11 audit](docs/phase-11-audit.md); the [initial Phase 11 verification](docs/phase-11-verification.md) records the complete core demo. Earlier phase documents are historical evidence; their deferred-feature notes do not describe the final application.
 

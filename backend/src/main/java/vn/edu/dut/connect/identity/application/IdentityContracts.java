@@ -39,6 +39,8 @@ public final class IdentityContracts {
 
     public record AuthResponse(String accessToken, String tokenType, long expiresIn, UserSummary user) {
     }
+    public record LoginLinkRequest(@NotBlank @Email @Size(max = 255) String email,
+                                   @Size(max = 150) String fullName, @Size(max = 150) String faculty) {}
 
     public record Session(AuthResponse response, String refreshToken) {
     }
