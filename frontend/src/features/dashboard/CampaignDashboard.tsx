@@ -7,7 +7,8 @@ import {Button} from '../../shared/components/Button';
 import {LoadingState} from '../../shared/components/LoadingState';
 import {ErrorState} from '../../shared/components/ErrorState';
 import {errorMessage} from '../../shared/api/errors';
-export function CampaignDashboard({campaignId}:{campaignId:string}){
+import {CampaignFinalResult} from './CampaignFinalResult';
+export function CampaignDashboard({campaignId, title, completed=false}:{campaignId:string; title?:string; completed?:boolean}){
     useLanguage();
     const query=useCampaignDashboard(campaignId);
     return <Card><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-semibold">{tr("Tổng quan chiến dịch")}</h2><Button disabled={query.isFetching} onClick={()=>void query.refetch()}>{tr("Làm mới tổng quan")}</Button></div>
@@ -23,5 +24,6 @@ export function CampaignDashboard({campaignId}:{campaignId:string}){
                 [tr("Mục tiêu gây quỹ"),query.data.financialSummary.fundraisingGoal===null?tr("Chưa thiết lập"):vnd(query.data.financialSummary.fundraisingGoal)]
             ]}/><p className="mt-5 text-sm text-text-secondary">{tr("Các tổng chỉ tính giờ hoàn thành đã xác minh, khoản đóng góp đã thanh toán và chi phí đã duyệt.")}</p>
         </>)}
+        {renderText(completed&&query.data&&<CampaignFinalResult title={title||tr("Chiến dịch")} data={query.data}/>)}
     </Card>;
 }

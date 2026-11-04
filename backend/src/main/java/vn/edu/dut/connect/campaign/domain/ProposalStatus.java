@@ -1,2 +1,2 @@
 package vn.edu.dut.connect.campaign.domain;
-public enum ProposalStatus { PENDING, APPROVED, REJECTED }
+public enum ProposalStatus { PENDING, APPROVED, REJECTED, CANCELLED }

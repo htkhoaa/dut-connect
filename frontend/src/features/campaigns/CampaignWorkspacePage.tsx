@@ -40,7 +40,7 @@ function CampaignWorkspace({campaignId}:{campaignId:string}){
             <Button variant="secondary" onClick={()=>setReload(true)}>{tr("Tải lại chiến dịch")}</Button>
         </div>
         <div className="flex flex-wrap gap-4 text-sm"><Link className="ui-button ui-button-secondary" to={'/campaigns/'+c.slug}>{tr("Xem trang công khai →")}</Link><Link className="ui-button ui-button-secondary" to="/manage/campaigns">{tr("← Chiến dịch tôi quản lý")}</Link></div>
-        <CampaignNavigation id={c.id}/><CampaignDashboard campaignId={c.id}/>
+        <CampaignNavigation id={c.id}/><CampaignDashboard campaignId={c.id} title={c.content.title} completed={c.status==='COMPLETED'}/>
         {renderText(<Card><h2 className="mb-4 text-xl font-semibold">{tr("Trạng thái chiến dịch")}</h2>{renderText(c.canManage&&<div className="flex flex-wrap gap-3">{renderText(commands[c.status].map(a=><Button key={a.command} disabled={mutation.isPending} onClick={()=>setAction({command:a.command,version:c.version})}>{renderText(a.label)}</Button>))}</div>)}{renderText(mutation.isError&&<div className="mt-4"><ErrorState message={errorMessage(mutation.error)}/></div>)}{renderText(mutation.isSuccess&&<p role="status" className="mt-4 text-success">{tr("Đã cập nhật trạng thái chiến dịch.")}</p>)}</Card>)}
         {renderText(c.canManage&&<Card><h2 className="mb-5 text-xl font-semibold">{tr("Chỉnh sửa chiến dịch")}</h2><PlanForm key={c.id} kind="campaign" id={c.id} content={c.content} version={c.version} categoryName={c.categoryName} organizationName={c.organizerName} modeLocked={c.status!=='DRAFT'}/></Card>)}
         <Card><CampaignManagers key={c.id} campaign={c}/></Card>

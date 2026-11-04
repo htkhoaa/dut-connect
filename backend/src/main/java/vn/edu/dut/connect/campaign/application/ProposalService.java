@@ -44,17 +44,26 @@ public class ProposalService {
     @Transactional
     public ProposalDetail edit(UUID id, UUID actor, PatchRequest request) {
         var proposal=proposals.lock(id).orElseThrow(()->ApplicationFailure.missing("Proposal not found"));
-        access.proposer(proposal,actor); proposal.requireVersion(request.version()); proposal.requirePending();
+        access.proposer(proposal,actor); proposal.requireVersion(request.version());
         var content=proposal.content().merge(request.content(),request.clearFields());
         eligibility.category(content,proposal.content().categoryId()); eligibility.representative(content,actor);
         proposal.edit(content); proposals.save(proposal);
+        return detail(proposal,actor);
+    }
+    @Transactional
+    public ProposalDetail cancel(UUID id, UUID actor, VersionRequest request) {
+        var proposal=proposals.lock(id).orElseThrow(()->ApplicationFailure.missing("Proposal not found"));
+        access.proposer(proposal,actor);
+        proposal.requireVersion(request.version());
+        proposal.cancel();
+        proposals.save(proposal);
         return detail(proposal,actor);
     }
     public ProposalDetail detail(Proposal p, UUID actor) {
         var proposer=identities.findAccount(p.proposerId()).orElseThrow(()->ApplicationFailure.missing("Proposer not found"));
         String category=categories.find(p.content().categoryId()).orElseThrow().name();
         String organization=p.content().organizationId()==null?null:organizations.names(Set.of(p.content().organizationId())).get(p.content().organizationId());
-        return new ProposalDetail(p.id(),p.proposerId(),proposer.fullName(),ContentDto.from(p.content()),category,organization,p.status(),p.rejectionReason(),p.reviewerId(),p.reviewedAt(),p.createdAt(),p.updatedAt(),p.version(),campaigns.byProposal(p.id()).map(Campaign::id).orElse(null),p.status()==ProposalStatus.PENDING && p.proposerId().equals(actor));
+        return new ProposalDetail(p.id(),p.proposerId(),proposer.fullName(),ContentDto.from(p.content()),category,organization,p.status(),p.rejectionReason(),p.reviewerId(),p.reviewedAt(),p.createdAt(),p.updatedAt(),p.version(),campaigns.byProposal(p.id()).map(Campaign::id).orElse(null),(p.status()==ProposalStatus.PENDING || p.status()==ProposalStatus.REJECTED) && p.proposerId().equals(actor));
     }
     private ProposalSummary summary(Proposal p) { return new ProposalSummary(p.id(),p.content().title(),p.content().organizerType(),p.status(),p.version(),p.createdAt()); }
 }

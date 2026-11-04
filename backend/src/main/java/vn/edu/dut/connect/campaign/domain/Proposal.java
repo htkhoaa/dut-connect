@@ -23,8 +23,15 @@ public class Proposal {
         createdAt = Instant.now(); updatedAt = createdAt;
     }
     public void edit(CampaignContent content) {
-        requirePending();
+        if (status != ProposalStatus.PENDING && status != ProposalStatus.REJECTED)
+            throw new CampaignViolation("INVALID_STATE_TRANSITION", "Only pending or rejected proposals can be changed");
         this.content = content; touch();
+        if (status == ProposalStatus.REJECTED) {
+            status = ProposalStatus.PENDING;
+            rejectionReason = null;
+            reviewedByUserId = null;
+            reviewedAt = null;
+        }
     }
     public void requirePending() {
         if (status != ProposalStatus.PENDING) throw new CampaignViolation("INVALID_STATE_TRANSITION", "Only pending proposals can be changed or reviewed");
@@ -36,6 +43,12 @@ public class Proposal {
             throw new CampaignViolation("VALIDATION_ERROR", "Text cannot contain null characters", "reason");
         if (reason == null || reason.isBlank() || reason.trim().length() > 1000) throw new CampaignViolation("VALIDATION_ERROR", "A rejection reason of at most 1000 characters is required", "reason");
         rejectionReason = reason.trim(); status = ProposalStatus.REJECTED; review(actor);
+    }
+    public void cancel() {
+        if (status != ProposalStatus.REJECTED)
+            throw new CampaignViolation("INVALID_STATE_TRANSITION", "Only rejected proposals can be cancelled");
+        status = ProposalStatus.CANCELLED;
+        touch();
     }
     private void review(UUID actor) { reviewedByUserId = actor; reviewedAt = Instant.now(); touch(); }
     public UUID proposerId() { return proposerUserId; }

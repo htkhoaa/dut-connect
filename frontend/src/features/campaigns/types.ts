@@ -2,7 +2,7 @@ import type {PageResponse} from '../../shared/api/errors';
 export type OrganizerType = 'INDIVIDUAL' | 'ORGANIZATION';
 export type ContributionMode = 'VOLUNTEER_ONLY' | 'DONATION_ONLY' | 'HYBRID';
 export type CampaignStatus = 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-export type ProposalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type ProposalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 export type ManagerRole = 'OWNER' | 'MANAGER';
 export type SkillTrack = 'TECHNICAL' | 'LOGISTICS';
 export interface Content {

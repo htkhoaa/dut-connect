@@ -24,4 +24,8 @@ public class ProposalController {
     }
     @PatchMapping("/{id}")
     public ProposalDetail edit(Authentication auth, @PathVariable UUID id, @Valid @RequestBody PatchRequest request) { return service.edit(id,UUID.fromString(auth.getName()),request); }
+    @PostMapping("/{id}/cancel")
+    public ProposalDetail cancel(Authentication auth, @PathVariable UUID id, @RequestBody VersionRequest request) {
+        return service.cancel(id, UUID.fromString(auth.getName()), request);
+    }
 }
