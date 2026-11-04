@@ -105,7 +105,7 @@ public class InfrastructureSecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/v1/campaign-categories", "/api/v1/campaigns", "/api/v1/campaigns/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/campaigns/*/financial-summary", "/api/v1/campaigns/*/expenses").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/organizations", "/api/v1/organizations/*").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/microsoft/configuration", "/api/v1/auth/microsoft/authorize", "/api/v1/auth/microsoft/callback").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/google/configuration").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/google/challenge", "/api/v1/auth/google/login", "/api/v1/auth/google/register").permitAll()

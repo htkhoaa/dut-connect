@@ -96,7 +96,7 @@ public class MicrosoftSignInService {
     public Session callback(String code, String state, LoginState expected) {
         requireConfigured();
         if (code == null || code.length() > 4096 || expected == null || state == null || !constantTime(state, expected.state()))
-            throw invalid();
+            throw invalid("state or authorization code is missing or invalid");
         TokenResponse response;
         try {
             var form = new LinkedMultiValueMap<String, String>();
@@ -104,24 +104,30 @@ public class MicrosoftSignInService {
             form.add("code", code); form.add("redirect_uri", redirectUri); form.add("code_verifier", expected.verifier());
             response = http.postForEntity("https://login.microsoftonline.com/" + tenantId + "/oauth2/v2.0/token",
                     new HttpEntity<>(form, headers()), TokenResponse.class).getBody();
-            if (response == null || response.idToken() == null) throw invalid();
+            if (response == null || response.idToken() == null) throw invalid("Microsoft token response did not contain an id_token");
             var jwt = decoder.decode(response.idToken());
             String nonce = jwt.getClaimAsString("nonce");
-            if (!constantTime(expected.state(), nonce)) throw invalid();
+            if (!constantTime(expected.state(), nonce)) throw invalid("nonce mismatch");
             String email = jwt.getClaimAsString("preferred_username");
             if (email == null) email = jwt.getClaimAsString("upn");
             if (email == null) email = jwt.getClaimAsString("email");
+            if (email == null) email = jwt.getClaimAsString("unique_name");
             email = email == null ? "" : email.trim().toLowerCase(java.util.Locale.ROOT);
             // Entra organizational accounts do not consistently emit email_verified;
             // the tenant issuer and the required DUT UPN suffix provide the trust boundary.
-            if (!email.matches(STUDENT_EMAIL)) throw invalid();
+            if (!email.matches(STUDENT_EMAIL)) {
+                log.warn("Microsoft account rejected: subject={}, tenant={}, emailClaim={}",
+                        jwt.getSubject(), jwt.getClaimAsString("tid"), email);
+                throw invalid("Microsoft account does not use a DUT student UPN");
+            }
             var identity = new Identity(jwt.getSubject(), jwt.getClaimAsString("tid"), email,
                     limit(jwt.getClaimAsString("name"), email.substring(0, 9)));
-            if (!tenantId.equals(identity.tenant()) || identity.subject() == null || identity.subject().isBlank()) throw invalid();
+            if (!tenantId.equals(identity.tenant()) || identity.subject() == null || identity.subject().isBlank())
+                throw invalid("Microsoft tenant or subject is invalid");
             return account(identity);
         } catch (RuntimeException ex) {
             if (ex instanceof ApplicationFailure failure) throw failure;
-            log.warn("Microsoft token validation failed: {}", ex.getMessage());
+            log.warn("Microsoft token validation failed: {}", ex.getMessage(), ex);
             throw new ApplicationFailure(401, "INVALID_MICROSOFT_CREDENTIAL", "Microsoft authentication failed");
         }
     }
@@ -158,5 +164,7 @@ public class MicrosoftSignInService {
         String result = value == null || value.isBlank() ? fallback : value.trim();
         return result.length() > 150 ? result.substring(0, 150) : result;
     }
-    private static ApplicationFailure invalid() { return new ApplicationFailure(401, "INVALID_MICROSOFT_CREDENTIAL", "Microsoft authentication failed"); }
+    private static ApplicationFailure invalid(String reason) {
+        return new ApplicationFailure(401, "INVALID_MICROSOFT_CREDENTIAL", "Microsoft authentication failed: " + reason);
+    }
 }

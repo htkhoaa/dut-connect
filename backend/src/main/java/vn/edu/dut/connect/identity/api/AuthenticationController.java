@@ -37,12 +37,6 @@ public class AuthenticationController {
         return session.response();
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<UserSummary> register(@Valid @RequestBody RegisterRequest request) {
-        UserSummary user = service.register(request);
-        return ResponseEntity.created(URI.create("/api/v1/auth/me")).body(user);
-    }
-
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         Session session = service.login(request);
