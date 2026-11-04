@@ -59,6 +59,6 @@ public class MicrosoftAuthenticationController {
 
     private void cookie(HttpServletResponse response, String name, String value, Duration age) {
         response.addHeader(HttpHeaders.SET_COOKIE, ResponseCookie.from(name, value).httpOnly(true).secure(service.secure())
-                .sameSite("Lax").path("/api/v1/auth/microsoft").maxAge(age).build().toString());
+                .sameSite(service.secure() ? "None" : "Lax").path("/").maxAge(age).build().toString());
     }
 }
