@@ -20,7 +20,8 @@ export interface AuthResponse {
 }
 
 export interface LoginValues {
-    studentId: string;
+    studentId?: string;
+    email?: string;
     password: string
 }
 

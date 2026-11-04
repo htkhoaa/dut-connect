@@ -17,6 +17,7 @@ import {useToast} from '../../shared/components/ToastProvider';
 import {apiClient} from '../../shared/api/client';
 
 const loginSchema = z.object({studentId: z.string().trim().min(1).max(32), password: z.string().min(1).max(72)});
+const adminLoginSchema = z.object({email: z.string().trim().email(), password: z.string().min(1).max(72)});
 function isPaymentReturn(path?: string): boolean {
     if (!path?.startsWith('/payment/result?')) return false;
     const url = new URL(path, window.location.origin);
@@ -46,7 +47,7 @@ export function AuthPage({admin = false}: { admin?: boolean }) {
     if (!initialized) return <LoadingState message={tr("Đang khôi phục phiên đăng nhập…")}/>;
     if (initialized && user) return <Navigate to={user.role === 'ADMIN' ? '/admin' : '/me/profile'} replace/>;
     const submit = form.handleSubmit(async (values) => {
-        const validation = loginSchema.safeParse(values);
+        const validation = (admin ? adminLoginSchema : loginSchema).safeParse(values);
         if (!validation.success) {
             for (const issue of validation.error.issues) form.setError(String(issue.path[0]) as FieldPath<RegisterValues>, {message: issue.message});
             return;
@@ -70,13 +71,13 @@ export function AuthPage({admin = false}: { admin?: boolean }) {
             }
         } catch (error) {
             for (const field of apiError(error)?.fieldErrors || []) {
-                if (['password', 'studentId'].includes(field.field))
+                if (['password', 'studentId', 'email'].includes(field.field))
                     form.setError(field.field as FieldPath<RegisterValues>, {message: field.message});
             }
         }
     });
     const fields: { name: keyof RegisterValues; label: string; type: string; autocomplete: string; max: number }[] = [
-        {name: 'studentId', label: tr("Mã sinh viên hoặc tài khoản admin"), type: 'text', autocomplete: 'username', max: 255},
+        {name: admin ? 'email' : 'studentId', label: admin ? tr("Email quản trị viên") : tr("Mã sinh viên"), type: admin ? 'email' : 'text', autocomplete: 'username', max: 255},
         {name: 'password', label: 'Mật khẩu', type: 'password', autocomplete: 'current-password', max: 72},
     ];
     if (!admin) return <div className="auth-layout"><div className="auth-art"><img src={dutPhotography.tower.src} alt=""/></div><div className="auth-form">
