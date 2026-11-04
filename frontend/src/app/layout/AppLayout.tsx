@@ -41,10 +41,19 @@ export function AppLayout() {
     const logout = useLogout();
     const {pathname} = useLocation();
     const [menu, setMenu] = useState(false);
+    const [headerScrolled, setHeaderScrolled] = useState(false);
     const [desktop, setDesktop] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
     const sidebar = useRef<HTMLElement>(null);
     const menuButton = useRef<HTMLButtonElement>(null);
+    const privatePage = !!user && (/^\/(me|manage|admin|proposals|donations|payment|dev)(\/|$)/.test(pathname) || pathname === '/organizations/new');
     useEffect(() => {setMenu(false);}, [pathname]);
+    useEffect(() => {
+        if (privatePage) return;
+        const update = () => setHeaderScrolled(window.scrollY > 24);
+        update();
+        window.addEventListener('scroll', update, {passive: true});
+        return () => window.removeEventListener('scroll', update);
+    }, [privatePage]);
     useEffect(() => {
         const query = window.matchMedia('(min-width: 1024px)');
         const update = () => setDesktop(query.matches);
@@ -67,7 +76,6 @@ export function AppLayout() {
         return () => {document.body.style.overflow = overflow; window.removeEventListener('keydown', trap); menuButton.current?.focus();};
     }, [menu, desktop]);
     useEffect(() => {const close = (event: KeyboardEvent) => {if (event.key === 'Escape') setMenu(false);}; window.addEventListener('keydown', close); return () => window.removeEventListener('keydown', close);}, []);
-    const privatePage = !!user && (/^\/(me|manage|admin|proposals|donations|payment|dev)(\/|$)/.test(pathname) || pathname === '/organizations/new');
     const items = user?.role === 'ADMIN' ? admin : student;
     const title = [...admin, ...student].find(i => pathname === i.to)?.label || tr("Không gian làm việc");
     const links = (values: Item[]) => values.map(i => <NavLink key={i.to} to={i.to} end={i.to === '/admin'} className={({isActive}) => 'sidebar-link ' + (isActive ? 'is-active' : '')}><Icon name={i.icon}/>{renderText(i.label)}</NavLink>);
@@ -84,7 +92,7 @@ export function AppLayout() {
             </aside>
         </>)}
         <div className={privatePage ? 'workspace-body' : ''}>
-            <header className={privatePage ? 'workspace-header' : 'public-header'}>
+            <header className={privatePage ? 'workspace-header' : `public-header ${headerScrolled ? 'is-scrolled' : 'is-top'}`}>
                 <div className="header-content">
                     {renderText(privatePage ? <div className="flex min-w-0 items-center gap-3"><button ref={menuButton} className="ui-button ui-button-ghost px-2 lg:hidden" aria-label={tr("Mở menu")} aria-expanded={menu} aria-controls="workspace-navigation" onClick={() => setMenu(!menu)}><Icon name="menu"/></button><div><p className="text-xs text-text-secondary">DUT Connect / {renderText(user.role === 'ADMIN' ? tr("Quản trị") : tr("Cá nhân"))}</p><p className="font-semibold">{renderText(title)}</p></div></div> : <Brand/>)}
                     {renderText(!privatePage && <nav className="public-nav" aria-label={tr("Điều hướng chính")}><NavLink to="/" end>{tr("Trang chủ")}</NavLink><NavLink to="/campaigns">{tr("Chiến dịch")}</NavLink><NavLink to="/organizations">{tr("Tổ chức")}</NavLink></nav>)}

@@ -15,6 +15,7 @@ import {Select} from '../../shared/components/Select';
 import {faculties} from '../../shared/lib/faculties';
 import {LoadingState} from '../../shared/components/LoadingState';
 import {useToast} from '../../shared/components/ToastProvider';
+import {apiClient} from '../../shared/api/client';
 
 const loginSchema = z.object({studentId: z.string().trim().min(1).max(32), password: z.string().min(1).max(72)});
 function isPaymentReturn(path?: string): boolean {
@@ -30,6 +31,7 @@ const registerSchema = loginSchema.extend({
     faculty: z.enum(faculties),
     password: z.string().min(8).refine((v) => new TextEncoder().encode(v).length <= 72, 'Mật khẩu tối đa 72 byte UTF-8'),
 }).refine(v => v.email === v.studentId + '@sv1.dut.udn.vn', {path: ['email'], message: 'Email phải khớp với mã sinh viên'});
+const microsoftOAuthEnabled = import.meta.env.VITE_MICROSOFT_OAUTH_ENABLED === 'true';
 
 export function AuthPage({registration = false}: { registration?: boolean }) {
     useLanguage();
@@ -47,6 +49,9 @@ export function AuthPage({registration = false}: { registration?: boolean }) {
     const location = useLocation();
     const {initialized, user} = useAuth();
     const {show} = useToast();
+    const startMicrosoftLogin = () => {
+        window.location.assign(`${apiClient.defaults.baseURL}/auth/microsoft/authorize`);
+    };
     useEffect(() => {
         const token = new URLSearchParams(location.search).get('token');
         if (token) void verifyLink.mutateAsync(token).then(() => navigate('/me/profile', {replace: true}));
@@ -119,6 +124,7 @@ export function AuthPage({registration = false}: { registration?: boolean }) {
             {requestLink.isSuccess && <p role="status" className="text-success">{tr("Nếu email hợp lệ, liên kết đăng nhập đã được gửi.")}</p>}
             {requestLink.isError && <p role="alert" className="text-danger">{renderText(errorMessage(requestLink.error))}</p>}
             <Button type="submit" disabled={requestLink.isPending} className="w-full">{tr("Gửi liên kết đăng nhập")}</Button>
+            {microsoftOAuthEnabled && <><div className="flex items-center gap-3 text-xs text-text-secondary"><span className="h-px flex-1 bg-border"/>{tr("hoặc")}<span className="h-px flex-1 bg-border"/></div><Button type="button" variant="secondary" onClick={startMicrosoftLogin} className="w-full"><span className="grid h-5 w-5 grid-cols-2 gap-0.5" aria-hidden="true"><i className="bg-[#f25022]"/><i className="bg-[#7fba00]"/><i className="bg-[#00a4ef]"/><i className="bg-[#ffb900]"/></span>{tr("Đăng nhập bằng Microsoft DUT")}</Button></>}
             <Button type="button" variant="secondary" onClick={() => setPasswordless(false)} className="w-full">{tr("Đăng nhập bằng mật khẩu quản trị")}</Button>
         </form> : <form noValidate onSubmit={submit} className="space-y-4">
             {renderText(fields.map((field) => <FormField key={field.name} id={field.name} label={field.label}
