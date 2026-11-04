@@ -65,6 +65,8 @@ Trước khi coi deployment hoàn tất, kiểm tra tải lại đường dẫn 
 - Frontend: `https://dutconnect.vercel.app`.
 - Backend: `https://dut-connect.onrender.com`.
 - `frontend/vercel.json` chuyển `/api/:path*` tới `https://dut-connect.onrender.com/api/:path*` trước rewrite SPA. Ví dụ `/api/v1/campaigns` giữ nguyên đường dẫn `/api/v1/campaigns` ở backend.
+- Microsoft OAuth callback phải dùng domain frontend proxy để refresh cookie được lưu đúng trên frontend:
+  `https://dutconnect.vercel.app/api/v1/auth/microsoft/callback`.
 - Trên Vercel, giữ `VITE_API_BASE_URL=/api/v1` hoặc bỏ biến để dùng mặc định này; không trỏ trình duyệt trực tiếp sang Render. Nếu trước đó đã đặt giá trị khác, sửa rồi redeploy.
 - Trên Render, đặt `SPRING_PROFILES_ACTIVE=prod` và `APP_ALLOWED_ORIGINS=https://dutconnect.vercel.app` (không có dấu `/` cuối).
 - Dùng domain production để kiểm tra đăng nhập. Domain riêng của mỗi deployment/preview chưa được thêm vào allowlist Origin của backend.
