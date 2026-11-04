@@ -92,6 +92,7 @@ app:
     student-id: ${APP_BOOTSTRAP_ADMIN_STUDENT_ID:}
     full-name: ${APP_BOOTSTRAP_ADMIN_FULL_NAME:}
     password: ${APP_BOOTSTRAP_ADMIN_PASSWORD:}
+    reset-existing: ${APP_BOOTSTRAP_ADMIN_RESET_EXISTING:false}
   donation:
     min-vnd: ${APP_DONATION_MIN_VND:10000}
     max-vnd: ${APP_DONATION_MAX_VND:100000000}

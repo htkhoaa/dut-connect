@@ -56,6 +56,11 @@ public class User {
         updatedAt = Instant.now();
     }
 
+    public void changePassword(String hash) {
+        passwordHash = hash;
+        updatedAt = Instant.now();
+    }
+
     public UUID id() {
         return id;
     }

@@ -19,10 +19,18 @@ public class AdminBootstrapService {
     }
 
     @Transactional
-    public void create(String email, String studentId, String name, String password) {
+    public void create(String email, String studentId, String name, String password, boolean resetExisting) {
         String normalizedEmail = RegistrationRules.email(email);
-        if (users.findEmail(normalizedEmail).isPresent()) {
-            log.info("Admin bootstrap skipped: configured email already exists");
+        var existing = users.findEmail(normalizedEmail);
+        if (existing.isPresent()) {
+            if (resetExisting && existing.get().role() == GlobalRole.ADMIN) {
+                RegistrationRules.password(password);
+                existing.get().changePassword(passwords.encode(password));
+                users.saveUser(existing.get());
+                log.warn("Admin bootstrap reset password for existing admin user={}", existing.get().id());
+            } else {
+                log.info("Admin bootstrap skipped: configured email already exists");
+            }
             return;
         }
         RegistrationRules.password(password);

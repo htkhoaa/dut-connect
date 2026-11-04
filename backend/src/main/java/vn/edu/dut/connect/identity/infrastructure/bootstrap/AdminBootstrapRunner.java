@@ -18,13 +18,14 @@ public class AdminBootstrapRunner implements ApplicationRunner {
 
     private final AdminBootstrapService service;
     private final Validator validator;
-    private final boolean enabled;
+    private final boolean enabled, resetExisting;
     private final String email, id, name, password;
 
     public AdminBootstrapRunner(AdminBootstrapService service, Validator validator,
                                 @Value("${app.bootstrap-admin.enabled}") boolean enabled, @Value("${app.bootstrap-admin.email}") String email,
                                 @Value("${app.bootstrap-admin.student-id}") String id, @Value("${app.bootstrap-admin.full-name}") String name,
-                                @Value("${app.bootstrap-admin.password}") String password) {
+                                @Value("${app.bootstrap-admin.password}") String password,
+                                @Value("${app.bootstrap-admin.reset-existing:false}") boolean resetExisting) {
         this.service = service;
         this.validator = validator;
         this.enabled = enabled;
@@ -32,12 +33,13 @@ public class AdminBootstrapRunner implements ApplicationRunner {
         this.id = id;
         this.name = name;
         this.password = password;
+        this.resetExisting = resetExisting;
     }
 
     public void run(ApplicationArguments args) {
         if (!enabled) return;
         if (!validator.validate(new BootstrapInput(id.trim(), name.trim(), email.trim(), password)).isEmpty())
             throw new IllegalStateException("Enabled admin bootstrap requires valid email, student ID, full name and password");
-        service.create(email, id, name, password);
+        service.create(email, id, name, password, resetExisting);
     }
 }
