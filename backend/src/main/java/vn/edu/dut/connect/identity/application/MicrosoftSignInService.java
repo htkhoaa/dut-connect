@@ -3,9 +3,13 @@ package vn.edu.dut.connect.identity.application;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.UUID;
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
@@ -84,10 +88,11 @@ public class MicrosoftSignInService {
     }
 
     public String authorizationUrl(LoginState state) {
+        String stateToken = encodeState(state);
         return UriComponentsBuilder.fromUriString("https://login.microsoftonline.com/" + tenantId + "/oauth2/v2.0/authorize")
                 .queryParam("client_id", clientId).queryParam("response_type", "code")
                 .queryParam("redirect_uri", redirectUri).queryParam("response_mode", "query")
-                .queryParam("scope", "openid profile email").queryParam("state", state.state())
+                .queryParam("scope", "openid profile email").queryParam("state", stateToken)
                 .queryParam("code_challenge", challenge(state.verifier())).queryParam("code_challenge_method", "S256")
                 .queryParam("nonce", state.nonce()).build().encode().toUriString();
     }
@@ -95,19 +100,23 @@ public class MicrosoftSignInService {
     @Transactional
     public Session callback(String code, String state, LoginState expected) {
         requireConfigured();
-        if (code == null || code.length() > 4096 || expected == null || state == null || !constantTime(state, expected.state()))
+        LoginState encoded = decodeState(state);
+        if (code == null || code.length() > 4096 || encoded == null)
             throw invalid("state or authorization code is missing or invalid");
+        if (expected != null && !constantTime(encoded.state(), expected.state()))
+            throw invalid("state mismatch");
+        LoginState credentials = encoded;
         TokenResponse response;
         try {
             var form = new LinkedMultiValueMap<String, String>();
             form.add("client_id", clientId); form.add("client_secret", clientSecret); form.add("grant_type", "authorization_code");
-            form.add("code", code); form.add("redirect_uri", redirectUri); form.add("code_verifier", expected.verifier());
+            form.add("code", code); form.add("redirect_uri", redirectUri); form.add("code_verifier", credentials.verifier());
             response = http.postForEntity("https://login.microsoftonline.com/" + tenantId + "/oauth2/v2.0/token",
                     new HttpEntity<>(form, headers()), TokenResponse.class).getBody();
             if (response == null || response.idToken() == null) throw invalid("Microsoft token response did not contain an id_token");
             var jwt = decoder.decode(response.idToken());
             String nonce = jwt.getClaimAsString("nonce");
-            if (!constantTime(expected.nonce(), nonce)) throw invalid("nonce mismatch");
+            if (!constantTime(credentials.nonce(), nonce)) throw invalid("nonce mismatch");
             String email = jwt.getClaimAsString("preferred_username");
             if (email == null) email = jwt.getClaimAsString("upn");
             if (email == null) email = jwt.getClaimAsString("email");
@@ -156,6 +165,45 @@ public class MicrosoftSignInService {
     private static String challenge(String verifier) {
         try { return Base64.getUrlEncoder().withoutPadding().encodeToString(MessageDigest.getInstance("SHA-256").digest(verifier.getBytes(StandardCharsets.US_ASCII))); }
         catch (Exception e) { throw new IllegalStateException("SHA-256 unavailable", e); }
+    }
+    private String encodeState(LoginState state) {
+        try {
+            byte[] iv = new byte[12];
+            new SecureRandom().nextBytes(iv);
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.ENCRYPT_MODE, key(), new GCMParameterSpec(128, iv));
+            byte[] payload = String.join("\n", state.state(), state.verifier(), state.nonce())
+                    .getBytes(StandardCharsets.UTF_8);
+            return b64(iv) + "." + b64(cipher.doFinal(payload));
+        } catch (Exception ex) {
+            throw new IllegalStateException("Unable to protect OAuth state", ex);
+        }
+    }
+    private LoginState decodeState(String token) {
+        try {
+            if (token == null || token.length() > 2048) return null;
+            String[] parts = token.split("\\.", -1);
+            if (parts.length != 2) return null;
+            byte[] iv = Base64.getUrlDecoder().decode(parts[0]);
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.DECRYPT_MODE, key(), new GCMParameterSpec(128, iv));
+            String[] values = new String(cipher.doFinal(Base64.getUrlDecoder().decode(parts[1])), StandardCharsets.UTF_8).split("\n", -1);
+            return values.length == 3 && values[0].length() <= 256 && values[1].length() <= 256 && values[2].length() <= 256
+                    ? new LoginState(values[0], values[1], values[2]) : null;
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+    private SecretKeySpec key() {
+        try {
+            return new SecretKeySpec(MessageDigest.getInstance("SHA-256")
+                    .digest(clientSecret.getBytes(StandardCharsets.UTF_8)), "AES");
+        } catch (Exception ex) {
+            throw new IllegalStateException("SHA-256 unavailable", ex);
+        }
+    }
+    private static String b64(byte[] value) {
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(value);
     }
     private static boolean constantTime(String left, String right) {
         return left != null && right != null && MessageDigest.isEqual(left.getBytes(StandardCharsets.UTF_8), right.getBytes(StandardCharsets.UTF_8));
