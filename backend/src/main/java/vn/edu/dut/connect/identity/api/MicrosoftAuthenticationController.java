@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
+import vn.edu.dut.connect.shared.application.ApplicationFailure;
 import vn.edu.dut.connect.identity.application.MicrosoftSignInService;
 import vn.edu.dut.connect.identity.application.MicrosoftSignInService.LoginState;
 
@@ -33,10 +34,15 @@ public class MicrosoftAuthenticationController {
                          @CookieValue(name = STATE, required = false) String expectedState,
                          @CookieValue(name = VERIFIER, required = false) String verifier,
                          HttpServletResponse response) throws java.io.IOException {
-        var session = service.callback(code, state, expectedState == null || verifier == null ? null : new LoginState(expectedState, verifier));
-        refresh.set(response, session.refreshToken());
-        cookie(response, STATE, "", Duration.ZERO); cookie(response, VERIFIER, "", Duration.ZERO);
-        response.sendRedirect(UriComponentsBuilder.fromUriString(service.frontendUrl()).path("/me/profile").build().toUriString());
+        try {
+            var session = service.callback(code, state, expectedState == null || verifier == null ? null : new LoginState(expectedState, verifier));
+            refresh.set(response, session.refreshToken());
+            cookie(response, STATE, "", Duration.ZERO); cookie(response, VERIFIER, "", Duration.ZERO);
+            response.sendRedirect(UriComponentsBuilder.fromUriString(service.frontendUrl()).path("/me/profile").build().toUriString());
+        } catch (ApplicationFailure failure) {
+            response.sendRedirect(UriComponentsBuilder.fromUriString(service.frontendUrl()).path("/login")
+                    .queryParam("oauth_error", failure.code()).build().toUriString());
+        }
     }
 
     private void cookie(HttpServletResponse response, String name, String value, Duration age) {

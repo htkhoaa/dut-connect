@@ -13,6 +13,8 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.security.oauth2.core.*;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
@@ -23,6 +25,7 @@ import static vn.edu.dut.connect.identity.application.IdentityContracts.Session;
 
 @Service
 public class MicrosoftSignInService {
+    private static final Logger log = LoggerFactory.getLogger(MicrosoftSignInService.class);
     public record Configuration(boolean enabled) {}
     public record LoginState(String state, String verifier) {}
     private record TokenResponse(@JsonProperty("id_token") String idToken) {}
@@ -106,6 +109,7 @@ public class MicrosoftSignInService {
             String nonce = jwt.getClaimAsString("nonce");
             if (!constantTime(expected.state(), nonce)) throw invalid();
             String email = jwt.getClaimAsString("preferred_username");
+            if (email == null) email = jwt.getClaimAsString("upn");
             if (email == null) email = jwt.getClaimAsString("email");
             email = email == null ? "" : email.trim().toLowerCase(java.util.Locale.ROOT);
             // Entra organizational accounts do not consistently emit email_verified;
@@ -117,6 +121,7 @@ public class MicrosoftSignInService {
             return account(identity);
         } catch (RuntimeException ex) {
             if (ex instanceof ApplicationFailure failure) throw failure;
+            log.warn("Microsoft token validation failed: {}", ex.getMessage());
             throw new ApplicationFailure(401, "INVALID_MICROSOFT_CREDENTIAL", "Microsoft authentication failed");
         }
     }

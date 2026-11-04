@@ -40,7 +40,7 @@ export const router = createBrowserRouter([
         children: [
             {path: '/', element: <HomePage/>},
             {path: '/login', element: <AuthPage/>},
-            {path: '/register', element: <AuthPage registration/>},
+            {path: '/login-admin', element: <AuthPage admin/>},
             {path: '/campaigns', element: <CampaignListPage/>},
             {path: '/activities/:id', element: <ActivityDetailPage/>},
             {path: '/campaigns/:id', element: <CampaignDetailPage/>},
