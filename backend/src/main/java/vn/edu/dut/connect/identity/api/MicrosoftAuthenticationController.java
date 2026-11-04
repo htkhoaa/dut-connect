@@ -14,6 +14,7 @@ import vn.edu.dut.connect.identity.application.MicrosoftSignInService.LoginState
 public class MicrosoftAuthenticationController {
     private static final String STATE = "dut_microsoft_state";
     private static final String VERIFIER = "dut_microsoft_verifier";
+    private static final String NONCE = "dut_microsoft_nonce";
     private final MicrosoftSignInService service;
     private final RefreshCookie refresh;
     public MicrosoftAuthenticationController(MicrosoftSignInService service, RefreshCookie refresh) { this.service = service; this.refresh = refresh; }
@@ -26,6 +27,7 @@ public class MicrosoftAuthenticationController {
         LoginState state = service.state();
         cookie(response, STATE, state.state(), Duration.ofMinutes(10));
         cookie(response, VERIFIER, state.verifier(), Duration.ofMinutes(10));
+        cookie(response, NONCE, state.nonce(), Duration.ofMinutes(10));
         response.sendRedirect(service.authorizationUrl(state));
     }
 
@@ -33,11 +35,13 @@ public class MicrosoftAuthenticationController {
     public void callback(@RequestParam String code, @RequestParam String state,
                          @CookieValue(name = STATE, required = false) String expectedState,
                          @CookieValue(name = VERIFIER, required = false) String verifier,
-                         HttpServletResponse response) throws java.io.IOException {
+    @CookieValue(name = NONCE, required = false) String nonce,
+    HttpServletResponse response) throws java.io.IOException {
         try {
-            var session = service.callback(code, state, expectedState == null || verifier == null ? null : new LoginState(expectedState, verifier));
+            var session = service.callback(code, state, expectedState == null || verifier == null || nonce == null
+                    ? null : new LoginState(expectedState, verifier, nonce));
             refresh.set(response, session.refreshToken());
-            cookie(response, STATE, "", Duration.ZERO); cookie(response, VERIFIER, "", Duration.ZERO);
+            cookie(response, STATE, "", Duration.ZERO); cookie(response, VERIFIER, "", Duration.ZERO); cookie(response, NONCE, "", Duration.ZERO);
             response.sendRedirect(UriComponentsBuilder.fromUriString(service.frontendUrl()).path("/me/profile").build().toUriString());
         } catch (ApplicationFailure failure) {
             response.sendRedirect(UriComponentsBuilder.fromUriString(service.frontendUrl()).path("/login")

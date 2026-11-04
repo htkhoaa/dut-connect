@@ -27,7 +27,7 @@ import static vn.edu.dut.connect.identity.application.IdentityContracts.Session;
 public class MicrosoftSignInService {
     private static final Logger log = LoggerFactory.getLogger(MicrosoftSignInService.class);
     public record Configuration(boolean enabled) {}
-    public record LoginState(String state, String verifier) {}
+    public record LoginState(String state, String verifier, String nonce) {}
     private record TokenResponse(@JsonProperty("id_token") String idToken) {}
     private record Identity(String subject, String tenant, String email, String name) {}
 
@@ -80,7 +80,7 @@ public class MicrosoftSignInService {
 
     public LoginState state() {
         requireConfigured();
-        return new LoginState(tokens.randomRefreshToken(), tokens.randomRefreshToken());
+        return new LoginState(tokens.randomRefreshToken(), tokens.randomRefreshToken(), tokens.randomRefreshToken());
     }
 
     public String authorizationUrl(LoginState state) {
@@ -89,7 +89,7 @@ public class MicrosoftSignInService {
                 .queryParam("redirect_uri", redirectUri).queryParam("response_mode", "query")
                 .queryParam("scope", "openid profile email").queryParam("state", state.state())
                 .queryParam("code_challenge", challenge(state.verifier())).queryParam("code_challenge_method", "S256")
-                .queryParam("nonce", state.state()).build().encode().toUriString();
+                .queryParam("nonce", state.nonce()).build().encode().toUriString();
     }
 
     @Transactional
@@ -107,7 +107,7 @@ public class MicrosoftSignInService {
             if (response == null || response.idToken() == null) throw invalid("Microsoft token response did not contain an id_token");
             var jwt = decoder.decode(response.idToken());
             String nonce = jwt.getClaimAsString("nonce");
-            if (!constantTime(expected.state(), nonce)) throw invalid("nonce mismatch");
+            if (!constantTime(expected.nonce(), nonce)) throw invalid("nonce mismatch");
             String email = jwt.getClaimAsString("preferred_username");
             if (email == null) email = jwt.getClaimAsString("upn");
             if (email == null) email = jwt.getClaimAsString("email");
@@ -126,8 +126,8 @@ public class MicrosoftSignInService {
                 throw invalid("Microsoft tenant or subject is invalid");
             return account(identity);
         } catch (RuntimeException ex) {
-            if (ex instanceof ApplicationFailure failure) throw failure;
             log.warn("Microsoft token validation failed: {}", ex.getMessage(), ex);
+            if (ex instanceof ApplicationFailure failure) throw failure;
             throw new ApplicationFailure(401, "INVALID_MICROSOFT_CREDENTIAL", "Microsoft authentication failed");
         }
     }
