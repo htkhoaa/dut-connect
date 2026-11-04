@@ -19,7 +19,7 @@ export function DonationCard({donation: d}: { donation: Donation }) {
     const link = pending ? checkoutLink(p?.checkoutUrl || null) : null;
     return <Card>
         <div className="flex flex-wrap justify-between gap-3"><h2 className="break-words text-xl font-semibold"><Link
-            className="text-primary hover:underline" to={'/campaigns/' + d.campaignSlug}>{renderText(d.campaignTitle)}</Link></h2><Badge
+            className="text-primary hover:opacity-80" to={'/campaigns/' + d.campaignSlug}>{renderText(d.campaignTitle)}</Link></h2><Badge
             tone={donationStatuses[d.status].tone}>{renderText(donationStatuses[d.status].label)}</Badge></div>
         <p className="mt-3 text-lg font-semibold">{renderText(vnd(d.amount))}</p>
         <p>{tr("Ngày tạo")}{renderText(new Date(d.createdAt).toLocaleString(locale()))}</p>{renderText(p?.paidAt &&

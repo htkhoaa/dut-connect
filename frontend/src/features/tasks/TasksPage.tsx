@@ -72,7 +72,7 @@ function Tasks({c, id, mine}: { c: string; id: string; mine: boolean }) {
         <ErrorState message={errorMessage(error)}/> : !data.length ?
             <EmptyState message={tr("Chưa có nhiệm vụ phù hợp.")}/> : data.map(t => <Card key={t.id}>
                 <div className="flex flex-wrap justify-between gap-3"><h2 className="break-words text-xl font-semibold">
-                    <Link className="text-primary hover:underline" to={'/tasks/' + t.id}>{renderText(t.title)}</Link></h2><Badge
+                    <Link className="font-medium text-primary hover:opacity-80" to={'/tasks/' + t.id}>{renderText(t.title)}</Link></h2><Badge
                     tone={t.status === 'VERIFIED' ? 'success' : 'neutral'}>{renderText(taskStatuses[t.status])}</Badge></div>
                 <p>{renderText(t.campaignTitle)} · {renderText(tracks[t.track])} · {renderText(priorities[t.priority])}{tr("mức ưu tiên")}</p><p
                 className="mt-3 whitespace-pre-wrap break-words">{renderText(t.description)}</p><p>{tr("Hạn hoàn thành:")}{renderText(date(t.dueAt))}</p><p

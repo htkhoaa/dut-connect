@@ -2,7 +2,7 @@ import {useLanguage, tr, renderText, locale} from "../../shared/lib/i18n";
 import {useEffect, useState} from 'react';
 import {useForm, useWatch} from 'react-hook-form';
 import {z} from 'zod';
-import {Link} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import {useOrganizations} from './hooks';
 import {organizationStatuses} from './presentation';
 import type {OrganizationScope, OrganizationStatus} from './types';
@@ -25,6 +25,7 @@ import {useDebouncedValue} from '../../shared/hooks/useDebouncedValue';
 
 export function OrganizationListPage({scope = 'public'}: {scope?: OrganizationScope}) {
     useLanguage();
+    const navigate=useNavigate();
     const [page, setPage] = useState(0);
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState<OrganizationStatus | ''>('');
@@ -54,8 +55,8 @@ export function OrganizationListPage({scope = 'public'}: {scope?: OrganizationSc
             <p className="mb-3 text-sm text-text-secondary">{renderText(list.data.totalElements)}{tr("tổ chức")}</p>
             {list.data.items.length === 0 ? <EmptyState message={scope === 'mine' ? tr("Bạn chưa tham gia tổ chức nào.") : tr("Chưa tìm thấy tổ chức.")}/> :
                 scope !== 'admin' ? <div className="campaign-grid">{renderText(list.data.items.map(o => <OrganizationCard key={o.id} organization={o}/>))}</div> : <Table caption={tr("Tổ chức")}><thead className="bg-surface-muted"><tr>{renderText([tr("Tên"), tr("Loại"), tr("Trạng thái"), tr("Ngày tạo")].map(label => <th key={label} scope="col" className="p-4">{renderText(label)}</th>))}</tr></thead>
-                    <tbody>{renderText(list.data.items.map(organization => <tr key={organization.id} className="border-t border-border">
-                        <td className="p-4"><Link className="font-medium text-primary hover:underline" to={'/organizations/' + organization.id}>{renderText(organization.name)}</Link></td>
+                    <tbody>{renderText(list.data.items.map(organization => <tr key={organization.id} tabIndex={0} className="cursor-pointer border-t border-border transition-colors hover:bg-surface-muted focus:bg-surface-muted" onClick={()=>navigate('/organizations/' + organization.id)} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();navigate('/organizations/' + organization.id);}}}>
+                        <td className="p-4 font-medium">{renderText(organization.name)}</td>
                         <td className="p-4">{renderText(catalogLabel(organization.organizationTypeName))}</td>
                         <td className="p-4"><Badge tone={organizationStatuses[organization.status].tone}>{renderText(organizationStatuses[organization.status].label)}</Badge></td>
                         <td className="p-4">{renderText(new Date(organization.createdAt).toLocaleDateString(locale()))}</td>

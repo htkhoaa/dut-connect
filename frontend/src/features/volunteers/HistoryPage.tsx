@@ -21,7 +21,7 @@ export function HistoryPage() {
         <ErrorState message={errorMessage(q.error)}/> : <>{!q.data.items.length &&
             <EmptyState message={tr("Bạn chưa có chiến dịch được chấp nhận tham gia.")}/>}{q.data.items.map(v => <Card
             key={v.campaignId}><h2 className="break-words text-xl font-semibold"><Link
-            className="text-primary hover:underline" to={'/campaigns/' + v.campaignSlug}>{renderText(v.campaignTitle)}</Link></h2><Badge
+            className="text-primary hover:opacity-80" to={'/campaigns/' + v.campaignSlug}>{renderText(v.campaignTitle)}</Link></h2><Badge
             tone={v.completionStatus === 'VERIFIED' ? 'success' : 'neutral'}>{renderText(completionStatuses[v.completionStatus])}</Badge>
             <p>{renderText(tracks[v.assignedTrack])}{tr("· Buổi có mặt:")}{renderText(v.presentSessions)} / {renderText(v.totalSessions)}</p><p>{tr("Số giờ chính thức đã xác minh:")}{renderText(v.verifiedHours ?? tr("Chưa xác minh"))}</p>{renderText(v.verifiedAt &&
                 <p>{tr("Đã xác minh")}{renderText(date(v.verifiedAt))}</p>)}<p className="whitespace-pre-wrap break-words">{renderText(v.note)}</p><Link

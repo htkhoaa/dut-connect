@@ -43,7 +43,7 @@ export function AdminExpensesPage(){
             {!list.data.items.length?<EmptyState message={tr("Không có chi phí ở trạng thái này.")}/>:<div className="space-y-4">{renderText(list.data.items.map(e=><Card key={e.id}>
                 <div className="space-y-3">
                     <Badge tone={expenseStatuses[e.status].tone}>{renderText(expenseStatuses[e.status].label)}</Badge>
-                    <Link className="block break-words text-primary hover:underline" to={'/manage/campaigns/'+e.campaignId+'/finance'}>{renderText(e.campaignTitle)}</Link>
+                    <Link className="block break-words font-medium text-primary hover:opacity-80" to={'/manage/campaigns/'+e.campaignId+'/finance'}>{renderText(e.campaignTitle)}</Link>
                     <ExpenseDetails expense={e}/>
                     <p className="text-sm text-text-secondary">{tr("Người gửi")}{renderText(e.submittedByName)}</p>
                     {renderText(e.reviewedByName&&<p>{tr("Người xét duyệt")}{renderText(e.reviewedByName)}{tr("lúc")}{renderText(new Date(e.reviewedAt!).toLocaleString(locale()))}</p>)}
