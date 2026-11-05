@@ -41,6 +41,7 @@ export function AppLayout() {
     const dropdownRef = useRef<HTMLDivElement>(null);
     const isAdmin = user?.role === 'ADMIN';
     const isAdminRoute = pathname.startsWith('/admin');
+    const privatePage = !!user && (/^\/(me|manage|admin|proposals|donations|payment|dev)(\/|$)/.test(pathname) || pathname === '/organizations/new');
 
     useEffect(() => {
         setDropdownOpen(false);
@@ -58,38 +59,68 @@ export function AppLayout() {
     }, []);
 
     return (
-        <div className="min-h-screen flex flex-col bg-background text-text-primary">
+        <div className={`min-h-screen flex flex-col text-text-primary ${privatePage ? 'workspace-shell' : 'public-shell'}`}>
             <a className="skip-link" href="#main-content">{tr("Chuyển đến nội dung")}</a>
 
             {/* TOP HEADER */}
-            <header className="sticky top-0 z-40 border-b border-border bg-white/95 backdrop-blur-md shadow-xs">
-                <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-                    <div className="flex items-center gap-8">
+            <header className="sticky top-0 z-40 border-b border-border bg-white/90 backdrop-blur-md shadow-xs">
+                <div className="mx-auto grid max-w-7xl grid-cols-[auto_1fr] md:grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 py-2.5 sm:px-6">
+                    {/* Left: Brand */}
+                    <div className="flex items-center justify-start min-w-0">
                         <Brand />
-                        <nav className="hidden md:flex items-center gap-1 text-sm font-medium" aria-label={tr("Điều hướng chính")}>
-                            <NavLink to="/" end className={({isActive}) => `rounded-xl px-3.5 py-2 transition-colors ${isActive ? 'bg-primary-light text-primary font-semibold' : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'}`}>
-                                {tr("Trang chủ")}
-                            </NavLink>
-                            <NavLink to="/campaigns" className={({isActive}) => `rounded-xl px-3.5 py-2 transition-colors ${isActive ? 'bg-primary-light text-primary font-semibold' : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'}`}>
-                                {tr("Chiến dịch")}
-                            </NavLink>
-                            <NavLink to="/organizations" className={({isActive}) => `rounded-xl px-3.5 py-2 transition-colors ${isActive ? 'bg-primary-light text-primary font-semibold' : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'}`}>
-                                {tr("Tổ chức")}
-                            </NavLink>
-                            {user && (
-                                <NavLink to="/manage/campaigns" className={({isActive}) => `rounded-xl px-3.5 py-2 transition-colors ${isActive ? 'bg-primary-light text-primary font-semibold' : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'}`}>
-                                    {tr("Chiến dịch của tôi")}
-                                </NavLink>
-                            )}
-                            {user && (
-                                <NavLink to="/proposals" className={({isActive}) => `rounded-xl px-3.5 py-2 transition-colors ${isActive ? 'bg-primary-light text-primary font-semibold' : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'}`}>
-                                    {tr("Đề xuất")}
-                                </NavLink>
-                            )}
-                        </nav>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    {/* Center: Nav links - Perfectly Centered in Header */}
+                    <nav className="hidden md:flex items-center justify-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium" aria-label={tr("Điều hướng chính")}>
+                        <NavLink
+                            to="/"
+                            end
+                            className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
+                                isActive ? 'bg-primary-light text-primary font-semibold shadow-2xs' : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                            }`}
+                        >
+                            {tr("Trang chủ")}
+                        </NavLink>
+                        <NavLink
+                            to="/campaigns"
+                            className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
+                                isActive ? 'bg-primary-light text-primary font-semibold shadow-2xs' : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                            }`}
+                        >
+                            {tr("Chiến dịch")}
+                        </NavLink>
+                        <NavLink
+                            to="/organizations"
+                            className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
+                                isActive ? 'bg-primary-light text-primary font-semibold shadow-2xs' : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                            }`}
+                        >
+                            {tr("Tổ chức")}
+                        </NavLink>
+                        {user && (
+                            <NavLink
+                                to="/manage/campaigns"
+                                className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
+                                    isActive ? 'bg-primary-light text-primary font-semibold shadow-2xs' : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                                }`}
+                            >
+                                {tr("Chiến dịch của tôi")}
+                            </NavLink>
+                        )}
+                        {user && (
+                            <NavLink
+                                to="/proposals"
+                                className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
+                                    isActive ? 'bg-primary-light text-primary font-semibold shadow-2xs' : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                                }`}
+                            >
+                                {tr("Đề xuất")}
+                            </NavLink>
+                        )}
+                    </nav>
+
+                    {/* Right: Actions */}
+                    <div className="flex items-center justify-end gap-3 min-w-0">
                         <LanguageSwitch />
 
                         {initialized && (
@@ -211,6 +242,9 @@ export function AppLayout() {
                             <>
                                 <NavLink to="/manage/campaigns" className="block rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted">
                                     {tr("Chiến dịch của tôi")}
+                                </NavLink>
+                                <NavLink to="/proposals" className="block rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted">
+                                    {tr("Đề xuất")}
                                 </NavLink>
                                 <NavLink to="/me/settings" className="block rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted">
                                     {tr("Cài đặt cá nhân")}
