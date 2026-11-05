@@ -38,6 +38,7 @@ export function AppLayout() {
     const {pathname} = useLocation();
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
+    const [headerScrolled, setHeaderScrolled] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const isAdmin = user?.role === 'ADMIN';
     const isAdminRoute = pathname.startsWith('/admin');
@@ -47,6 +48,13 @@ export function AppLayout() {
         setDropdownOpen(false);
         setMobileNavOpen(false);
     }, [pathname]);
+
+    useEffect(() => {
+        const update = () => setHeaderScrolled(window.scrollY > 20);
+        update();
+        window.addEventListener('scroll', update, {passive: true});
+        return () => window.removeEventListener('scroll', update);
+    }, []);
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -63,8 +71,12 @@ export function AppLayout() {
             <a className="skip-link" href="#main-content">{tr("Chuyển đến nội dung")}</a>
 
             {/* TOP HEADER */}
-            <header className="sticky top-0 z-40 border-b border-border bg-white/90 backdrop-blur-md shadow-xs">
-                <div className="mx-auto grid max-w-7xl grid-cols-[auto_1fr] md:grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 py-2.5 sm:px-6">
+            <header className={`sticky top-0 z-40 transition-all duration-300 ${
+                headerScrolled || mobileNavOpen
+                    ? 'border-b border-border bg-white/95 backdrop-blur-md shadow-xs py-2'
+                    : 'border-b border-transparent bg-transparent shadow-none py-2.5'
+            }`}>
+                <div className="mx-auto grid max-w-7xl grid-cols-[auto_1fr] md:grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 sm:px-6">
                     {/* Left: Brand */}
                     <div className="flex items-center justify-start min-w-0">
                         <Brand />
@@ -76,7 +88,11 @@ export function AppLayout() {
                             to="/"
                             end
                             className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
-                                isActive ? 'bg-primary-light text-primary font-semibold shadow-2xs' : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                                isActive
+                                    ? 'bg-primary-light text-primary font-semibold shadow-2xs'
+                                    : headerScrolled
+                                        ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                                        : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
                             }`}
                         >
                             {tr("Trang chủ")}
@@ -84,7 +100,11 @@ export function AppLayout() {
                         <NavLink
                             to="/campaigns"
                             className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
-                                isActive ? 'bg-primary-light text-primary font-semibold shadow-2xs' : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                                isActive
+                                    ? 'bg-primary-light text-primary font-semibold shadow-2xs'
+                                    : headerScrolled
+                                        ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                                        : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
                             }`}
                         >
                             {tr("Chiến dịch")}
@@ -92,7 +112,11 @@ export function AppLayout() {
                         <NavLink
                             to="/organizations"
                             className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
-                                isActive ? 'bg-primary-light text-primary font-semibold shadow-2xs' : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                                isActive
+                                    ? 'bg-primary-light text-primary font-semibold shadow-2xs'
+                                    : headerScrolled
+                                        ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                                        : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
                             }`}
                         >
                             {tr("Tổ chức")}
@@ -101,7 +125,11 @@ export function AppLayout() {
                             <NavLink
                                 to="/manage/campaigns"
                                 className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
-                                    isActive ? 'bg-primary-light text-primary font-semibold shadow-2xs' : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                                    isActive
+                                        ? 'bg-primary-light text-primary font-semibold shadow-2xs'
+                                        : headerScrolled
+                                            ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                                            : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
                                 }`}
                             >
                                 {tr("Chiến dịch của tôi")}
@@ -111,7 +139,11 @@ export function AppLayout() {
                             <NavLink
                                 to="/proposals"
                                 className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
-                                    isActive ? 'bg-primary-light text-primary font-semibold shadow-2xs' : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                                    isActive
+                                        ? 'bg-primary-light text-primary font-semibold shadow-2xs'
+                                        : headerScrolled
+                                            ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                                            : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
                                 }`}
                             >
                                 {tr("Đề xuất")}
@@ -128,7 +160,9 @@ export function AppLayout() {
                                 <div className="relative" ref={dropdownRef}>
                                     <button
                                         type="button"
-                                        className="flex items-center gap-2.5 rounded-full border border-border bg-surface p-1.5 pr-3 text-left transition-all hover:border-primary-muted hover:shadow-xs focus:outline-none"
+                                        className={`flex items-center gap-2.5 rounded-full border p-1.5 pr-3 text-left transition-all hover:border-primary-muted hover:shadow-xs focus:outline-none ${
+                                            headerScrolled ? 'border-border bg-surface' : 'border-border/70 bg-white/70 backdrop-blur-xs'
+                                        }`}
                                         onClick={() => setDropdownOpen(!dropdownOpen)}
                                         aria-expanded={dropdownOpen}
                                         aria-haspopup="true"
