@@ -51,12 +51,13 @@ public final class IdentityContracts {
         }
     }
 
-    public record ProfileResponse(UserSummary user, String faculty, String bio, ContributionTrack preferredTrack,
+    public record ProfileResponse(UserSummary user, String faculty, String className, String bio, ContributionTrack preferredTrack,
                                   String experience, long version, List<SkillResponse> skills) {
     }
 
     public record ProfileRequest(@NotBlank @Size(max = 150) String fullName,
-                                 @NotBlank @Size(max = 150) String faculty, @Size(max = 500) String bio,
+                                 @NotBlank @Size(max = 150) String faculty, @Size(max = 50) String className,
+                                 @Size(max = 500) String bio,
                                  ContributionTrack preferredTrack,
                                  @Size(max = 10000) String experience, @NotNull @PositiveOrZero Long version,
                                  @NotNull @PositiveOrZero Long userVersion) {

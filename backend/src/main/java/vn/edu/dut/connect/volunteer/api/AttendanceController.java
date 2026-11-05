@@ -54,4 +54,14 @@ public class AttendanceController {
     public AttendanceResult record(@PathVariable UUID id, Authentication a, @Valid @RequestBody AttendanceRequest r) {
         return service.record(id, UUID.fromString(a.getName()), r);
     }
+
+    @PostMapping("/attendance-sessions/{id}/qr")
+    public QrSessionDto generateQr(@PathVariable UUID id, Authentication a) {
+        return service.generateQr(id, UUID.fromString(a.getName()));
+    }
+
+    @PostMapping("/attendance-sessions/checkin-qr")
+    public QrCheckinResponse checkinQr(@RequestParam String token, Authentication a) {
+        return service.checkinQr(token, UUID.fromString(a.getName()));
+    }
 }

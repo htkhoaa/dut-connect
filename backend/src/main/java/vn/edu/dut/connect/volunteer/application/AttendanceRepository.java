@@ -16,6 +16,8 @@ public interface AttendanceRepository {
 
     Optional<AttendanceSession> session(UUID id);
 
+    Optional<AttendanceSession> sessionByQrToken(String token);
+
     Optional<UUID> sessionCampaign(UUID id);
 
     AttendanceSession saveSession(AttendanceSession value);

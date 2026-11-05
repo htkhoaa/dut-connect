@@ -14,6 +14,7 @@ import {Button} from '../../shared/components/Button';
 import {Input} from '../../shared/components/Input';
 import {Select} from '../../shared/components/Select';
 import {ConfirmDialog} from '../../shared/components/ConfirmDialog';
+import {Dialog} from '../../shared/components/Dialog';
 import {Pagination} from '../../shared/components/Pagination';
 import {ErrorState} from '../../shared/components/ErrorState';
 import {LoadingState} from '../../shared/components/LoadingState';
@@ -33,6 +34,8 @@ function Attendance({c}: { c: string }) {
     const [edit, setEdit] = useState<Session | true | null>(null);
     const [session, setSession] = useState<Session | null>(null);
     const [remove, setRemove] = useState<Session | null>(null);
+    const [qrData, setQrData] = useState<{title: string; qrImageUrl: string; token: string; checkinUrl: string} | null>(null);
+    const [qrLoading, setQrLoading] = useState(false);
     const [feedback, setFeedback] = useState('');
     const q = useCoordinationQuery(['sessions', c, page], () => api.list(c, page));
     const campaign = useCampaign(c);
@@ -40,6 +43,23 @@ function Attendance({c}: { c: string }) {
     const manager = !!campaign.data && (!!campaign.data.ownRole || user?.role === 'ADMIN');
     const mutable = manager && q.isSuccess && ['OPEN', 'ACTIVE'].includes(campaign.data?.status || '');
     const m = useCoordinationMutation((s: Session) => api.remove(s.id, s.version));
+
+    const handleShowQr = async (s: Session) => {
+        try {
+            setQrLoading(true);
+            const res = await api.generateQr(s.id);
+            setQrData({
+                title: s.title,
+                qrImageUrl: res.qrCodeImageUrl,
+                token: res.qrToken,
+                checkinUrl: window.location.origin + res.checkinUrl,
+            });
+        } catch (err) {
+            setFeedback(errorMessage(err));
+        } finally {
+            setQrLoading(false);
+        }
+    };
     return <div className="space-y-6"><h1 className="text-3xl font-semibold">{tr("Buổi điểm danh")}</h1>{renderText(manager && <WorkspaceLinks
         id={c}/>)} {renderText(mutable && <Button onClick={() => setEdit(true)}>{tr("Tạo buổi điểm danh")}</Button>)}{renderText(feedback &&
         <p role="status" className="text-success">{renderText(feedback)}</p>)}{renderText(m.isError &&
@@ -47,8 +67,11 @@ function Attendance({c}: { c: string }) {
         <ErrorState message={errorMessage(q.error)}/> : <>{!q.data.items.length &&
             <EmptyState message={tr("Chưa có buổi điểm danh.")}/>}{q.data.items.map(s => <Card key={s.id}><h2
             className="break-words text-xl font-semibold">{renderText(s.title)}</h2><p>{renderText(date(s.startsAt))} – {renderText(date(s.endsAt))}</p>
-            <div className="mt-4 flex flex-wrap gap-3"><Button onClick={() => setSession(s)}>{tr("Xem điểm danh")}</Button>{renderText(mutable && <><Button onClick={() => setEdit(s)}>{tr("Chỉnh sửa buổi điểm danh")}</Button><Button
-                onClick={() => setRemove(s)}>{tr("Xóa buổi điểm danh")}</Button></>)}</div>
+            <div className="mt-4 flex flex-wrap gap-3">
+                <Button onClick={() => setSession(s)}>{tr("Xem điểm danh")}</Button>
+                <Button variant="secondary" disabled={qrLoading} onClick={() => handleShowQr(s)}>📱 {tr("Mã QR điểm danh")}</Button>
+                {renderText(mutable && <><Button onClick={() => setEdit(s)}>{tr("Chỉnh sửa buổi điểm danh")}</Button><Button onClick={() => setRemove(s)}>{tr("Xóa buổi điểm danh")}</Button></>)}
+            </div>
         </Card>)}<Pagination {...q.data} onPageChange={setPage}/></>)}{renderText(edit &&
         <Card><SessionForm key={edit === true ? 'new' : edit.id} c={c} value={edit === true ? undefined : edit}
                            onClose={() => setEdit(null)} onSaved={() => {
@@ -58,7 +81,33 @@ function Attendance({c}: { c: string }) {
         <Card><Records key={session.id + session.version} c={c} session={session} mutable={mutable} onSaved={s => {
             setSession(s);
             setFeedback(tr("Đã lưu điểm danh."));
-        }} onClose={() => setSession(null)}/></Card>)}<ConfirmDialog open={!!remove} title={tr("Xóa buổi điểm danh?")}
+        }} onClose={() => setSession(null)}/></Card>)}
+        {qrData && (
+            <Dialog open={true} title={tr("Mã QR Điểm danh")} onClose={() => setQrData(null)}>
+                <div className="space-y-4 text-center">
+                    <p className="font-semibold text-text-primary">{qrData.title}</p>
+                    <p className="text-xs text-text-secondary">{tr("Tình nguyện viên quét mã QR này bằng điện thoại để điểm danh tự động.")}</p>
+                    <div className="flex justify-center p-4 bg-white rounded-2xl border border-border">
+                        <img src={qrData.qrImageUrl} alt="QR Code" className="h-64 w-64 object-contain" />
+                    </div>
+                    <div className="space-y-1 text-left text-xs bg-surface-muted p-3 rounded-xl">
+                        <p className="font-semibold text-text-secondary">{tr("Liên kết điểm danh trực tiếp:")}</p>
+                        <p className="font-mono text-primary break-all">{qrData.checkinUrl}</p>
+                    </div>
+                    <div className="flex justify-end gap-3 pt-2">
+                        <Button variant="secondary" onClick={() => setQrData(null)}>{tr("Đóng")}</Button>
+                        <Button variant="primary" onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = qrData.qrImageUrl;
+                            link.download = `qr-diem-danh-${qrData.title}.png`;
+                            link.target = '_blank';
+                            link.click();
+                        }}>💾 {tr("Tải mã QR")}</Button>
+                    </div>
+                </div>
+            </Dialog>
+        )}
+        <ConfirmDialog open={!!remove} title={tr("Xóa buổi điểm danh?")}
                                                                     message={tr("Buổi điểm danh và toàn bộ kết quả điểm danh sẽ bị xóa.")}
                                                                     confirmLabel={tr("Xóa")} busy={m.isPending}
                                                                     onClose={() => setRemove(null)} onConfirm={() => {

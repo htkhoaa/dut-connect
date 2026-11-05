@@ -31,6 +31,10 @@ public class AttendancePersistence implements AttendanceRepository {
         return sessions.findById(id);
     }
 
+    public Optional<AttendanceSession> sessionByQrToken(String token) {
+        return sessions.findByQrToken(token);
+    }
+
     public Optional<UUID> sessionCampaign(UUID id) {
         return jdbc.sql("select campaign_id from dut_connect.attendance_sessions where id=:id").param("id", id).query(UUID.class).optional();
     }

@@ -106,6 +106,10 @@ payment:
     query-order-url: ${ZALOPAY_QUERY_ORDER_URL:https://sb-openapi.zalopay.vn/v2/query}
     callback-url: ${ZALOPAY_CALLBACK_URL:}
     redirect-url: ${ZALOPAY_REDIRECT_URL:}
+  payos:
+    client-id: ${PAYOS_CLIENT_ID:}
+    api-key: ${PAYOS_API_KEY:}
+    checksum-key: ${PAYOS_CHECKSUM_KEY:}
 ai:
   enabled: ${AI_ENABLED:false}
   base-url: ${AI_BASE_URL:}

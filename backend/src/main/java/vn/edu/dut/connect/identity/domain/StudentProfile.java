@@ -12,6 +12,8 @@ public class StudentProfile {
     private UUID userId;
     @Column(nullable = false, length = 150)
     private String faculty;
+    @Column(length = 50)
+    private String className;
     @Column(length = 500)
     private String bio;
     @Enumerated(EnumType.STRING)
@@ -36,11 +38,12 @@ public class StudentProfile {
         updatedAt = createdAt;
     }
 
-    public void update(String faculty, String bio, ContributionTrack track, String experience) {
+    public void update(String faculty, String bio, ContributionTrack track, String experience, String className) {
         this.faculty = faculty;
         this.bio = bio;
         this.preferredTrack = track;
         this.experience = experience;
+        this.className = className;
         touch();
     }
 
@@ -50,6 +53,10 @@ public class StudentProfile {
 
     public String faculty() {
         return faculty;
+    }
+
+    public String className() {
+        return className;
     }
 
     public String bio() {

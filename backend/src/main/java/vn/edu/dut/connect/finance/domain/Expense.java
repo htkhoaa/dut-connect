@@ -25,6 +25,8 @@ public class Expense {
     @Column(nullable=false) private Instant createdAt;
     @Column(nullable=false) private Instant updatedAt;
     @Version private Long version;
+    @Column(columnDefinition="bytea") private byte[] receiptData;
+    @Column(length=100) private String receiptContentType;
     protected Expense() {}
     public Expense(UUID campaign,UUID actor,String title,String category,BigDecimal amount,LocalDate date,String description,String proof) {
         id=UUID.randomUUID();campaignId=campaign;submittedByUserId=actor;status=ExpenseStatus.PENDING;
@@ -55,4 +57,6 @@ public class Expense {
     public BigDecimal amount(){return amount;} public LocalDate expenseDate(){return expenseDate;} public String description(){return description;} public String proofReference(){return proofReference;}
     public ExpenseStatus status(){return status;} public UUID submittedByUserId(){return submittedByUserId;} public UUID reviewedByUserId(){return reviewedByUserId;}
     public Instant reviewedAt(){return reviewedAt;} public String rejectionReason(){return rejectionReason;} public Instant createdAt(){return createdAt;} public Instant updatedAt(){return updatedAt;} public Long version(){return version;}
+    public byte[] receiptData(){return receiptData;} public String receiptContentType(){return receiptContentType;}
+    public void setReceiptData(byte[] data, String contentType){this.receiptData=data;this.receiptContentType=contentType;updatedAt=Instant.now();}
 }

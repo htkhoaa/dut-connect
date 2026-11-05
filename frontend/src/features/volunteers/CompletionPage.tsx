@@ -23,6 +23,7 @@ import {LoadingState} from '../../shared/components/LoadingState';
 import {EmptyState} from '../../shared/components/EmptyState';
 import type {Completion, CompletionStatus} from '../coordination/types';
 import * as api from './completionApi';
+import {exportVolunteerCertificate} from '../../shared/lib/pdfExport';
 
 export function CompletionPage() {
     useLanguage();
@@ -48,11 +49,26 @@ function Completions({c}: { c: string }) {
             <div className="flex flex-wrap justify-between gap-3"><h2
                 className="break-words text-xl font-semibold">{renderText(v.fullName)}</h2><Badge
                 tone={v.status === 'VERIFIED' ? 'success' : 'neutral'}>{renderText(completionStatuses[v.status])}</Badge></div>
-            <p className="break-words">{renderText(v.studentId)} · {renderText(tracks[v.assignedTrack])}</p><p>{tr("Buổi có mặt:")}{renderText(v.presentSessions)} / {renderText(v.totalSessions)}</p>
-            <p>{renderText(v.status === 'VERIFIED' ? tr("Đã xác minh") : tr("Đã ghi nhận"))}{tr("giờ:")}{renderText(v.verifiedHours ?? tr("Chưa ghi nhận"))}</p><p
-            className="whitespace-pre-wrap break-words">{renderText(v.note)}</p>{renderText(v.verifiedAt &&
-            <p>{tr("Đã xác minh")}{renderText(date(v.verifiedAt))}</p>)}{renderText(mutable && v.status !== 'VERIFIED' &&
-            <Button onClick={() => setEdit(v)}>{tr("Ghi nhận hoàn thành")}</Button>)}</Card>)}<Pagination {...q.data}
+            <p className="break-words text-sm text-text-secondary">{renderText(v.studentId)} · {renderText(tracks[v.assignedTrack])}</p>
+            <p className="text-sm"><span>{tr("Buổi có mặt: ")}</span><strong>{renderText(v.presentSessions)} / {renderText(v.totalSessions)}</strong></p>
+            <p className="text-sm"><span>{renderText(v.status === 'VERIFIED' ? tr("Đã xác minh số giờ: ") : tr("Đã ghi nhận số giờ: "))}</span><strong>{renderText(v.verifiedHours ?? tr("Chưa ghi nhận"))}</strong></p>
+            {renderText(v.note && <p className="whitespace-pre-wrap break-words text-xs text-text-secondary bg-surface-muted p-2 rounded-lg">{renderText(v.note)}</p>)}
+            {renderText(v.verifiedAt && <p className="text-xs text-text-secondary">{tr("Đã xác minh lúc: ")}{renderText(date(v.verifiedAt))}</p>)}
+            <div className="mt-3 flex flex-wrap gap-2">
+                {renderText(mutable && v.status !== 'VERIFIED' && <Button onClick={() => setEdit(v)}>{tr("Ghi nhận hoàn thành")}</Button>)}
+                {v.status === 'VERIFIED' && (
+                    <Button variant="secondary" onClick={() => exportVolunteerCertificate({
+                        fullName: v.fullName,
+                        studentId: v.studentId,
+                        campaignTitle: campaign.data?.content.title || tr("Chiến dịch tình nguyện"),
+                        verifiedHours: v.verifiedHours || '0',
+                        verifiedAt: v.verifiedAt || undefined,
+                        organizerName: campaign.data?.organizerName
+                    })}>
+                        📜 {tr("Xuất chứng nhận PDF")}
+                    </Button>
+                )}
+            </div></Card>)}<Pagination {...q.data}
                                                                                                onPageChange={setPage}/></>)}{renderText(edit &&
         <Card><CompletionForm key={edit.userId} c={c} value={edit} onClose={() => setEdit(null)} onSaved={() => {
             setEdit(null);

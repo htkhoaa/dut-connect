@@ -10,3 +10,14 @@ export async function save(campaign:string,values:ExpenseWrite,expense?:Expense)
     return expense?(await apiClient.patch<Expense>(`/expenses/${expense.id}`,body)).data:(await apiClient.post<Expense>(`/campaigns/${campaign}/expenses`,body)).data;
 }
 export async function review({id,command,...body}:ExpenseReview){return (await apiClient.post<Expense>(`/admin/expenses/${id}/${command}`,body)).data;}
+export async function uploadReceipt(id: string, file: File) {
+    const data = new FormData();
+    data.append('file', file);
+    return (await apiClient.put(`/expenses/${id}/receipt`, data, {headers: {'Content-Type': 'multipart/form-data'}})).data;
+}
+export async function deleteReceipt(id: string) {
+    return (await apiClient.delete(`/expenses/${id}/receipt`)).data;
+}
+export function receiptUrl(id: string) {
+    return `/api/v1/expenses/${id}/receipt`;
+}

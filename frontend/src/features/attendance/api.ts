@@ -31,3 +31,7 @@ export async function records(id: string, page: number) {
 export async function record(id: string, version: number, records: AttendanceRecordInput[]) {
     return (await apiClient.put<AttendanceResult>('/attendance-sessions/' + id + '/records', {version, records})).data;
 }
+
+export async function generateQr(id: string) {
+    return (await apiClient.post<{sessionId: string; qrToken: string; qrExpiresAt: string; checkinUrl: string; qrCodeImageUrl: string}>('/attendance-sessions/' + id + '/qr')).data;
+}

@@ -15,8 +15,8 @@ public class PaymentSettings implements vn.edu.dut.connect.donation.application.
     public PaymentSettings(Environment env) {
         this.env = env;
         provider = env.getProperty("payment.provider", "mock");
-        if (!java.util.Set.of("mock", "zalopay").contains(provider))
-            throw new IllegalStateException("PAYMENT_PROVIDER must be mock or zalopay");
+        if (!java.util.Set.of("mock", "zalopay", "payos").contains(provider))
+            throw new IllegalStateException("PAYMENT_PROVIDER must be mock, zalopay or payos");
         minimum = Donation.integerAmount(new BigDecimal(env.getProperty("app.donation.min-vnd", "10000")));
         maximum = Donation.integerAmount(new BigDecimal(env.getProperty("app.donation.max-vnd", "100000000")));
         if (maximum.compareTo(minimum) < 0 || maximum.compareTo(BigDecimal.valueOf(Long.MAX_VALUE)) > 0)
@@ -37,5 +37,9 @@ public class PaymentSettings implements vn.edu.dut.connect.donation.application.
 
     public String zalopay(String key) {
         return env.getProperty("payment.zalopay." + key, "").trim();
+    }
+
+    public String payos(String key) {
+        return env.getProperty("payment.payos." + key, "").trim();
     }
 }

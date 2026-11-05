@@ -18,7 +18,7 @@ public final class FinanceContracts {
         public static PublicExpense from(Expense e){return new PublicExpense(e.id(),e.campaignId(),e.title(),e.category(),e.amount().toPlainString(),e.expenseDate(),e.description(),e.proofReference(),e.reviewedAt());}
     }
     public record ExpenseDto(UUID id,UUID campaignId,String campaignTitle,String title,String category,String amount,LocalDate expenseDate,String description,String proofReference,
-        ExpenseStatus status,UUID submittedByUserId,String submittedByName,UUID reviewedByUserId,String reviewedByName,Instant reviewedAt,String rejectionReason,Instant createdAt,Instant updatedAt,long version,boolean canEdit) {}
+        ExpenseStatus status,UUID submittedByUserId,String submittedByName,UUID reviewedByUserId,String reviewedByName,Instant reviewedAt,String rejectionReason,Instant createdAt,Instant updatedAt,long version,boolean canEdit,boolean hasReceipt) {}
     public record FinancialSummary(UUID campaignId,String institutionalFunding,String sponsorFunding,String verifiedDonations,String totalFunding,String approvedExpenses,String remainingFunds,String fundraisingGoal,long successfulDonationCount) {}
     public record FundraisingProgress(UUID campaignId,String verifiedDonations,long successfulDonationCount) {}
 }

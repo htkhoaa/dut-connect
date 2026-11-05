@@ -11,6 +11,7 @@ export interface Skill {
 export interface Profile {
     user: UserSummary;
     faculty: string;
+    className?: string | null;
     bio: string | null;
     preferredTrack: Track | null;
     experience: string | null;
@@ -21,6 +22,7 @@ export interface Profile {
 export interface ProfileValues {
     fullName: string;
     faculty: string;
+    className: string;
     bio: string;
     preferredTrack: Track | '';
     experience: string;

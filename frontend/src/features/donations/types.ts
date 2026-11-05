@@ -5,7 +5,7 @@ export interface Payment {
     id: string;
     donationId: string;
     amount: string;
-    provider: 'mock' | 'zalopay';
+    provider: 'mock' | 'zalopay' | 'payos';
     status: PaymentStatus;
     checkoutUrl: string | null;
     providerOrderId: string;
@@ -64,10 +64,10 @@ export const validId = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-
 
 export function checkoutLink(url: string | null): string | null {
     if (!url) return null;
-    if (/^\/dev\/mock-payments\/[0-9a-f-]{36}$/i.test(url)) return url;
+    if (url.startsWith('/')) return url;
     try {
         const parsed = new URL(url);
-        return parsed.protocol === 'https:' && !parsed.username && !parsed.password ? parsed.href : null;
+        return (parsed.protocol === 'https:' || parsed.protocol === 'http:') && !parsed.username && !parsed.password ? parsed.href : null;
     } catch {
         return null;
     }

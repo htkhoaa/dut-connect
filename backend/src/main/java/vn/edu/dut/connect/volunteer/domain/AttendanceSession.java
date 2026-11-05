@@ -20,6 +20,9 @@ public class AttendanceSession {
     private Instant updatedAt;
     @Version
     private Long version;
+    @Column(length = 64)
+    private String qrToken;
+    private Instant qrExpiresAt;
 
     public UUID id() {
         return id;
@@ -39,6 +42,21 @@ public class AttendanceSession {
 
     public Long version() {
         return version;
+    }
+
+    public String qrToken() {
+        return qrToken;
+    }
+
+    public Instant qrExpiresAt() {
+        return qrExpiresAt;
+    }
+
+    public String generateQrToken() {
+        this.qrToken = UUID.randomUUID().toString().replace("-", "");
+        this.qrExpiresAt = endsAt != null ? endsAt : Instant.now().plus(java.time.Duration.ofHours(4));
+        touch();
+        return this.qrToken;
     }
 
     public void requireVersion(Long expected) {

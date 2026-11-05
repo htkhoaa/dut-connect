@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import vn.edu.dut.connect.volunteer.domain.AttendanceSession;
 
 interface JpaSessionRepository extends JpaRepository<AttendanceSession, UUID> {
+    java.util.Optional<AttendanceSession> findByQrToken(String qrToken);
 }

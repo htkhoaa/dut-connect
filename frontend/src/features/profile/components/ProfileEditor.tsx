@@ -13,16 +13,24 @@ import {Select} from '../../../shared/components/Select';
 import {Textarea} from '../../../shared/components/Textarea';
 import {faculties} from '../../../shared/lib/faculties';
 const schema = z.object({
-    fullName: z.string().trim().min(1).max(150), faculty: z.string().trim().min(1).max(150),
-    bio: z.string().max(500), preferredTrack: z.enum(['', 'TECHNICAL', 'LOGISTICS']), experience: z.string().max(10000),
+    fullName: z.string().trim().min(1).max(150),
+    faculty: z.string().trim().min(1).max(150),
+    className: z.string().max(50).optional().default(''),
+    bio: z.string().max(500),
+    preferredTrack: z.enum(['', 'TECHNICAL', 'LOGISTICS']),
+    experience: z.string().max(10000),
 });
 
 export function ProfileEditor({profile}: { profile: Profile }) {
     useLanguage();
     const form = useForm<ProfileValues>({
         defaultValues: {
-            fullName: profile.user.fullName, faculty: profile.faculty, bio: profile.bio || '',
-            preferredTrack: profile.preferredTrack || '', experience: profile.experience || '',
+            fullName: profile.user.fullName,
+            faculty: profile.faculty,
+            className: profile.className || '',
+            bio: profile.bio || '',
+            preferredTrack: profile.preferredTrack || '',
+            experience: profile.experience || '',
         }
     });
     const update = useUpdateProfile();
@@ -30,8 +38,12 @@ export function ProfileEditor({profile}: { profile: Profile }) {
     useEffect(() => {
         if (!form.formState.isDirty) {
             form.reset({
-                fullName: profile.user.fullName, faculty: profile.faculty, bio: profile.bio || '',
-                preferredTrack: profile.preferredTrack || '', experience: profile.experience || ''
+                fullName: profile.user.fullName,
+                faculty: profile.faculty,
+                className: profile.className || '',
+                bio: profile.bio || '',
+                preferredTrack: profile.preferredTrack || '',
+                experience: profile.experience || ''
             });
             setExpected({version: profile.version, userVersion: profile.user.version});
         }
@@ -45,16 +57,21 @@ export function ProfileEditor({profile}: { profile: Profile }) {
         try {
             const saved = await update.mutateAsync({
                 ...parsed.data,
+                className: parsed.data.className || '',
                 preferredTrack: parsed.data.preferredTrack || null, ...expected
             });
             form.reset({
-                fullName: saved.user.fullName, faculty: saved.faculty, bio: saved.bio || '',
-                preferredTrack: saved.preferredTrack || '', experience: saved.experience || ''
+                fullName: saved.user.fullName,
+                faculty: saved.faculty,
+                className: saved.className || '',
+                bio: saved.bio || '',
+                preferredTrack: saved.preferredTrack || '',
+                experience: saved.experience || ''
             });
             setExpected({version: saved.version, userVersion: saved.user.version});
         } catch (error) {
             for (const field of apiError(error)?.fieldErrors || [])
-                if (['fullName', 'faculty', 'bio', 'preferredTrack', 'experience'].includes(field.field))
+                if (['fullName', 'faculty', 'className', 'bio', 'preferredTrack', 'experience'].includes(field.field))
                     form.setError(field.field as FieldPath<ProfileValues>, {message: field.message});
         }
     });
@@ -63,6 +80,8 @@ export function ProfileEditor({profile}: { profile: Profile }) {
         <form noValidate onSubmit={submit} className="space-y-4">
             <FormField id="fullName" label={tr("Họ và tên")} error={form.formState.errors.fullName?.message}><Input
                 id="fullName" maxLength={150} {...form.register('fullName')} /></FormField>
+            <FormField id="className" label={tr("Lớp sinh hoạt (VD: 21TCLC_DT1)")} error={form.formState.errors.className?.message}><Input
+                id="className" placeholder="VD: 21TCLC_DT1" maxLength={50} {...form.register('className')} /></FormField>
             <FormField id="faculty" label="Khoa" error={form.formState.errors.faculty?.message}><Select id="faculty" {...form.register('faculty')}>
                 {renderText(!faculties.some(f => f === profile.faculty) && <option value={profile.faculty}>{renderText(profile.faculty)}</option>)}
                 {renderText(faculties.map(f => <option key={f} value={f}>{renderText(f)}</option>))}

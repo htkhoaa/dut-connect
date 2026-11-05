@@ -13,6 +13,12 @@ public class Campaign {
     @Column(nullable=false) private Instant createdAt;
     @Column(nullable=false) private Instant updatedAt;
     @Version private Long version;
+    @Column(length=30) private String payoutStatus;
+    @Column(columnDefinition="bytea") private byte[] payoutReceiptData;
+    @Column(length=100) private String payoutReceiptContentType;
+    @Column(precision=19, scale=0) private java.math.BigDecimal payoutAmount;
+    private Instant payoutTransferredAt;
+    @Column(columnDefinition="text") private String payoutNote;
     protected Campaign() {}
     public Campaign(Proposal proposal, String slug) {
         if (proposal.status() != ProposalStatus.APPROVED)
@@ -58,6 +64,21 @@ public class Campaign {
     public CampaignContent content() { return content; }
     public CampaignStatus status() { return status; }
     public Long version() { return version; }
+    public String payoutStatus() { return payoutStatus; }
+    public byte[] payoutReceiptData() { return payoutReceiptData; }
+    public String payoutReceiptContentType() { return payoutReceiptContentType; }
+    public java.math.BigDecimal payoutAmount() { return payoutAmount; }
+    public Instant payoutTransferredAt() { return payoutTransferredAt; }
+    public String payoutNote() { return payoutNote; }
+    public void confirmPayout(java.math.BigDecimal amount, byte[] receiptData, String contentType, String note) {
+        this.payoutStatus = "PAID_OUT";
+        this.payoutAmount = amount;
+        this.payoutReceiptData = receiptData;
+        this.payoutReceiptContentType = contentType;
+        this.payoutNote = note;
+        this.payoutTransferredAt = Instant.now();
+        touch();
+    }
     public Instant createdAt() { return createdAt; }
     public Instant updatedAt() { return updatedAt; }
 }

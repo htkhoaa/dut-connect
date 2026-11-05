@@ -7,6 +7,9 @@ import {lazy} from 'react';
 import {RouteGuard} from '../../features/auth/RouteGuard';
 
 const AuthPage = lazy(() => import('../../features/auth/AuthPage').then((m) => ({default: m.AuthPage})));
+const SettingsPage = lazy(() => import('../../features/settings/SettingsPage').then((m) => ({default: m.SettingsPage})));
+const QrCheckinPage = lazy(() => import('../../features/attendance/QrCheckinPage').then((m) => ({default: m.QrCheckinPage})));
+const AdminPayoutPage = lazy(() => import('../../features/admin/payouts/AdminPayoutPage').then((m) => ({default: m.AdminPayoutPage})));
 const ProfilePage = lazy(() => import('../../features/profile/ProfilePage').then((m) => ({default: m.ProfilePage})));
 const UsersPage = lazy(() => import('../../features/admin/users/UsersPage').then((m) => ({default: m.UsersPage})));
 const OrganizationListPage = lazy(() => import('../../features/organizations/OrganizationListPage').then((m) => ({default: m.OrganizationListPage})));
@@ -46,6 +49,8 @@ export const router = createBrowserRouter([
             {path: '/organizations', element: <OrganizationListPage/>},
             {path: '/organizations/:id', element: <OrganizationDetailPage/>},
             {element: <RouteGuard/>, children: [
+                {path: '/attendance/checkin', element: <QrCheckinPage/>},
+                {path: '/me/settings', element: <SettingsPage/>},
                 {path: '/me/profile', element: <ProfilePage/>},
                 {path:'/me/donations',element:<DonationsPage/>},
                 {path:'/donations/:donationId',element:<PaymentResultPage/>},
@@ -74,6 +79,7 @@ export const router = createBrowserRouter([
             ]},
             {element: <RouteGuard admin/>, children: [
                 {path:'/admin',element:<AdminDashboardPage/>},
+                {path: '/admin/payouts', element: <AdminPayoutPage/>},
                 {path: '/admin/users', element: <UsersPage/>},
                 {path: '/admin/expenses', element: <AdminExpensesPage/>},
                 {path: '/admin/organizations', element: <OrganizationListPage scope="admin"/>},

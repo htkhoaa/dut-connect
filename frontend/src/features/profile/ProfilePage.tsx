@@ -17,7 +17,7 @@ export function ProfilePage() {
     if (profile.isPending) return <LoadingState message={tr("Đang tải hồ sơ…")}/>;
     if (profile.isError) return <ErrorState message={errorMessage(profile.error)} onRetry={() => void profile.refetch()}/>;
     return <>
-        <div className="profile-heading mb-7"><UserAvatar className="profile-avatar"/><div className="min-w-0 flex-1"><p className="eyebrow text-primary">{tr("KHÔNG GIAN CỦA BẠN")}</p><h1 className="mt-2 break-words text-3xl font-bold">{renderText(profile.data.user.fullName)}</h1><p className="mt-2 text-sm text-text-secondary">{renderText(profile.data.faculty)} · {renderText(profile.data.user.studentId)}</p></div>
+        <div className="profile-heading mb-7"><UserAvatar className="profile-avatar"/><div className="min-w-0 flex-1"><p className="eyebrow text-primary">{tr("KHÔNG GIAN CỦA BẠN")}</p><h1 className="mt-2 break-words text-3xl font-bold">{renderText(profile.data.user.fullName)}</h1><p className="mt-2 text-sm text-text-secondary">{profile.data.className ? `${profile.data.className} · ` : ''}{renderText(profile.data.faculty)} · {renderText(profile.data.user.studentId)}</p></div>
             <Button variant="secondary" onClick={() => setConfirmReload(true)}>{tr("Tải lại hồ sơ")}</Button>
         </div>
         <div className="mb-6 flex items-start gap-3 rounded-xl border border-primary-muted bg-primary-light p-4"><Icon name="spark" className="shrink-0 text-primary"/><p className="text-sm text-text-secondary">{tr("Chia sẻ kỹ năng và kinh nghiệm để ban tổ chức hiểu rõ hơn cách bạn có thể đóng góp.")}</p></div>

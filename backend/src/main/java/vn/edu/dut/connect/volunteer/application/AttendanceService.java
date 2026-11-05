@@ -1,6 +1,7 @@
 package vn.edu.dut.connect.volunteer.application;
 
 import java.util.*;
+import java.time.Instant;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,6 +71,29 @@ public class AttendanceService {
         v.touch();
         repository.saveSession(v);
         return new AttendanceResult(dto(v), recordDtos(rows));
+    }
+
+    @Transactional
+    public QrSessionDto generateQr(UUID sessionId, UUID actor) {
+        var session = writable(sessionId, actor);
+        String token = session.generateQrToken();
+        repository.saveSession(session);
+        String checkinUrl = "/attendance/checkin?token=" + token;
+        String qrImageUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + token;
+        return new QrSessionDto(session.id(), token, session.qrExpiresAt(), checkinUrl, qrImageUrl);
+    }
+
+    @Transactional
+    public QrCheckinResponse checkinQr(String token, UUID actor) {
+        if (token == null || token.isBlank()) throw new ApplicationFailure(400, "VALIDATION_ERROR", "Token is required");
+        var session = repository.sessionByQrToken(token)
+                .orElseThrow(() -> ApplicationFailure.missing("Attendance session not found for this QR code"));
+        if (session.qrExpiresAt() != null && Instant.now().isAfter(session.qrExpiresAt())) {
+            throw new ApplicationFailure(400, "QR_EXPIRED", "This attendance QR code has expired");
+        }
+        access.accepted(session.campaignId(), List.of(actor));
+        repository.upsert(session.id(), actor, List.of(new AttendanceInput(actor, AttendanceStatus.PRESENT)));
+        return new QrCheckinResponse(session.id(), session.title(), session.campaignId(), Instant.now());
     }
 
     private AttendanceSession writable(UUID id, UUID actor) {

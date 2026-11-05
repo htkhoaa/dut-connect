@@ -40,6 +40,23 @@ public class PaymentCallbackService {
         }
     }
 
+    public Acknowledgment receivePayOS(String body) {
+        if (body == null || body.length() > 65536) return invalid();
+        try {
+            payments.callback("payos", new PaymentGateway.Callback(body, "", 0));
+            return new Acknowledgment(0, "Success");
+        } catch (PaymentViolation | DataIntegrityViolationException e) {
+            log.warn("PayOS webhook rejected failureType={}", e.getClass().getSimpleName());
+            return invalid();
+        } catch (ApplicationFailure e) {
+            log.warn("PayOS webhook rejected code={} status={}", e.code(), e.status());
+            return e.status() >= 500 ? new Acknowledgment(1, "Temporarily unavailable") : invalid();
+        } catch (Exception e) {
+            log.warn("PayOS webhook exception", e);
+            return invalid();
+        }
+    }
+
     private static Acknowledgment invalid() {
         return new Acknowledgment(2, "Invalid");
     }

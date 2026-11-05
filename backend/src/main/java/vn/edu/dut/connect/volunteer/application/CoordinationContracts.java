@@ -75,4 +75,10 @@ public final class CoordinationContracts {
                              CompletionStatus completionStatus, String verifiedHours, Instant verifiedAt, String note,
                              long presentSessions, long totalSessions) {
     }
+
+    public record QrSessionDto(UUID sessionId, String qrToken, Instant qrExpiresAt, String checkinUrl, String qrCodeImageUrl) {
+    }
+
+    public record QrCheckinResponse(UUID sessionId, String sessionTitle, UUID campaignId, Instant checkedInAt) {
+    }
 }

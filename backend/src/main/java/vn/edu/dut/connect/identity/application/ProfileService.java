@@ -36,7 +36,7 @@ public class ProfileService {
         RegistrationRules.version(profile.version(), request.version());
         if (!profile.faculty().equals(request.faculty().trim())) Faculties.require(request.faculty());
         user.rename(request.fullName().trim());
-        profile.update(request.faculty().trim(), trim(request.bio()), request.preferredTrack(), trim(request.experience()));
+        profile.update(request.faculty().trim(), trim(request.bio()), request.preferredTrack(), trim(request.experience()), trim(request.className()));
         users.saveUser(user);
         profiles.saveProfile(profile);
         return response(user, profile);
@@ -73,7 +73,7 @@ public class ProfileService {
     }
 
     private ProfileResponse response(User user, StudentProfile profile) {
-        return new ProfileResponse(UserSummary.from(user), profile.faculty(), profile.bio(), profile.preferredTrack(), profile.experience(),
+        return new ProfileResponse(UserSummary.from(user), profile.faculty(), profile.className(), profile.bio(), profile.preferredTrack(), profile.experience(),
                 profile.version(), skills.userSkills(user.id()).stream().map(SkillResponse::from).toList());
     }
 

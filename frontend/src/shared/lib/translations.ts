@@ -1,6 +1,8 @@
 /** Vietnamese remains the source language; translations are bundled, with no runtime service. */
 export const english: Record<string, string> = Object.fromEntries(`
 Mã sinh viên|Student ID
+Lớp sinh hoạt (VD: 21TCLC_DT1)|Class (e.g. 21TCLC_DT1)
+Lớp sinh hoạt|Class
 Mật khẩu|Password
 Email sinh viên|Student email
 Họ và tên|Full name
@@ -859,3 +861,45 @@ Object.assign(english, {
 });
 
 Object.assign(english, {'Xóa ảnh đại diện?':'Remove profile picture?', 'Bạn có thể tải một ảnh mới sau khi xóa.':'You can upload a new picture after removal.', 'Lịch mô phỏng':'Simulated schedule'});
+
+Object.assign(english, {
+  'Quản lý giải ngân quyên góp (Payout)': 'Donation Payout Management',
+  'Giải ngân quyên góp': 'Donation Payout',
+  'Thông tin giải ngân': 'Payout account info',
+  'Số tiền hiện tại': 'Current funds',
+  'Xác nhận đã giải ngân': 'Confirm payout completed',
+  'Chưa cập nhật STK': 'Bank account not set',
+  'Điểm danh bằng QR Code': 'QR Code Attendance',
+  'Mã QR Điểm danh': 'Attendance QR Code',
+  'Xác nhận điểm danh': 'Confirm attendance',
+  'Tạo poster kết quả': 'Generate result poster',
+  'Ẩn poster kết quả': 'Hide result poster',
+  'Xuất / In báo cáo PDF': 'Export / Print PDF Report',
+  'Xuất chứng nhận PDF': 'Export Certificate (PDF)',
+  'Xem biên lai': 'View payout receipt',
+  'Đang quyên góp': 'Fundraising',
+  'Đã đạt mục tiêu': 'Goal reached',
+  'Đã kết thúc - Chờ giải ngân': 'Completed - Pending payout',
+  'Đã giải ngân': 'Disbursed',
+  'Đã xác minh số giờ: ': 'Verified hours: ',
+  'Đã ghi nhận số giờ: ': 'Recorded hours: ',
+  'Buổi có mặt: ': 'Present sessions: ',
+  'Chứng từ: ': 'Proof: ',
+  'Biên lai chuyển khoản thành công (ảnh chụp màn hình)': 'Transfer receipt proof (screenshot)',
+  'Số tiền giải ngân (VND)': 'Payout amount (VND)',
+  'Ghi chú minh chứng (tùy chọn)': 'Proof note (optional)',
+  'Xác nhận giải ngân cho chiến dịch': 'Confirm payout for campaign',
+  'Liên kết điểm danh trực tiếp:': 'Direct attendance check-in link:',
+  'Tình nguyện viên quét mã QR này bằng điện thoại để điểm danh tự động.': 'Volunteers scan this QR code with their phone to check in automatically.',
+  'Tải mã QR': 'Download QR code',
+  'Nhập mã token điểm danh…': 'Enter attendance token…',
+  'Mã điểm danh hoặc liên kết QR': 'Attendance code or QR link',
+  'Sự có mặt của bạn đã được ghi nhận vào hệ thống.': 'Your presence has been recorded in the system.',
+  'Xem lịch sử tham gia': 'View participation history',
+  'Thông tin tài khoản nhận giải ngân của chiến dịch': 'Campaign payout bank account details',
+  'Chưa cập nhật': 'Not set',
+  'Xem hóa đơn đính kèm': 'View attached receipt',
+  'Xem hóa đơn hiện tại': 'View current receipt',
+  'Ảnh hóa đơn chứng từ (tùy chọn, tối đa 5MB)': 'Expense receipt image (optional, max 5MB)',
+  'Đã có hóa đơn đính kèm:': 'Attached receipt available:'
+});
