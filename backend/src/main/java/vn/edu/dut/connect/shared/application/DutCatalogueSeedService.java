@@ -79,7 +79,7 @@ public class DutCatalogueSeedService {
                     today.plusDays(seed.deadlineOffset()).atTime(23, 59).toInstant(ZoneOffset.UTC), null,
                     seed.capacity(), 0, seed.capacity(),
                     "Sinh viên quan tâm hoạt động cộng đồng; tham gia buổi hướng dẫn an toàn, làm việc theo nhóm và tuân thủ phân công. Chỉ tiêu tuyển là mô phỏng.",
-                    null, BigDecimal.ZERO, null, BigDecimal.ZERO, null);
+                    null, BigDecimal.ZERO, null, BigDecimal.ZERO, null, null, null, null);
             var proposal = proposals.create(actor, new CampaignContracts.CreateRequest(content));
             var campaign = reviews.approve(proposal.id(), actor, new CampaignContracts.VersionRequest(proposal.version()));
             for (CampaignStatus step : steps(seed.status()))

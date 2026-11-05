@@ -22,10 +22,6 @@ public class CampaignController {
     public PageResponse<CampaignSummary> mine(Authentication auth, @RequestParam(defaultValue="0") int page, @RequestParam(defaultValue="20") int size, @RequestParam(required=false) String q, @RequestParam(required=false) CampaignStatus status,
             @RequestParam(required=false) UUID categoryId, @RequestParam(required=false) ContributionMode contributionMode,
             @RequestParam(required=false) UUID organizationId, @RequestParam(defaultValue="newest") String sort) { return PageResponse.from(views.mine(UUID.fromString(auth.getName()),new CampaignQuery(page,size,q,status,categoryId,contributionMode,organizationId,sort))); }
-    @GetMapping("/admin/campaigns")
-    public PageResponse<CampaignSummary> adminList(Authentication auth, @RequestParam(defaultValue="0") int page, @RequestParam(defaultValue="20") int size, @RequestParam(required=false) String q, @RequestParam(required=false) CampaignStatus status,
-            @RequestParam(required=false) UUID categoryId, @RequestParam(required=false) ContributionMode contributionMode,
-            @RequestParam(required=false) UUID organizationId, @RequestParam(defaultValue="newest") String sort) { return PageResponse.from(views.adminList(UUID.fromString(auth.getName()),new CampaignQuery(page,size,q,status,categoryId,contributionMode,organizationId,sort))); }
     @GetMapping("/campaigns/{idOrSlug}")
     public CampaignDetail get(@PathVariable String idOrSlug, Authentication auth) { return views.get(idOrSlug,auth==null?null:UUID.fromString(auth.getName())); }
     @PatchMapping("/campaigns/{id}")

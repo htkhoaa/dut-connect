@@ -25,5 +25,8 @@ public record ContentInput(
     @Digits(integer=19, fraction=0) BigDecimal institutionalFunding,
     @Size(max=200) String sponsorName,
     @Digits(integer=19, fraction=0) BigDecimal sponsorFunding,
-    @Digits(integer=19, fraction=0) BigDecimal estimatedBudget
+    @Digits(integer=19, fraction=0) BigDecimal estimatedBudget,
+    @Size(max=120) String donationBankName,
+    @Size(max=64) String donationAccountNumber,
+    @Size(max=200) String donationAccountHolder
 ) {}

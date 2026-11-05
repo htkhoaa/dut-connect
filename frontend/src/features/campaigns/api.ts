@@ -1,6 +1,6 @@
 import {apiClient} from '../../shared/api/client';
 import type {PageResponse} from '../../shared/api/errors';
-import type {CampaignSummary,CampaignDetail,CampaignFilters,Category,CategoryWrite,PlanWrite,CampaignAction,Manager,TeamAction,SkillInput,SkillOption,OrganizationOption} from './types';
+import type {CampaignSummary,CampaignDetail,CampaignFilters,Category,CategoryWrite,PlanWrite,CampaignAction,SkillInput,SkillOption,OrganizationOption} from './types';
 export async function campaignList(scope:'public'|'mine'|'admin',filters:CampaignFilters) {
     return (await apiClient.get<PageResponse<CampaignSummary>>(scope==='mine'?'/me/campaigns':scope==='admin'?'/admin/campaigns':'/campaigns',{params:{...filters,size:20,status:filters.status||undefined,categoryId:filters.categoryId||undefined,organizationId:filters.organizationId||undefined,contributionMode:filters.contributionMode||undefined}})).data;
 }
@@ -19,11 +19,6 @@ export async function saveCategory(id:string|undefined,values:CategoryWrite) {
 export async function organizationOptions(scope:'public'|'mine') {
     const items:OrganizationOption[]=[];let page=0;
     while(true){const result=(await apiClient.get<PageResponse<OrganizationOption>>(scope==='mine'?'/me/organizations':'/organizations',{params:{page:page++,size:100}})).data;items.push(...result.items.filter(o=>o.status==='VERIFIED'));if(!result.hasNext)return items;}
-}
-export async function team(id:string,page:number) {return (await apiClient.get<PageResponse<Manager>>('/campaigns/'+id+'/managers',{params:{page,size:20}})).data;}
-export async function changeTeam(id:string,action:TeamAction) {
-    if(action.command==='add')return (await apiClient.post<CampaignDetail>('/campaigns/'+id+'/managers',{studentId:action.studentId,version:action.version})).data;
-    await apiClient.delete('/campaigns/'+id+'/managers/'+action.userId,{params:{version:action.version}});
 }
 export async function skillCatalog() {
     const items:SkillOption[]=[];let page=0;

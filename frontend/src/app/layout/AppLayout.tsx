@@ -26,7 +26,6 @@ const admin: Item[] = [
     {to: '/admin/proposals', label: 'Duyệt đề xuất', icon: 'file'},
     {to: '/admin/organizations', label: 'Xác minh tổ chức', icon: 'shield'},
     {to: '/admin/expenses', label: 'Duyệt chi phí', icon: 'file'},
-    {to: '/admin/campaigns', label: 'Tất cả chiến dịch', icon: 'heart'},
     {to: '/admin/users', label: 'Người dùng', icon: 'users'},
     {to: '/admin/categories', label: 'Danh mục', icon: 'grid'},
 ];

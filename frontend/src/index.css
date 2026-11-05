@@ -58,6 +58,9 @@
  .contribution-grid {@apply grid gap-4 md:grid-cols-3;}
  .contribution-card {@apply flex items-start gap-4;}
  .campaign-grid {@apply grid gap-6 md:grid-cols-2 xl:grid-cols-3;}
+ .campaign-workspace {position:relative;}
+ .campaign-workspace::before {content:'';position:absolute;inset:-2rem -2rem auto;height:13rem;z-index:-1;background:radial-gradient(circle at 8% 0%,rgb(21 86 213 / .14),transparent 58%);pointer-events:none;}
+ .campaign-workspace>.ui-card {box-shadow:0 10px 30px rgb(23 40 66 / .045);}
  .campaign-cover {@apply h-52;}
  .campaign-cover img {transition:transform .4s;}
  .campaign-card:hover .campaign-cover img {transform:scale(1.035);}

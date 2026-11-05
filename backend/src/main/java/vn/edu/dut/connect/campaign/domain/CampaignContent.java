@@ -26,6 +26,9 @@ public class CampaignContent {
     @Column(length=200) private String sponsorName;
     @Column(precision=19, scale=0) private BigDecimal sponsorFunding;
     @Column(precision=19, scale=0) private BigDecimal estimatedBudget;
+    @Column(name="donation_bank_name", length=120) private String donationBankName;
+    @Column(name="donation_account_number", length=64) private String donationAccountNumber;
+    @Column(name="donation_account_holder", length=200) private String donationAccountHolder;
     protected CampaignContent() {}
     public CampaignContent(ContentInput input) {
         organizerType = input.organizerType();
@@ -49,6 +52,9 @@ public class CampaignContent {
         sponsorName = normalize(input.sponsorName());
         sponsorFunding = input.sponsorFunding() == null ? BigDecimal.ZERO : input.sponsorFunding();
         estimatedBudget = input.estimatedBudget();
+        donationBankName = normalize(input.donationBankName());
+        donationAccountNumber = normalize(input.donationAccountNumber());
+        donationAccountHolder = normalize(input.donationAccountHolder());
         validate();
         fundraisingGoal = wholeMoney(fundraisingGoal);
         institutionalFunding = wholeMoney(institutionalFunding);
@@ -57,7 +63,7 @@ public class CampaignContent {
     }
     public CampaignContent merge(ContentInput patch, Set<String> clearFields) {
         Set<String> clears = clearFields == null ? Set.of() : clearFields;
-        if (!Set.of("organizationId", "expectedImpact", "applicationDeadline", "fundraisingDeadline", "targetVolunteerCount", "targetTechnicalCount", "targetLogisticsCount", "volunteerRequirements", "fundraisingGoal", "sponsorName", "estimatedBudget").containsAll(clears))
+        if (!Set.of("organizationId", "expectedImpact", "applicationDeadline", "fundraisingDeadline", "targetVolunteerCount", "targetTechnicalCount", "targetLogisticsCount", "volunteerRequirements", "fundraisingGoal", "sponsorName", "estimatedBudget", "donationBankName", "donationAccountNumber", "donationAccountHolder").containsAll(clears))
             invalid("clearFields", "Only optional fields may be cleared");
         for (String field : clears) {
             boolean supplied = switch (field) {
@@ -72,6 +78,9 @@ public class CampaignContent {
                 case "fundraisingGoal" -> patch.fundraisingGoal() != null;
                 case "sponsorName" -> patch.sponsorName() != null;
                 case "estimatedBudget" -> patch.estimatedBudget() != null;
+                case "donationBankName" -> patch.donationBankName() != null;
+                case "donationAccountNumber" -> patch.donationAccountNumber() != null;
+                case "donationAccountHolder" -> patch.donationAccountHolder() != null;
                 default -> false;
             };
             if (supplied) invalid(field, "Choose a value or clearFields, not both");
@@ -97,11 +106,14 @@ public class CampaignContent {
             patch.institutionalFunding() == null ? institutionalFunding : patch.institutionalFunding(),
             clears.contains("sponsorName") ? null : patch.sponsorName() == null ? sponsorName : patch.sponsorName(),
             patch.sponsorFunding() == null ? sponsorFunding : patch.sponsorFunding(),
-            clears.contains("estimatedBudget") ? null : patch.estimatedBudget() == null ? estimatedBudget : patch.estimatedBudget()
+            clears.contains("estimatedBudget") ? null : patch.estimatedBudget() == null ? estimatedBudget : patch.estimatedBudget(),
+            clears.contains("donationBankName") ? null : patch.donationBankName() == null ? donationBankName : patch.donationBankName(),
+            clears.contains("donationAccountNumber") ? null : patch.donationAccountNumber() == null ? donationAccountNumber : patch.donationAccountNumber(),
+            clears.contains("donationAccountHolder") ? null : patch.donationAccountHolder() == null ? donationAccountHolder : patch.donationAccountHolder()
         ));
     }
     public ContentInput values() {
-        return new ContentInput(organizerType, organizationId, categoryId, title, summary, description, expectedImpact, contributionMode, startDate, endDate, applicationDeadline, fundraisingDeadline, targetVolunteerCount, targetTechnicalCount, targetLogisticsCount, volunteerRequirements, fundraisingGoal, institutionalFunding, sponsorName, sponsorFunding, estimatedBudget);
+        return new ContentInput(organizerType, organizationId, categoryId, title, summary, description, expectedImpact, contributionMode, startDate, endDate, applicationDeadline, fundraisingDeadline, targetVolunteerCount, targetTechnicalCount, targetLogisticsCount, volunteerRequirements, fundraisingGoal, institutionalFunding, sponsorName, sponsorFunding, estimatedBudget, donationBankName, donationAccountNumber, donationAccountHolder);
     }
     private void validate() {
         if (organizerType == null) invalid("organizerType", "Choose an organizer type");
@@ -125,6 +137,11 @@ public class CampaignContent {
             invalid("targetTechnicalCount", "Technical and logistics targets cannot exceed the volunteer target");
         if (contributionMode == ContributionMode.VOLUNTEER_ONLY && (fundraisingGoal != null || fundraisingDeadline != null))
             invalid("fundraisingGoal", "Volunteer-only campaigns cannot configure fundraising");
+        boolean fundraising = contributionMode != ContributionMode.VOLUNTEER_ONLY;
+        if (fundraising && (donationBankName == null || donationAccountNumber == null || donationAccountHolder == null))
+            invalid("donationAccountNumber", "Donation campaigns require bank account details");
+        if (!fundraising && (donationBankName != null || donationAccountNumber != null || donationAccountHolder != null))
+            invalid("donationAccountNumber", "Volunteer-only campaigns cannot configure donation account details");
         money("fundraisingGoal", fundraisingGoal, true); money("institutionalFunding", institutionalFunding, false);
         money("sponsorFunding", sponsorFunding, false); money("estimatedBudget", estimatedBudget, false);
     }
@@ -164,4 +181,7 @@ public class CampaignContent {
     public String sponsorName() { return sponsorName; }
     public BigDecimal sponsorFunding() { return sponsorFunding; }
     public BigDecimal estimatedBudget() { return estimatedBudget; }
+    public String donationBankName() { return donationBankName; }
+    public String donationAccountNumber() { return donationAccountNumber; }
+    public String donationAccountHolder() { return donationAccountHolder; }
 }

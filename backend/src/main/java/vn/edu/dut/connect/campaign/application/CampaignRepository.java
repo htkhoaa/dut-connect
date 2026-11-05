@@ -16,8 +16,6 @@ public interface CampaignRepository {
     Set<UUID> managedCampaigns(Set<UUID> ids,UUID userId);
     Optional<ManagerRole> role(UUID campaignId, UUID userId);
     void addManager(UUID campaignId, UUID userId, ManagerRole role);
-    void removeManager(UUID campaignId, UUID userId);
-    PageResult<ManagerMembership> managers(UUID campaignId, CampaignQuery query);
     List<Requirement> skills(UUID campaignId);
     void replaceSkills(UUID campaignId, List<Requirement> items);
     void lockSlug(String slug);

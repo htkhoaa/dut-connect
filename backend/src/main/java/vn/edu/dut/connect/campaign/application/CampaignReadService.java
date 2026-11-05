@@ -23,7 +23,6 @@ public class CampaignReadService {
     }
     public PageResult<CampaignSummary> browse(CampaignQuery query) { return summaries(campaigns.list(query,null,CampaignRepository.Visibility.PUBLIC)); }
     public PageResult<CampaignSummary> mine(UUID actor, CampaignQuery query) { access.active(actor); return summaries(campaigns.list(query,actor,CampaignRepository.Visibility.ALL)); }
-    public PageResult<CampaignSummary> adminList(UUID actor, CampaignQuery query) { access.admin(actor); return summaries(campaigns.list(query,null,CampaignRepository.Visibility.ALL)); }
     public CampaignDetail get(String idOrSlug, UUID actor) {
         Optional<Campaign> result;
         try { result=campaigns.find(UUID.fromString(idOrSlug)); }
@@ -38,10 +37,9 @@ public class CampaignReadService {
         var contact=identities.findAccount(c.contactId()).orElseThrow(()->ApplicationFailure.missing("Contact not found"));
         String organizer=c.content().organizationId()==null?contact.fullName():organizations.names(Set.of(c.content().organizationId())).get(c.content().organizationId());
         ManagerRole role=actor==null?null:campaigns.role(c.id(),actor).orElse(null);
-        boolean admin=actor!=null && access.active(actor).admin();
         boolean mutable=c.status()!=CampaignStatus.COMPLETED && c.status()!=CampaignStatus.CANCELLED;
         return new CampaignDetail(c.id(),c.slug(),c.proposalId(),c.contactId(),contact.fullName(),organizer,categories.find(c.content().categoryId()).orElseThrow().name(),
-                ContentDto.from(c.content()),c.status(),c.createdAt(),c.updatedAt(),c.version(),role,mutable && (admin || role!=null),mutable && (admin || role==ManagerRole.OWNER),skills(c.id()));
+                ContentDto.from(c.content()),c.status(),c.createdAt(),c.updatedAt(),c.version(),role,mutable && role==ManagerRole.OWNER, false,skills(c.id()));
     }
     public List<SkillDto> skills(UUID id) {
         var items=campaigns.skills(id);

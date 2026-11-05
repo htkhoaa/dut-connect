@@ -66,7 +66,7 @@ export function AuthPage({admin = false}: { admin?: boolean }) {
                     /^\/me\/campaigns\/[0-9a-f-]{36}\/meetings$/i.test(state?.from || '') ||
                     /^\/tasks\/[0-9a-f-]{36}$/i.test(state?.from || '') ||
                     /^\/(?:proposals|manage\/campaigns)\/[0-9a-f-]{36}$/i.test(state?.from || '') ||
-                    (['/admin', '/admin/users', '/admin/organizations', '/admin/proposals', '/admin/categories', '/admin/campaigns', '/admin/expenses'].includes(state?.from || '') && session.user.role === 'ADMIN') ? state?.from : undefined;
+                    (['/admin', '/admin/users', '/admin/organizations', '/admin/proposals', '/admin/categories', '/admin/expenses'].includes(state?.from || '') && session.user.role === 'ADMIN') ? state?.from : undefined;
                 navigate(target || (session.user.role === 'ADMIN' ? '/admin' : '/me/profile'), {replace: true});
             }
         } catch (error) {

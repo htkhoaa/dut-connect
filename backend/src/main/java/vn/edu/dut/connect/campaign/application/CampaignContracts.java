@@ -28,10 +28,13 @@ public final class CampaignContracts {
         String institutionalFunding,
         String sponsorName,
         String sponsorFunding,
-        String estimatedBudget
+        String estimatedBudget,
+        String donationBankName,
+        String donationAccountNumber,
+        String donationAccountHolder
     ) {
         public static ContentDto from(CampaignContent c) {
-            return new ContentDto(c.organizerType(), c.organizationId(), c.categoryId(), c.title(), c.summary(), c.description(), c.expectedImpact(), c.contributionMode(), c.startDate(), c.endDate(), c.applicationDeadline(), c.fundraisingDeadline(), c.targetVolunteerCount(), c.targetTechnicalCount(), c.targetLogisticsCount(), c.volunteerRequirements(), c.fundraisingGoal() == null ? null : c.fundraisingGoal().toPlainString(), c.institutionalFunding() == null ? null : c.institutionalFunding().toPlainString(), c.sponsorName(), c.sponsorFunding() == null ? null : c.sponsorFunding().toPlainString(), c.estimatedBudget() == null ? null : c.estimatedBudget().toPlainString());
+            return new ContentDto(c.organizerType(), c.organizationId(), c.categoryId(), c.title(), c.summary(), c.description(), c.expectedImpact(), c.contributionMode(), c.startDate(), c.endDate(), c.applicationDeadline(), c.fundraisingDeadline(), c.targetVolunteerCount(), c.targetTechnicalCount(), c.targetLogisticsCount(), c.volunteerRequirements(), c.fundraisingGoal() == null ? null : c.fundraisingGoal().toPlainString(), c.institutionalFunding() == null ? null : c.institutionalFunding().toPlainString(), c.sponsorName(), c.sponsorFunding() == null ? null : c.sponsorFunding().toPlainString(), c.estimatedBudget() == null ? null : c.estimatedBudget().toPlainString(), c.donationBankName(), c.donationAccountNumber(), c.donationAccountHolder());
         }
     }
     public record CreateRequest(@NotNull @Valid ContentInput content) {}
@@ -50,9 +53,6 @@ public final class CampaignContracts {
     public record CampaignDetail(UUID id, String slug, UUID proposalId, UUID primaryContactUserId, String primaryContactName, String organizerName, String categoryName,
         ContentDto content, CampaignStatus status, Instant createdAt, Instant updatedAt, long version, ManagerRole ownRole, boolean canManage, boolean canAssignManagers,
         List<SkillDto> skills) {}
-    public record ManagerMembership(UUID userId, ManagerRole managerRole, Instant createdAt) {}
-    public record ManagerDto(UUID userId, String studentId, String fullName, ManagerRole managerRole, Instant createdAt) {}
-    public record AddManagerRequest(@NotBlank @Size(max=32) String studentId, @NotNull @PositiveOrZero Long version) {}
     public record Requirement(@NotNull UUID skillId, @NotNull SkillTrack track, @Min(1) @Max(5) Integer importance) {
         public Requirement { importance = importance == null ? 3 : importance; }
     }

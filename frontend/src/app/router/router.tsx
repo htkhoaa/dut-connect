@@ -31,7 +31,6 @@ const PaymentResultPage=lazy(()=>import('../../features/donations/PaymentResultP
 const MockCheckoutPage=lazy(()=>import('../../features/donations/MockCheckoutPage').then(m=>({default:m.MockCheckoutPage})));
 const FinancePage=lazy(()=>import('../../features/finance/FinancePage').then(m=>({default:m.FinancePage})));
 const AdminExpensesPage=lazy(()=>import('../../features/finance/AdminExpensesPage').then(m=>({default:m.AdminExpensesPage})));
-const MatchingPage=lazy(()=>import('../../features/ai/MatchingPage').then(m=>({default:m.MatchingPage})));
 const AdminDashboardPage=lazy(()=>import('../../features/dashboard/AdminDashboardPage').then(m=>({default:m.AdminDashboardPage})));
 const ReportsPage=lazy(()=>import('../../features/reports/ReportsPage').then(m=>({default:m.ReportsPage})));
 export const router = createBrowserRouter([
@@ -61,7 +60,6 @@ export const router = createBrowserRouter([
                 {path:'/manage/campaigns/:campaignId/attendance',element:<AttendancePage/>},
                 {path:'/manage/campaigns/:campaignId/completions',element:<CompletionPage/>},
                 {path:'/manage/campaigns/:campaignId/finance',element:<FinancePage/>},
-                {path:'/manage/campaigns/:campaignId/ai',element:<MatchingPage/>},
                 {path:'/manage/campaigns/:campaignId/reports',element:<ReportsPage/>},
                 {path: '/me/applications', element: <ApplicationsPage mine/>},
                 {path: '/me/organizations', element: <OrganizationListPage scope="mine"/>},
@@ -81,7 +79,6 @@ export const router = createBrowserRouter([
                 {path: '/admin/organizations', element: <OrganizationListPage scope="admin"/>},
                 {path: '/admin/proposals', element: <ProposalListPage admin/>},
                 {path: '/admin/categories', element: <CategoryManagementPage/>},
-                {path: '/admin/campaigns', element: <CampaignListPage scope="admin"/>},
             ]},
             {path: '*', element: <NotFoundPage/>},
         ],

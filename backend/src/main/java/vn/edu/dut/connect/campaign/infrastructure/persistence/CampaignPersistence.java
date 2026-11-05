@@ -31,16 +31,6 @@ public class CampaignPersistence implements CampaignRepository {
         jdbc.sql("insert into dut_connect.campaign_managers(campaign_id,user_id,manager_role,created_at) values(:id,:user,:role,:now)")
                 .param("id",id).param("user",user).param("role",role.name()).param("now",java.sql.Timestamp.from(Instant.now())).update();
     }
-    public void removeManager(UUID id, UUID user) {
-        jdbc.sql("delete from dut_connect.campaign_managers where campaign_id=:id and user_id=:user").param("id",id).param("user",user).update();
-    }
-    public PageResult<ManagerMembership> managers(UUID id, CampaignQuery query) {
-        long total=jdbc.sql("select count(*) from dut_connect.campaign_managers where campaign_id=:id").param("id",id).query(Long.class).single();
-        var items=jdbc.sql("select user_id,manager_role,created_at from dut_connect.campaign_managers where campaign_id=:id order by created_at,user_id limit :size offset :offset")
-                .param("id",id).param("size",query.size()).param("offset",(long)query.page()*query.size()).query(ManagerMembership.class).list();
-        int pages=(int)Math.min(Integer.MAX_VALUE,(total+query.size()-1)/query.size());
-        return new PageResult<>(items,query.page(),query.size(),total,pages,query.page()+1L<pages,query.page()>0);
-    }
     public List<Requirement> skills(UUID id) {
         return jdbc.sql("select skill_id,track,importance from dut_connect.campaign_skill_requirements where campaign_id=:id order by track,skill_id").param("id",id).query(Requirement.class).list();
     }

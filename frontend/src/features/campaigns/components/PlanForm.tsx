@@ -27,12 +27,14 @@ const schema=z.object({
     applicationDeadline:z.string(),fundraisingDeadline:z.string(),
     targetVolunteerCount:optionalCount,targetTechnicalCount:optionalCount,targetLogisticsCount:optionalCount,
     volunteerRequirements:z.string().max(10000),fundraisingGoal:optionalMoney,institutionalFunding:optionalMoney,
-    sponsorName:z.string().max(200),sponsorFunding:optionalMoney,estimatedBudget:optionalMoney
+    sponsorName:z.string().max(200),sponsorFunding:optionalMoney,estimatedBudget:optionalMoney,
+    donationBankName:z.string().max(120),donationAccountNumber:z.string().max(64),donationAccountHolder:z.string().max(200)
 }).superRefine((v,ctx)=>{
     if(v.endDate<v.startDate)ctx.addIssue({code:'custom',path:['endDate'],message:tr("Ngày kết thúc không được trước ngày bắt đầu")});
     if(v.organizerType==='ORGANIZATION'&&!z.uuid().safeParse(v.organizationId).success)ctx.addIssue({code:'custom',path:['organizationId'],message:tr("Chọn tổ chức đã xác minh")});
     if(v.contributionMode!=='DONATION_ONLY'&&(!v.targetVolunteerCount||Number(v.targetVolunteerCount)<1))ctx.addIssue({code:'custom',path:['targetVolunteerCount'],message:tr("Cần ít nhất một vị trí tình nguyện")});
     if(v.fundraisingGoal&&/^\d+$/.test(v.fundraisingGoal)&&BigInt(v.fundraisingGoal)===0n)ctx.addIssue({code:'custom',path:['fundraisingGoal'],message:tr("Mục tiêu phải lớn hơn 0")});
+    if(v.contributionMode!=='VOLUNTEER_ONLY')for(const name of ['donationBankName','donationAccountNumber','donationAccountHolder'] as const)if(!v[name].trim())ctx.addIssue({code:'custom',path:[name],message:tr("Thông tin tài khoản nhận ủng hộ là bắt buộc")});
     for(const name of ['applicationDeadline','fundraisingDeadline'] as const)if(v[name]&&Number.isNaN(new Date(v[name]).getTime()))ctx.addIssue({code:'custom',path:[name],message:tr("Nhập ngày và giờ hợp lệ")});
 });
 function localTime(value:string|null|undefined){
@@ -46,7 +48,8 @@ function defaults(content?:Content):FormValues{
         applicationDeadline:localTime(content?.applicationDeadline),fundraisingDeadline:localTime(content?.fundraisingDeadline),
         targetVolunteerCount:content?.targetVolunteerCount?.toString()||'',targetTechnicalCount:content?.targetTechnicalCount?.toString()||'',targetLogisticsCount:content?.targetLogisticsCount?.toString()||'',
         volunteerRequirements:content?.volunteerRequirements||'',fundraisingGoal:content?.fundraisingGoal||'',institutionalFunding:content?.institutionalFunding||'0',
-        sponsorName:content?.sponsorName||'',sponsorFunding:content?.sponsorFunding||'0',estimatedBudget:content?.estimatedBudget||''};
+        sponsorName:content?.sponsorName||'',sponsorFunding:content?.sponsorFunding||'0',estimatedBudget:content?.estimatedBudget||'',
+        donationBankName:content?.donationBankName||'',donationAccountNumber:content?.donationAccountNumber||'',donationAccountHolder:content?.donationAccountHolder||''};
 }
 function instant(value:string,original?:string|null){
     const date=new Date(value);
@@ -63,7 +66,8 @@ function payload(v:FormValues,original?:Content):Content{
         applicationDeadline:volunteers&&v.applicationDeadline?instant(v.applicationDeadline,original?.applicationDeadline):null,
         fundraisingDeadline:donations&&v.fundraisingDeadline?instant(v.fundraisingDeadline,original?.fundraisingDeadline):null,
         fundraisingGoal:donations?v.fundraisingGoal||null:null,volunteerRequirements:volunteers?v.volunteerRequirements.trim()||null:null,
-        institutionalFunding:v.institutionalFunding||'0',sponsorFunding:v.sponsorFunding||'0',sponsorName:v.sponsorName.trim()||null,estimatedBudget:v.estimatedBudget||null};
+        institutionalFunding:v.institutionalFunding||'0',sponsorFunding:v.sponsorFunding||'0',sponsorName:v.sponsorName.trim()||null,estimatedBudget:v.estimatedBudget||null,
+        donationBankName:donations?v.donationBankName.trim()||null:null,donationAccountNumber:donations?v.donationAccountNumber.trim()||null:null,donationAccountHolder:donations?v.donationAccountHolder.trim()||null:null};
 }
 export function PlanForm({kind='proposal',id,content,version:initialVersion,categoryName,organizationName,modeLocked=false}:{kind?:'proposal'|'campaign';id?:string;content?:Content;version?:number;categoryName?:string;organizationName?:string;modeLocked?:boolean}){
     useLanguage();
@@ -106,6 +110,7 @@ export function PlanForm({kind='proposal',id,content,version:initialVersion,cate
             {renderText(mode!=='VOLUNTEER_ONLY'&&<><h3 className="text-lg font-semibold">{tr("Kế hoạch gây quỹ")}</h3>{input('fundraisingGoal',tr("Mục tiêu gây quỹ (VND)"))}{input('fundraisingDeadline',tr("Hạn gây quỹ (giờ địa phương)"),'datetime-local')}</>)}
             <h3 className="text-lg font-semibold">{tr("Tài trợ và ngân sách dự kiến")}</h3>
             <div className="grid gap-4 sm:grid-cols-2">{renderText(input('institutionalFunding',tr("Kinh phí nhà trường (VND)")))}{renderText(input('sponsorFunding',tr("Kinh phí tài trợ (VND)")))}{renderText(input('sponsorName',tr("Nhà tài trợ"),'text',200))}{renderText(input('estimatedBudget',tr("Ngân sách dự kiến (VND)")))}</div>
+            {renderText(mode!=='VOLUNTEER_ONLY'&&<div className="rounded-2xl border border-primary-muted bg-primary-light p-4"><h3 className="text-base font-semibold">{tr("Tài khoản nhận ủng hộ")}</h3><p className="mt-1 text-sm text-text-secondary">{tr("Chỉ hiển thị công khai khi chiến dịch có hỗ trợ tài chính.")}</p><div className="mt-4 grid gap-4 sm:grid-cols-2">{input('donationBankName',tr("Ngân hàng"),'text',120)}{input('donationAccountNumber',tr("Số tài khoản"),'text',64)}{input('donationAccountHolder',tr("Chủ tài khoản"),'text',200)}</div></div>)}
         </fieldset>
         {renderText(form.formState.errors.root&&<ErrorState message={form.formState.errors.root.message||tr("Chưa thể lưu")}/>)}
         {renderText(mutation.isSuccess&&id&&<p role="status" className="text-success">{tr("Đã lưu thay đổi.")}</p>)}
