@@ -97,7 +97,7 @@ app:
     min-vnd: ${APP_DONATION_MIN_VND:10000}
     max-vnd: ${APP_DONATION_MAX_VND:100000000}
 payment:
-  provider: ${PAYMENT_PROVIDER:mock}
+  provider: ${PAYMENT_PROVIDER:payos}
   zalopay:
     app-id: ${ZALOPAY_APP_ID:}
     key1: ${ZALOPAY_KEY1:}

@@ -58,16 +58,20 @@ public class PayOSPaymentGateway implements PaymentGateway {
         if (clientId.isBlank() || apiKey.isBlank() || checksumKey.isBlank()) {
             // Local fallback: create dynamic VietQR link that any banking app can scan
             String encodedDesc = URLEncoder.encode(description, StandardCharsets.UTF_8);
-            String vietQrUrl = "https://img.vietqr.io/image/970422-0888888888-compact2.png?amount="
-                    + command.amount().toPlainString() + "&addInfo=" + encodedDesc + "&accountName=DUT+CONNECT";
-            String checkoutUrl = "/donations/" + command.donationId() + "?vietqr=" + URLEncoder.encode(vietQrUrl, StandardCharsets.UTF_8);
+            String vietQrUrl = "https://img.vietqr.io/image/MB-4310072005-compact2.png?amount="
+                    + command.amount().toPlainString() + "&addInfo=" + encodedDesc + "&accountName=HUYNH+TUAN+KHOA";
+            String checkoutUrl = "/payment/result?donationId=" + command.donationId() + "&vietqr=" + URLEncoder.encode(vietQrUrl, StandardCharsets.UTF_8);
             return new CreationResult(Outcome.PENDING, checkoutUrl, "00", "VietQR dynamic code generated");
         }
 
         try {
             int amount = command.amount().intValueExact();
-            String returnUrl = "/donations/" + command.donationId();
-            String cancelUrl = "/donations/" + command.donationId();
+            String frontendUrl = System.getenv().getOrDefault("APP_FRONTEND_URL", "https://dutconnect.vercel.app");
+            if (frontendUrl.endsWith("/")) {
+                frontendUrl = frontendUrl.substring(0, frontendUrl.length() - 1);
+            }
+            String returnUrl = frontendUrl + "/payment/result?donationId=" + command.donationId();
+            String cancelUrl = frontendUrl + "/payment/result?donationId=" + command.donationId();
 
             // PayOS signature: sorted key format
             String dataToSign = "amount=" + amount + "&cancelUrl=" + cancelUrl + "&description=" + description + "&orderCode=" + orderCode + "&returnUrl=" + returnUrl;
@@ -102,9 +106,9 @@ public class PayOSPaymentGateway implements PaymentGateway {
         } catch (Exception e) {
             log.error("PayOS creation error", e);
             // Fallback to VietQR image link
-            String vietQrUrl = "https://img.vietqr.io/image/970422-0888888888-compact2.png?amount="
-                    + command.amount().toPlainString() + "&addInfo=" + URLEncoder.encode(description, StandardCharsets.UTF_8) + "&accountName=DUT+CONNECT";
-            String checkoutUrl = "/donations/" + command.donationId() + "?vietqr=" + URLEncoder.encode(vietQrUrl, StandardCharsets.UTF_8);
+            String vietQrUrl = "https://img.vietqr.io/image/MB-4310072005-compact2.png?amount="
+                    + command.amount().toPlainString() + "&addInfo=" + URLEncoder.encode(description, StandardCharsets.UTF_8) + "&accountName=HUYNH+TUAN+KHOA";
+            String checkoutUrl = "/payment/result?donationId=" + command.donationId() + "&vietqr=" + URLEncoder.encode(vietQrUrl, StandardCharsets.UTF_8);
             return new CreationResult(Outcome.PENDING, checkoutUrl, "00", "VietQR fallback created");
         }
     }

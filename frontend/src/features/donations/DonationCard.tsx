@@ -32,6 +32,9 @@ export function DonationCard({donation: d}: { donation: Donation }) {
         const urlParams = new URLSearchParams(window.location.search);
         vietQrImgUrl = urlParams.get('vietqr');
     }
+    if (pending && !vietQrImgUrl) {
+        vietQrImgUrl = `https://img.vietqr.io/image/MB-4310072005-compact2.png?amount=${d.amount}&addInfo=${encodeURIComponent('DUT ' + d.id.substring(0, 16))}&accountName=HUYNH+TUAN+KHOA`;
+    }
 
     return <Card>
         <div className="flex flex-wrap justify-between gap-3"><h2 className="break-words text-xl font-semibold"><Link

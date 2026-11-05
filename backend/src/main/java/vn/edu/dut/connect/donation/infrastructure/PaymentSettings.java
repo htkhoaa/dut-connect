@@ -14,7 +14,7 @@ public class PaymentSettings implements vn.edu.dut.connect.donation.application.
 
     public PaymentSettings(Environment env) {
         this.env = env;
-        provider = env.getProperty("payment.provider", "mock");
+        provider = env.getProperty("payment.provider", "payos");
         if (!java.util.Set.of("mock", "zalopay", "payos").contains(provider))
             throw new IllegalStateException("PAYMENT_PROVIDER must be mock, zalopay or payos");
         minimum = Donation.integerAmount(new BigDecimal(env.getProperty("app.donation.min-vnd", "10000")));
