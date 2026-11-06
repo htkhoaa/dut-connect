@@ -10,9 +10,13 @@ import {errorMessage} from '../../shared/api/errors';
 export function FinancialSummaryCard({campaignId}:{campaignId:string}){
     useLanguage();
     const query=useFinancialSummary(campaignId);
+    if (query.isPending) return <Card><LoadingState/></Card>;
+    if (query.isError) return <Card><ErrorState message={errorMessage(query.error)} onRetry={()=>void query.refetch()}/></Card>;
+    const d = query.data;
+    // Only show if campaign has donation activity or a fundraising goal
+    const hasFinancialData = BigInt(d.fundraisingGoal ?? 0) > 0n || BigInt(d.verifiedDonations ?? 0) > 0n || d.successfulDonationCount > 0;
+    if (!hasFinancialData) return null;
     return <Card><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-semibold">{tr("Tài chính chiến dịch")}</h2><Button disabled={query.isFetching} onClick={()=>void query.refetch()}>{tr("Làm mới số liệu")}</Button></div>
-        {renderText(query.isPending?<LoadingState/>:query.isError?<ErrorState message={errorMessage(query.error)} onRetry={()=>void query.refetch()}/>:<div className="space-y-5"><Fundraising raised={query.data.verifiedDonations} goal={query.data.fundraisingGoal}/><dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{renderText(([
-            [tr("Kinh phí nhà trường"),query.data.institutionalFunding],[tr("Kinh phí tài trợ"),query.data.sponsorFunding],[tr("Tổng kinh phí"),query.data.totalFunding],[tr("Chi phí đã duyệt"),query.data.approvedExpenses],[tr("Kinh phí còn lại"),query.data.remainingFunds]
-        ] as const).map(([label,value])=><div key={label}><dt className="text-text-secondary">{renderText(label)}</dt><dd className={`break-words text-lg font-semibold ${BigInt(value)<0n?'text-danger':''}`}>{renderText(vnd(value))}</dd></div>))}<div><dt className="text-text-secondary">{tr("Lượt đóng góp thành công")}</dt><dd className="text-lg font-semibold">{renderText(query.data.successfulDonationCount)}</dd></div></dl><p className="text-sm text-text-secondary">{tr("Chỉ khoản đóng góp đã xác nhận thanh toán và chi phí đã duyệt được tính vào tổng.")}</p></div>)}
+        <div className="space-y-5"><Fundraising raised={d.verifiedDonations} goal={d.fundraisingGoal}/><dl className="grid gap-4 sm:grid-cols-3"><div><dt className="text-text-secondary">{tr("Đã quyên góp")}</dt><dd className={`break-words text-lg font-semibold ${BigInt(d.verifiedDonations)<0n?'text-danger':'text-primary'}`}>{renderText(vnd(d.verifiedDonations))}</dd></div><div><dt className="text-text-secondary">{tr("Mục tiêu")}</dt><dd className="break-words text-lg font-semibold">{renderText(vnd(d.fundraisingGoal))}</dd></div><div><dt className="text-text-secondary">{tr("Lượt đóng góp thành công")}</dt><dd className="text-lg font-semibold">{renderText(d.successfulDonationCount)}</dd></div></dl><p className="text-sm text-text-secondary">{tr("Chỉ khoản đóng góp đã xác nhận thanh toán được tính vào tổng.")}</p></div>
     </Card>;
 }

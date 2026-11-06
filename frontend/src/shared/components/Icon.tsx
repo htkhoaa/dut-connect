@@ -21,6 +21,7 @@ const paths = {
     leaf: 'M20 4c-9-2-17 3-15 10 2 7 11 6 14 0 2-4 1-10 1-10ZM3 21l12-12',
     spark: 'm12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5Z',
     share: 'M18 8a3 3 0 1 0-2.8-4 3 3 0 0 0 .1 1L8.9 9a3 3 0 1 0 0 6l6.4 4a3 3 0 1 0 1-1.7L10 13.3a3 3 0 0 0 0-2.6l6.3-3.7c.5.6 1 .9 1.7 1Z',
+    bell: 'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0',
 };
 export type IconName = keyof typeof paths;
 export function Icon({name, size = 20, className = ''}: {name: IconName; size?: number; className?: string}) {

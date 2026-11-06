@@ -45,14 +45,14 @@ export function OrganizationListPage({scope = 'public'}: {scope?: OrganizationSc
         })} className="filter-panel mb-6 flex flex-wrap gap-3">
             <div className="min-w-0 flex-1"><Input aria-label={tr("Tìm kiếm tổ chức")} placeholder={tr("Tìm theo tên")} maxLength={200} {...form.register('q')}/></div>
             <Button type="submit">{tr("Tìm kiếm")}</Button>
-            <p className="w-full text-xs text-text-secondary">{tr("Kết quả tự cập nhật khi bạn nhập.")}</p>
+
             {renderText(scope === 'admin' && <div className="w-full sm:w-56"><Select aria-label={tr("Trạng thái tổ chức")} value={status} onChange={event => {setStatus(event.target.value as OrganizationStatus | ''); setPage(0);}}>
                 <option value="">{tr("Tất cả trạng thái")}</option>{renderText(Object.entries(organizationStatuses).map(([value, presentation]) => <option key={value} value={value}>{renderText(presentation.label)}</option>))}
             </Select></div>)}
             {renderText(form.formState.errors.q && <p role="alert" className="w-full text-danger">{renderText(form.formState.errors.q.message)}</p>)}
         </form>}
         {list.isPending ? <LoadingState/> : list.isError ? <ErrorState message={errorMessage(list.error)} onRetry={() => void list.refetch()}/> : <>
-            <p className="mb-3 text-sm text-text-secondary">{renderText(list.data.totalElements)}{tr("tổ chức")}</p>
+            <p className="mb-3 text-sm text-text-secondary">{renderText(list.data.totalElements)} {tr("tổ chức")}</p>
             {list.data.items.length === 0 ? <EmptyState message={scope === 'mine' ? tr("Bạn chưa tham gia tổ chức nào.") : tr("Chưa tìm thấy tổ chức.")}/> :
                 scope !== 'admin' ? <div className="campaign-grid">{renderText(list.data.items.map(o => <OrganizationCard key={o.id} organization={o}/>))}</div> : <Table caption={tr("Tổ chức")}><thead className="bg-surface-muted"><tr>{renderText([tr("Tên"), tr("Loại"), tr("Trạng thái"), tr("Ngày tạo")].map(label => <th key={label} scope="col" className="p-4">{renderText(label)}</th>))}</tr></thead>
                     <tbody>{renderText(list.data.items.map(organization => <tr key={organization.id} tabIndex={0} className="cursor-pointer border-t border-border transition-colors hover:bg-surface-muted focus:bg-surface-muted" onClick={()=>navigate('/organizations/' + organization.id)} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();navigate('/organizations/' + organization.id);}}}>

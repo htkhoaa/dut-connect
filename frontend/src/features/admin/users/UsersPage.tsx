@@ -22,7 +22,7 @@ export function UsersPage() {
     if (users.isPending) return <LoadingState message={tr("Đang tải người dùng…")}/>;
     if (users.isError) return <ErrorState message={errorMessage(users.error)} onRetry={() => void users.refetch()}/>;
     return <><h1 className="mb-3 text-3xl font-semibold">{tr("Quản lý người dùng")}</h1>
-        <p className="mb-6 text-text-secondary">{renderText(users.data.totalElements)}{tr("tài khoản")}</p>
+        <p className="mb-6 text-text-secondary">{renderText(users.data.totalElements)} {tr("tài khoản")}</p>
         {change.isError && <ErrorState message={errorMessage(change.error)}/>}
         {change.isSuccess && <p role="status" className="mb-4 text-success">{tr("Đã cập nhật trạng thái tài khoản.")}</p>}
         <Table caption={tr("Người dùng đã đăng ký và trạng thái tài khoản")}>

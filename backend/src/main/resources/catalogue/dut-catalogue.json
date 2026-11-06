@@ -4,31 +4,31 @@
       "key": "dut-v1-org-union",
       "name": "Đoàn Thanh niên Trường Đại học Bách khoa – Đại học Đà Nẵng",
       "type": "UNIVERSITY_YOUTH_UNION",
-      "description": "Kết nối các đội hình Bách khoa với cộng đồng qua Mùa hè xanh, Xuân tình nguyện và hiến máu. Sinh viên góp sức trong tổ chức, hậu cần và hỗ trợ địa phương.\n\nNguồn hoạt động: https://dut.udn.vn/KhoaHoa/Tintuc/id/11414\n\nHồ sơ phục vụ trải nghiệm DUT Connect, do quản trị viên quản lý; không khẳng định đơn vị đã đăng ký trên nền tảng."
+      "description": "Đầu tàu phong trào thanh niên và công tác Đoàn toàn trường, tiên phong kết nối sinh viên Bách khoa với các chiến dịch tình nguyện lớn: Mùa hè xanh, Xuân tình nguyện, Chủ nhật xanh và Hiến máu nhân đạo. Nơi rèn luyện bản lĩnh, kỹ năng lãnh đạo và tinh thần cống hiến vì cộng đồng."
     },
     {
       "key": "dut-v1-org-association",
       "name": "Hội Sinh viên Trường Đại học Bách khoa – Đại học Đà Nẵng",
       "type": "STUDENT_ASSOCIATION",
-      "description": "Đồng hành cùng sinh viên và Đoàn trường trong hoạt động cộng đồng. Bài ra quân Xuân tình nguyện 2026 ghi nhận sự tham gia của Hội Sinh viên cùng các liên chi đoàn, câu lạc bộ, đội và nhóm.\n\nNguồn hoạt động: https://dut.udn.vn/Fast/Tintuc/id/11702\n\nHồ sơ phục vụ trải nghiệm DUT Connect, do quản trị viên quản lý; không khẳng định đơn vị đã đăng ký trên nền tảng."
+      "description": "Tổ chức đại diện cho tiếng nói, nguyện vọng và quyền lợi chính đáng của toàn thể sinh viên DUT. Đồng hành hỗ trợ học tập, nghiên cứu khoa học, xây dựng nếp sống văn minh và tạo môi trường để sinh viên Bách khoa hội nhập, cống hiến."
     },
     {
       "key": "dut-v1-org-heat",
       "name": "CLB Sức trẻ Khoa Công nghệ Nhiệt – Điện lạnh",
       "type": "CLUB",
-      "description": "Cộng đồng sinh viên cùng hành động vì môi trường. Hoạt động Chủ nhật xanh tại biển Nguyễn Tất Thành ngày 29/03/2026 thể hiện tinh thần bảo vệ không gian biển.\n\nNguồn hoạt động: https://dut.udn.vn/KhoaNhietDL/Tintuc/id/11881\n\nHồ sơ phục vụ trải nghiệm DUT Connect, do quản trị viên quản lý; không khẳng định đơn vị đã đăng ký trên nền tảng."
+      "description": "Câu lạc bộ hành động vì môi trường và cộng đồng của sinh viên Khoa Nhiệt - Điện lạnh. Thường xuyên tổ chức các chiến dịch bảo vệ bờ biển Nguyễn Tất Thành, công trình thanh niên xanh và các hoạt động tình nguyện kỹ thuật chuyên ngành."
     },
     {
       "key": "dut-v1-org-project",
       "name": "Liên Chi đoàn Khoa Quản lý Dự án",
       "type": "FACULTY_YOUTH_UNION",
-      "description": "Tập hợp đoàn viên gìn giữ khuôn viên xanh. Bài FPM – Chủ nhật xanh ghi nhận đoàn viên tham gia dọn khu A ngày 18/01/2022.\n\nNguồn hoạt động: https://fpm.dut.udn.vn/tin-tuc/chi-tiet/FPM---Chu-nhat-xanh-1867\n\nHồ sơ phục vụ trải nghiệm DUT Connect, do quản trị viên quản lý; không khẳng định đơn vị đã đăng ký trên nền tảng."
+      "description": "Liên Chi đoàn năng động của sinh viên Khoa Quản lý Dự án. Tiên phong ứng dụng tư duy quản lý bài bản, chuyên nghiệp vào các dự án cộng đồng, giữ gìn khuôn viên học tập sáng - xanh - sạch - đẹp và phát triển kỹ năng mềm cho sinh viên."
     },
     {
       "key": "dut-v1-org-advice",
       "name": "Đội Tư vấn sinh viên Trường Đại học Bách khoa",
       "type": "STUDENT_TEAM",
-      "description": "Đội sinh viên có đại diện phát biểu tại lễ ra quân Xuân tình nguyện 2026. Hồ sơ giới thiệu tinh thần sẻ chia và kết nối đội hình phục vụ cộng đồng.\n\nNguồn hoạt động: https://dut.udn.vn/Fast/Tintuc/id/11702\n\nHồ sơ phục vụ trải nghiệm DUT Connect, do quản trị viên quản lý; không khẳng định đơn vị đã đăng ký trên nền tảng."
+      "description": "Đội hình tình nguyện gắn bó, thân thiện, chuyên tư vấn hỗ trợ tân sinh viên nhập học, hướng dẫn thủ tục, chia sẻ kinh nghiệm học tập và tham gia điều phối các sự kiện lớn của Trường Đại học Bách khoa."
     }
   ],
   "campaigns": [

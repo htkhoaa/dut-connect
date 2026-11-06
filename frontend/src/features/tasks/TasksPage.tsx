@@ -74,10 +74,10 @@ function Tasks({c, id, mine}: { c: string; id: string; mine: boolean }) {
                 <div className="flex flex-wrap justify-between gap-3"><h2 className="break-words text-xl font-semibold">
                     <Link className="font-medium text-primary hover:opacity-80" to={'/tasks/' + t.id}>{renderText(t.title)}</Link></h2><Badge
                     tone={t.status === 'VERIFIED' ? 'success' : 'neutral'}>{renderText(taskStatuses[t.status])}</Badge></div>
-                <p>{renderText(t.campaignTitle)} · {renderText(tracks[t.track])} · {renderText(priorities[t.priority])}{tr("mức ưu tiên")}</p><p
-                className="mt-3 whitespace-pre-wrap break-words">{renderText(t.description)}</p><p>{tr("Hạn hoàn thành:")}{renderText(date(t.dueAt))}</p><p
-                className="break-words">{tr("Người được phân công:")}{renderText(t.assignees.map(a => a.fullName + ' (' + a.studentId + ', ' + tracks[a.assignedTrack] + ')').join('; ') || tr("Chưa phân công"))}</p>{renderText(t.verifiedAt &&
-                <p>{tr("Xác minh:")}{renderText(date(t.verifiedAt))}</p>)}
+                <p>{renderText(t.campaignTitle)} · {renderText(tracks[t.track])} · {tr("Mức ưu tiên: ")}{renderText(priorities[t.priority])}</p><p
+                className="mt-3 whitespace-pre-wrap break-words">{renderText(t.description)}</p><p>{tr("Hạn hoàn thành: ")}{renderText(date(t.dueAt))}</p><p
+                className="break-words">{tr("Người được phân công: ")}{renderText(t.assignees.map(a => a.fullName + ' (' + a.studentId + ', ' + tracks[a.assignedTrack] + ')').join('; ') || tr("Chưa phân công"))}</p>{renderText(t.verifiedAt &&
+                <p>{tr("Xác minh: ")}{renderText(date(t.verifiedAt))}</p>)}
                 <div className="mt-4 flex flex-wrap gap-3">{renderText(t.canProgress && t.status === 'TODO' &&
                     <Button disabled={mutation.isPending} onClick={() => setAction({
                         task: t,

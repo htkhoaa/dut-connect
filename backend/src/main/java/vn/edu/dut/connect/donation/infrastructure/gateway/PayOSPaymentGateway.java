@@ -51,9 +51,14 @@ public class PayOSPaymentGateway implements PaymentGateway {
         String checksumKey = settings.payos("checksum-key");
 
         // Format orderCode: numeric positive integer fits PayOS requirement (< 9007199254740991)
-        long orderCode = Math.abs(command.orderId().hashCode() % 1_000_000_000L) + (System.currentTimeMillis() % 1_000_000L);
+        long orderCode;
+        try {
+            orderCode = Long.parseLong(command.orderId());
+        } catch (Exception e) {
+            orderCode = Math.abs(command.orderId().hashCode() % 1_000_000_000L) + (System.currentTimeMillis() % 1_000_000L);
+        }
         // VietQR standard memo: max 25 alphanumeric chars
-        String description = "DUT " + command.orderId().substring(0, Math.min(18, command.orderId().length()));
+        String description = "DUT " + orderCode;
 
         if (clientId.isBlank() || apiKey.isBlank() || checksumKey.isBlank()) {
             // Local fallback: create dynamic VietQR link that any banking app can scan
@@ -129,12 +134,11 @@ public class PayOSPaymentGateway implements PaymentGateway {
 
             long amountVal = data.path("amount").asLong(0);
             String desc = data.path("description").asText("");
-            String orderCode = data.path("orderCode").asText();
+            long orderCode = data.path("orderCode").asLong(0);
             String reference = data.path("reference").asText(UUID.randomUUID().toString());
 
-            // OrderId extraction from description "DUT <orderId>" or orderCode
-            String orderId = orderCode;
-            if (desc.startsWith("DUT ")) {
+            String orderId = orderCode > 0 ? String.valueOf(orderCode) : "";
+            if (orderId.isBlank() && desc.startsWith("DUT ")) {
                 orderId = desc.substring(4).trim();
             }
 

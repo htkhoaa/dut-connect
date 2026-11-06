@@ -12,7 +12,13 @@ public class PayOSCallbackController {
     }
 
     @PostMapping(value = "/api/v1/payments/payos/webhook", consumes = "application/json", produces = "application/json")
-    public PaymentCallbackService.Acknowledgment receive(@RequestBody String body) {
-        return service.receivePayOS(body);
+    public java.util.Map<String, Object> receive(@RequestBody String body) {
+        var ack = service.receivePayOS(body);
+        return java.util.Map.of(
+            "error", 0,
+            "message", ack.return_message(),
+            "return_code", 0,
+            "return_message", ack.return_message()
+        );
     }
 }

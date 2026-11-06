@@ -45,9 +45,9 @@ export function AdminExpensesPage(){
                     <Badge tone={expenseStatuses[e.status].tone}>{renderText(expenseStatuses[e.status].label)}</Badge>
                     <Link className="block break-words font-medium text-primary hover:opacity-80" to={'/manage/campaigns/'+e.campaignId+'/finance'}>{renderText(e.campaignTitle)}</Link>
                     <ExpenseDetails expense={e}/>
-                    <p className="text-sm text-text-secondary">{tr("Người gửi")}{renderText(e.submittedByName)}</p>
-                    {renderText(e.reviewedByName&&<p>{tr("Người xét duyệt")}{renderText(e.reviewedByName)}{tr("lúc")}{renderText(new Date(e.reviewedAt!).toLocaleString(locale()))}</p>)}
-                    {renderText(e.rejectionReason&&<p className="break-words text-danger">{tr("Lý do từ chối:")}{renderText(e.rejectionReason)}</p>)}
+                    <p className="text-sm text-text-secondary">{tr("Người gửi: ")}{renderText(e.submittedByName)}</p>
+                    {renderText(e.reviewedByName&&<p>{tr("Người xét duyệt: ")}{renderText(e.reviewedByName)} {tr("lúc")} {renderText(new Date(e.reviewedAt!).toLocaleString(locale()))}</p>)}
+                    {renderText(e.rejectionReason&&<p className="break-words text-danger">{tr("Lý do từ chối: ")}{renderText(e.rejectionReason)}</p>)}
                     {renderText(e.status==='PENDING'&&<div className="flex flex-wrap gap-3">
                         <Button disabled={busy||rejecting!==null} onClick={()=>{review.reset();setFeedback('');setApproving(e);}}>{tr("Duyệt")}</Button>
                         <Button disabled={busy||rejecting!==null} onClick={()=>{review.reset();setFeedback('');setRejecting(e);}}>{tr("Từ chối")}</Button>

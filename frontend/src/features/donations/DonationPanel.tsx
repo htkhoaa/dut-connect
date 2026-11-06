@@ -70,20 +70,6 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                 </p>
             ) : (
                 <div className="space-y-4">
-                    <div className="rounded-xl bg-primary-light/50 p-3 border border-primary-muted/30">
-                        <p className="text-xs text-primary font-medium leading-relaxed">
-                            📱 {settings.data.provider === 'payos'
-                                ? tr("Ủng hộ qua VietQR (Cổng PayOS). Tiền chuyển trực tiếp về tài khoản Quỹ và tự động ghi nhận vào chiến dịch.")
-                                : settings.data.provider === 'mock'
-                                    ? tr("Thanh toán mô phỏng thử nghiệm (Sandbox). Không thu tiền thật.")
-                                    : tr("Thanh toán qua cổng ZaloPay Sandbox.")
-                            }
-                        </p>
-                        <p className="mt-1 text-[11px] text-text-secondary">
-                            {tr("Hạn mức:")} {vnd(settings.data.minimumVnd)} – {vnd(settings.data.maximumVnd)}
-                        </p>
-                    </div>
-
                     <form
                         noValidate
                         className="space-y-4"

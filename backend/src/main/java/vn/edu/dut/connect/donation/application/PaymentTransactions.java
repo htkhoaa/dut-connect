@@ -43,7 +43,13 @@ public class PaymentTransactions {
             throw new ApplicationFailure(409, "CAMPAIGN_NOT_ACCEPTING_DONATIONS", "Campaign is not accepting donations");
         var d = repository.saveDonation(new Donation(campaign, actor, amount));
         Instant now = Instant.now();
-        String order = DateTimeFormatter.ofPattern("yyMMdd").withZone(ZoneId.of("Asia/Ho_Chi_Minh")).format(now) + "_" + UUID.randomUUID().toString().replace("-", "");
+        String order;
+        if ("payos".equalsIgnoreCase(provider)) {
+            long code = (System.currentTimeMillis() % 100_000_000_000L) * 100 + java.util.concurrent.ThreadLocalRandom.current().nextInt(100);
+            order = String.valueOf(code);
+        } else {
+            order = DateTimeFormatter.ofPattern("yyMMdd").withZone(ZoneId.of("Asia/Ho_Chi_Minh")).format(now) + "_" + UUID.randomUUID().toString().replace("-", "");
+        }
         var p = repository.savePayment(new PaymentTransaction(d.id(), provider, order, amount, now.plus(ORDER_LIFETIME)));
         log.info("Payment intent created actor={} campaign={} donation={} payment={}", actor, campaign, d.id(), p.id());
         return new CreationCommand(d.id(), p.id(), order, amount, now, p.expiresAt());

@@ -50,7 +50,27 @@ public class PaymentPersistence implements PaymentRepository {
     }
 
     public Optional<UUID> paymentByOrder(String provider, String order) {
-        return jdbc.sql("select id from dut_connect.payment_transactions where provider=:provider and provider_order_id=:order").param("provider", provider).param("order", order).query(UUID.class).optional();
+        long numOrder = 0;
+        try {
+            numOrder = Long.parseLong(order);
+        } catch (Exception ignored) {}
+
+        return jdbc.sql("""
+            select id from dut_connect.payment_transactions
+            where provider=:provider and (
+                provider_order_id = :order
+                or provider_order_id like :likeOrder
+                or (payos_order_code is not null and payos_order_code = :numOrder)
+            )
+            order by created_at desc
+            limit 1
+        """)
+        .param("provider", provider)
+        .param("order", order)
+        .param("likeOrder", order + "%")
+        .param("numOrder", numOrder)
+        .query(UUID.class)
+        .optional();
     }
 
     public List<PaymentTransaction> payments(Set<UUID> ids) {

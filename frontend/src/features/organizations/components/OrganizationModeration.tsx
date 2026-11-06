@@ -15,7 +15,7 @@ export function OrganizationModeration({detail}: {detail: OrganizationDetail}) {
     const command: Moderation = detail.organization.status === 'PENDING_VERIFICATION' ? 'verify' : detail.organization.status === 'VERIFIED' ? 'suspend' : 'restore';
     return <section className="space-y-4" aria-label={tr("Xác minh tổ chức")}>
         <h2 className="text-xl font-semibold">{tr("Xét duyệt")}</h2>
-        <Button disabled={mutation.isPending} onClick={() => setConfirmation({command, version: detail.organization.version})}>{renderText(labels[command])}{tr("tổ chức")}</Button>
+        <Button disabled={mutation.isPending} onClick={() => setConfirmation({command, version: detail.organization.version})}>{renderText(labels[command])} {tr("tổ chức")}</Button>
         {renderText(mutation.isError && <ErrorState message={errorMessage(mutation.error)}/>)}
         {renderText(mutation.isSuccess && <p role="status" className="text-success">{tr("Đã cập nhật trạng thái tổ chức.")}</p>)}
         <ConfirmDialog open={confirmation !== null} title={confirmation ? labels[confirmation.command] + ' organization?' : ''}

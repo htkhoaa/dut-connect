@@ -8,6 +8,7 @@ import {LoadingState} from '../../shared/components/LoadingState';
 import {errorMessage} from '../../shared/api/errors';
 import {UserAvatar} from '../../features/profile/avatar';
 import {LanguageSwitch} from '../../shared/components/LanguageSwitch';
+import {NotificationBell} from '../../features/notifications/NotificationBell';
 
 type AdminItem = {to: string; label: string; icon: IconName};
 const adminItems: AdminItem[] = [
@@ -154,6 +155,7 @@ export function AppLayout() {
                     {/* Right: Actions */}
                     <div className="flex items-center justify-end gap-3 min-w-0">
                         <LanguageSwitch />
+                        {user && <NotificationBell />}
 
                         {initialized && (
                             user ? (

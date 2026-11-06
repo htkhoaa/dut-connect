@@ -60,7 +60,7 @@ export function OrganizationForm({detail}: {detail?: OrganizationDetail}) {
                     <option value="">{tr("Chọn loại")}</option>
                     {renderText(catalog.data.items.map(type => <option key={type.id} value={type.id}>{renderText(catalogLabel(type.name))}</option>))}
                     {renderText(detail && !catalog.data.items.some(type => type.id === detail.organization.organizationTypeId) &&
-                        <option value={detail.organization.organizationTypeId}>{renderText(detail.organization.organizationTypeName)}{tr("(ngừng sử dụng)")}</option>)}
+                        <option value={detail.organization.organizationTypeId}>{renderText(detail.organization.organizationTypeName)} {tr("(ngừng sử dụng)")}</option>)}
                 </Select>
             </FormField>
             <FormField id="organization-description" label={tr("Mô tả")} error={form.formState.errors.description?.message}>
