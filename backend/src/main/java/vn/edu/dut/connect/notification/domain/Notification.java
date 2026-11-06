@@ -15,7 +15,7 @@ public class Notification {
     private String type;
     @Column(nullable = false, length = 200)
     private String title;
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "text")
     private String body;
     @Column(length = 50)
     private String entityType;

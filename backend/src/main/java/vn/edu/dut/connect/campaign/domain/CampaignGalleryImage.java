@@ -11,8 +11,7 @@ public class CampaignGalleryImage {
     private UUID id;
     @Column(nullable = false)
     private UUID campaignId;
-    @Lob
-    @Column(nullable = false)
+    @Column(columnDefinition = "bytea", nullable = false)
     private byte[] imageData;
     @Column(nullable = false, length = 100)
     private String contentType;
