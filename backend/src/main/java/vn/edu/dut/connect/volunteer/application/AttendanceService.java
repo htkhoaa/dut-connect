@@ -2,6 +2,8 @@ package vn.edu.dut.connect.volunteer.application;
 
 import java.util.*;
 import java.time.Instant;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +29,7 @@ public class AttendanceService {
     }
 
     public PageResult<SessionDto> list(UUID c, UUID actor, Pagination p) {
-        access.requireManager(c, actor);
+        access.view(c, actor);
         return repository.sessions(c, p).map(AttendanceService::dto);
     }
 
@@ -55,7 +57,7 @@ public class AttendanceService {
 
     public PageResult<AttendanceDto> records(UUID id, UUID actor, Pagination p) {
         var c = repository.sessionCampaign(id).orElseThrow(() -> ApplicationFailure.missing("Session not found"));
-        access.requireManager(c, actor);
+        access.view(c, actor);
         var page = repository.records(id, p);
         var mapped = recordDtos(page.items());
         var byId = mapped.stream().collect(java.util.stream.Collectors.toMap(AttendanceDto::id, v -> v));
@@ -78,8 +80,11 @@ public class AttendanceService {
         var session = writable(sessionId, actor);
         String token = session.generateQrToken();
         repository.saveSession(session);
+        String frontendUrl = System.getenv().getOrDefault("APP_FRONTEND_URL", "https://dutconnect.vercel.app");
+        if (frontendUrl.endsWith("/")) frontendUrl = frontendUrl.substring(0, frontendUrl.length() - 1);
         String checkinUrl = "/attendance/checkin?token=" + token;
-        String qrImageUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + token;
+        String fullUrl = frontendUrl + checkinUrl;
+        String qrImageUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + URLEncoder.encode(fullUrl, StandardCharsets.UTF_8);
         return new QrSessionDto(session.id(), token, session.qrExpiresAt(), checkinUrl, qrImageUrl);
     }
 

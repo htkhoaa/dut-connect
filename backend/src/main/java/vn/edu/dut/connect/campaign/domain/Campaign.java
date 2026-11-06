@@ -40,14 +40,14 @@ public class Campaign {
         this.content = content; touch();
     }
     public void requireMutable() {
-        if (status == CampaignStatus.COMPLETED || status == CampaignStatus.CANCELLED)
-            throw new CampaignViolation("INVALID_STATE_TRANSITION", "Completed and cancelled campaigns cannot be changed");
+        if (status == CampaignStatus.ACTIVE || status == CampaignStatus.COMPLETED || status == CampaignStatus.CANCELLED)
+            throw new CampaignViolation("INVALID_STATE_TRANSITION", "Chiến dịch đã bắt đầu hoặc đã kết thúc, không thể chỉnh sửa nội dung");
     }
     public void transition(CampaignStatus next) {
         boolean allowed = switch (status) {
             case DRAFT -> next == CampaignStatus.OPEN || next == CampaignStatus.CANCELLED;
             case OPEN -> next == CampaignStatus.ACTIVE || next == CampaignStatus.CANCELLED;
-            case ACTIVE -> next == CampaignStatus.COMPLETED || next == CampaignStatus.CANCELLED;
+            case ACTIVE -> next == CampaignStatus.COMPLETED;
             default -> false;
         };
         if (!allowed) throw new CampaignViolation("INVALID_STATE_TRANSITION", "Campaign cannot perform this transition");

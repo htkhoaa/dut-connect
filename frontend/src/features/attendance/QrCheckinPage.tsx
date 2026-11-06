@@ -1,8 +1,9 @@
-import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
+import {useLanguage, tr} from "../../shared/lib/i18n";
 import {useState, useEffect} from 'react';
 import {useSearchParams, Link} from 'react-router-dom';
 import {useMutation} from '@tanstack/react-query';
 import {apiClient} from '../../shared/api/client';
+import {useAuth} from '../auth/store';
 import {Card} from '../../shared/components/Card';
 import {Button} from '../../shared/components/Button';
 import {Icon} from '../../shared/components/Icon';
@@ -10,14 +11,29 @@ import {errorMessage} from '../../shared/api/errors';
 
 export function QrCheckinPage() {
     useLanguage();
+    const user = useAuth(s => s.user);
+    const initialized = useAuth(s => s.initialized);
     const [searchParams] = useSearchParams();
-    const tokenFromUrl = searchParams.get('token') || '';
-    const [token, setToken] = useState(tokenFromUrl);
+    const rawToken = searchParams.get('token') || '';
+    const [token, setToken] = useState(rawToken);
     const [successData, setSuccessData] = useState<{sessionTitle: string; campaignTitle?: string} | null>(null);
+
+    const cleanToken = (input: string) => {
+        try {
+            if (input.includes('token=')) {
+                const url = new URL(input.startsWith('http') ? input : 'https://dummy.com' + (input.startsWith('/') ? input : '/' + input));
+                return url.searchParams.get('token') || input.trim();
+            }
+        } catch {
+            // fallback
+        }
+        return input.trim();
+    };
 
     const checkinMutation = useMutation({
         mutationFn: async (tokenVal: string) => {
-            return (await apiClient.post(`/attendance-sessions/checkin-qr?token=${encodeURIComponent(tokenVal)}`)).data;
+            const cleaned = cleanToken(tokenVal);
+            return (await apiClient.post(`/attendance-sessions/checkin-qr?token=${encodeURIComponent(cleaned)}`)).data;
         },
         onSuccess: (data: any) => {
             setSuccessData({
@@ -28,15 +44,16 @@ export function QrCheckinPage() {
     });
 
     useEffect(() => {
-        if (tokenFromUrl && !successData && !checkinMutation.isPending && !checkinMutation.isError) {
-            checkinMutation.mutate(tokenFromUrl);
+        if (rawToken && user && !successData && !checkinMutation.isPending && !checkinMutation.isError) {
+            checkinMutation.mutate(rawToken);
         }
-    }, [tokenFromUrl]);
+    }, [rawToken, user]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (token.trim()) {
-            checkinMutation.mutate(token.trim());
+        const cleaned = cleanToken(token);
+        if (cleaned) {
+            checkinMutation.mutate(cleaned);
         }
     };
 
@@ -53,7 +70,26 @@ export function QrCheckinPage() {
                     </p>
                 </div>
 
-                {successData ? (
+                {initialized && !user ? (
+                    <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center space-y-4">
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                            <span className="text-xl">⚠️</span>
+                        </div>
+                        <div>
+                            <h2 className="text-base font-bold text-amber-900">{tr("Cần đăng nhập để điểm danh")}</h2>
+                            <p className="mt-1 text-xs text-amber-700 leading-relaxed">
+                                {tr("Bạn cần đăng nhập tài khoản sinh viên DUT Connect trên thiết bị này để hệ thống xác nhận điểm danh cho bạn.")}
+                            </p>
+                        </div>
+                        <Link
+                            to="/login"
+                            state={{from: '/attendance/checkin?token=' + (rawToken || token)}}
+                            className="ui-button ui-button-primary w-full text-sm font-semibold"
+                        >
+                            {tr("Đăng nhập để điểm danh ngay")}
+                        </Link>
+                    </div>
+                ) : successData ? (
                     <div className="mt-6 rounded-2xl border border-success/30 bg-success/5 p-6 text-center space-y-4">
                         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-success text-white">
                             <span className="text-xl font-bold">✓</span>
@@ -98,7 +134,7 @@ export function QrCheckinPage() {
                             className="w-full"
                             disabled={checkinMutation.isPending || !token.trim()}
                         >
-                            {renderText(checkinMutation.isPending ? tr("Đang xác nhận…") : tr("Xác nhận điểm danh"))}
+                            {checkinMutation.isPending ? tr("Đang xác nhận…") : tr("Xác nhận điểm danh")}
                         </Button>
                     </form>
                 )}

@@ -62,12 +62,30 @@ public class VolunteerService {
         active(actor);return dtos(registrations.list(campaignId,actor,query));
     }
     public PageResult<ApplicationDto> applicants(UUID campaignId,UUID actor,VolunteerQuery query) {
-        manager(campaignId,actor);campaigns.getCampaign(campaignId);return dtos(registrations.list(campaignId,null,query));
+        if (query.status() == RegistrationStatus.ACCEPTED) {
+            active(actor);
+            var a = identities.findAccount(actor).orElse(null);
+            boolean isMgr = a != null && (a.admin() || campaigns.isManager(campaignId, actor));
+            boolean isVol = isAcceptedVolunteer(campaignId, actor);
+            if (!isMgr && !isVol) denied();
+        } else {
+            manager(campaignId,actor);
+        }
+        campaigns.getCampaign(campaignId);
+        return dtos(registrations.list(campaignId,null,query));
     }
     public RecruitmentSummary summary(UUID campaignId,UUID actor) {
-        manager(campaignId,actor);var c=campaigns.getCampaign(campaignId);var counts=registrations.counts(campaignId);
+        active(actor);
+        var a = identities.findAccount(actor).orElse(null);
+        boolean isMgr = a != null && (a.admin() || campaigns.isManager(campaignId, actor));
+        boolean isVol = isAcceptedVolunteer(campaignId, actor);
+        if (!isMgr && !isVol) denied();
+        var c=campaigns.getCampaign(campaignId);var counts=registrations.counts(campaignId);
         return new RecruitmentSummary(counts.accepted(),counts.technical(),counts.logistics(),c.targetVolunteerCount(),c.targetTechnicalCount(),c.targetLogisticsCount(),
             c.status()==CampaignStatus.OPEN || c.status()==CampaignStatus.ACTIVE);
+    }
+    private boolean isAcceptedVolunteer(UUID campaignId, UUID actor) {
+        return !registrations.list(campaignId, actor, new VolunteerQuery(0, 1, RegistrationStatus.ACCEPTED, null)).items().isEmpty();
     }
     private VolunteerRegistration reviewable(UUID id,UUID actor) {
         UUID campaignId=campaignOf(id);var c=campaigns.lockCampaign(campaignId);activeLocked(actor);manager(campaignId,actor);

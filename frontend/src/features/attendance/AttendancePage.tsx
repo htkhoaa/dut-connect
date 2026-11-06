@@ -48,11 +48,12 @@ function Attendance({c}: { c: string }) {
         try {
             setQrLoading(true);
             const res = await api.generateQr(s.id);
+            const fullCheckinUrl = window.location.origin + res.checkinUrl;
             setQrData({
                 title: s.title,
-                qrImageUrl: res.qrCodeImageUrl,
+                qrImageUrl: `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(fullCheckinUrl)}`,
                 token: res.qrToken,
-                checkinUrl: window.location.origin + res.checkinUrl,
+                checkinUrl: fullCheckinUrl,
             });
         } catch (err) {
             setFeedback(errorMessage(err));

@@ -10,10 +10,27 @@ import {errorMessage} from '../../shared/api/errors';
 
 export function WorkspaceLinks({id}: { id: string }) {
     useLanguage();
-    return <nav
-        className="flex flex-wrap gap-4">{renderText([['', tr("Không gian làm việc")], ['/team', tr("Đội tình nguyện")], ['/meetings', tr("Lịch họp")], ['/tasks', tr("Nhiệm vụ")], ['/attendance', tr("Điểm danh")], ['/completions', tr("Hoàn thành")], ['/finance', tr("Tài chính")]].map(([suffix, label]) =>
-        <Link className="ui-button ui-button-secondary" key={suffix}
-              to={'/manage/campaigns/' + id + suffix}>{renderText(label)}</Link>))}</nav>;
+    return (
+        <nav className="flex flex-wrap gap-2.5">
+            {renderText(
+                [
+                    ['', tr("Không gian quản lý")],
+                    ['/applications', tr("Đăng ký tình nguyện")],
+                    ['/completions', tr("Xác minh hoàn thành")],
+                    ['/finance', tr("Tài chính")],
+                    ['/reports', tr("Báo cáo")]
+                ].map(([suffix, label]) => (
+                    <Link
+                        className="ui-button ui-button-secondary text-xs"
+                        key={suffix}
+                        to={'/manage/campaigns/' + id + suffix}
+                    >
+                        {renderText(label)}
+                    </Link>
+                ))
+            )}
+        </nav>
+    );
 }
 
 export function Field({label, error, children}: { label: string; error?: string; children: ReactNode }) {
