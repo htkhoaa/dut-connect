@@ -26,8 +26,18 @@ public final class DonationContracts {
                               List<PaymentDto> payments) {
     }
 
-    public record CreationDto(UUID donationId, UUID paymentTransactionId, DonationStatus status, String checkoutUrl,
-                              String message) {
+    public record CreationDto(
+            UUID donationId,
+            UUID paymentTransactionId,
+            DonationStatus status,
+            String checkoutUrl,
+            String message,
+            String orderCode,
+            String qrCodeUrl
+    ) {
+        public CreationDto(UUID donationId, UUID paymentTransactionId, DonationStatus status, String checkoutUrl, String message) {
+            this(donationId, paymentTransactionId, status, checkoutUrl, message, null, null);
+        }
     }
 
     public record SettingsDto(String provider, String minimumVnd, String maximumVnd, boolean available) {

@@ -15,7 +15,7 @@ function getWsUrl(): string {
 }
 
 export function useNotifications() {
-    const {user} = useAuth();
+    const {user, accessToken} = useAuth();
     const qc = useQueryClient();
     const wsRef = useRef<WebSocket | null>(null);
 
@@ -61,7 +61,9 @@ export function useNotifications() {
 
         function connect() {
             try {
-                const wsUrl = getWsUrl();
+                const token = useAuth.getState().accessToken;
+                const wsBase = getWsUrl();
+                const wsUrl = token ? `${wsBase}?token=${encodeURIComponent(token)}` : wsBase;
                 const ws = new WebSocket(wsUrl);
                 wsRef.current = ws;
 
@@ -72,6 +74,13 @@ export function useNotifications() {
                             void qc.invalidateQueries({queryKey: ['notifications']});
                             // Optional gentle audio beep or vibration
                             if ('vibrate' in navigator) navigator.vibrate(100);
+                        } else if (data.action === 'DONATION_RECEIVED' || data.action === 'CAMPAIGN_UPDATED') {
+                            void qc.invalidateQueries({queryKey: ['notifications']});
+                            void qc.invalidateQueries({queryKey: ['campaign']});
+                            void qc.invalidateQueries({queryKey: ['campaigns']});
+                            void qc.invalidateQueries({queryKey: ['financial-summary']});
+                            void qc.invalidateQueries({queryKey: ['campaign-dashboard']});
+                            void qc.invalidateQueries({queryKey: ['activities']});
                         }
                     } catch (ignored) {}
                 };
@@ -100,7 +109,7 @@ export function useNotifications() {
                 wsRef.current = null;
             }
         };
-    }, [user, qc]);
+    }, [user, accessToken, qc]);
 
     return {
         unreadCount: unreadQuery.data?.count ?? 0,

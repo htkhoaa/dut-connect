@@ -29,9 +29,10 @@ public class CampaignAccess implements CampaignAccessPort {
     }
     private Snapshot snapshot(Campaign c) {
         var v=c.content();
-        return new Snapshot(c.id(),c.status(),v.contributionMode(),v.applicationDeadline(),v.fundraisingDeadline(),v.targetVolunteerCount(),v.targetTechnicalCount(),v.targetLogisticsCount(),v.title(),c.slug());
+        return new Snapshot(c.id(),c.status(),v.contributionMode(),v.applicationDeadline(),v.fundraisingDeadline(),v.targetVolunteerCount(),v.targetTechnicalCount(),v.targetLogisticsCount(),v.title(),c.slug(),c.contactId());
     }
     public Set<UUID> managedCampaigns(Set<UUID> ids,UUID user){return campaigns.managedCampaigns(ids,user);}
+    public List<UUID> managers(UUID campaignId) { return campaigns.managers(campaignId); }
     public boolean isManager(UUID id, UUID user) {
         return identities.findAccount(user).filter(IdentityDirectoryPort.Account::active).isPresent() && campaigns.role(id,user).isPresent();
     }

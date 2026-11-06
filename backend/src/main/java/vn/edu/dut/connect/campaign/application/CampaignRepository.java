@@ -14,6 +14,7 @@ public interface CampaignRepository {
     Campaign save(Campaign campaign);
     PageResult<Campaign> list(CampaignQuery query, UUID manager, Visibility visibility);
     Set<UUID> managedCampaigns(Set<UUID> ids,UUID userId);
+    List<UUID> managers(UUID campaignId);
     Optional<ManagerRole> role(UUID campaignId, UUID userId);
     void addManager(UUID campaignId, UUID userId, ManagerRole role);
     List<Requirement> skills(UUID campaignId);

@@ -24,6 +24,7 @@ interface ActiveDonation {
     donationId: string;
     amount: string;
     vietQrUrl: string;
+    orderCode: string;
     checkoutUrl?: string;
     paymentId?: string;
 }
@@ -67,7 +68,14 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
         setChecking(true);
         setCheckMessage(null);
         try {
-            const res = await api.detail(activeDonation.donationId);
+            let res = await api.detail(activeDonation.donationId);
+            if (res.status !== 'PAID' && activeDonation.paymentId) {
+                try {
+                    res = await api.refresh(activeDonation.paymentId);
+                } catch {
+                    // ignore
+                }
+            }
             if (res.status === 'PAID') {
                 setIsPaid(true);
                 setCheckMessage(tr("Xác nhận thành công! Cảm ơn tấm lòng hảo tâm của bạn."));
@@ -188,7 +196,7 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                         <div className="flex justify-between items-center pt-1 border-t border-border">
                             <span className="text-text-secondary">{tr("Nội dung:")}</span>
                             <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-[11px] font-bold text-primary">
-                                DUT {activeDonation.donationId.substring(0, 15)}
+                                DUT {activeDonation.orderCode}
                             </span>
                         </div>
                     </div>
@@ -314,7 +322,8 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                                 mutation.mutate(confirm, {
                                     onSuccess: r => {
                                         setConfirm(null);
-                                        let qrUrl = `https://img.vietqr.io/image/MB-4310072005-compact2.png?amount=${confirm}&addInfo=${encodeURIComponent('DUT ' + r.donationId.substring(0, 15))}&accountName=HUYNH+TUAN+KHOA`;
+                                        const orderCode = r.orderCode || r.donationId.substring(0, 15);
+                                        let qrUrl = r.qrCodeUrl || `https://img.vietqr.io/image/MB-4310072005-compact2.png?amount=${confirm}&addInfo=${encodeURIComponent('DUT ' + orderCode)}&accountName=HUYNH+TUAN+KHOA`;
                                         if (r.checkoutUrl && r.checkoutUrl.includes('vietqr=')) {
                                             try {
                                                 const parsed = new URL(r.checkoutUrl, window.location.origin);
@@ -328,6 +337,7 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                                             donationId: r.donationId,
                                             amount: confirm,
                                             vietQrUrl: qrUrl,
+                                            orderCode: orderCode,
                                             checkoutUrl: r.checkoutUrl || undefined,
                                             paymentId: r.paymentTransactionId,
                                         });

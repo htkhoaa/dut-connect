@@ -1,6 +1,8 @@
 package vn.edu.dut.connect.donation.application;
 
 import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -10,6 +12,7 @@ import static vn.edu.dut.connect.donation.application.PaymentGateway.*;
 
 @Service
 public class PaymentService {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PaymentService.class);
     private final PaymentGateways gateways;
     private final PaymentTransactions transactions;
     private final DonationReadService reads;
@@ -29,8 +32,37 @@ public class PaymentService {
         transactions.finalizeCreation(command.paymentId(), result);
         var d = reads.detail(command.donationId(), actor);
         var p = d.payments().stream().filter(v -> v.id().equals(command.paymentId())).findFirst().orElseThrow();
+
+        String orderCode = command.orderId();
+        String description = "DUT " + orderCode;
+        String qrCodeUrl = "https://img.vietqr.io/image/MB-4310072005-compact2.png?amount="
+                + amount.toPlainString() + "&addInfo=" + URLEncoder.encode(description, StandardCharsets.UTF_8)
+                + "&accountName=HUYNH+TUAN+KHOA";
+
         // A callback may settle the intent before the create-order response arrives.
-        return new CreationDto(d.id(), p.id(), d.status(), p.checkoutUrl(), p.failureReason());
+        return new CreationDto(d.id(), p.id(), d.status(), p.checkoutUrl(), p.failureReason(), orderCode, qrCodeUrl);
+    }
+
+    public DonationDto checkAndDetail(UUID donationId, UUID actor) {
+        var d = reads.detail(donationId, actor);
+        if (d.status() == vn.edu.dut.connect.donation.domain.DonationStatus.CREATED
+                || d.status() == vn.edu.dut.connect.donation.domain.DonationStatus.PENDING_PAYMENT) {
+            for (var p : d.payments()) {
+                if (p.status() == vn.edu.dut.connect.donation.domain.PaymentStatus.CREATED
+                        || p.status() == vn.edu.dut.connect.donation.domain.PaymentStatus.PROVIDER_PENDING) {
+                    try {
+                        var result = gateways.get(p.provider()).query(p.providerOrderId());
+                        if (result.outcome() == Outcome.PAID) {
+                            transactions.settle(result);
+                            return reads.detail(donationId, actor);
+                        }
+                    } catch (Exception e) {
+                        log.debug("Auto-check query failed for order={}: {}", p.providerOrderId(), e.getMessage());
+                    }
+                }
+            }
+        }
+        return d;
     }
 
     public DonationDto refresh(UUID id, UUID actor) {

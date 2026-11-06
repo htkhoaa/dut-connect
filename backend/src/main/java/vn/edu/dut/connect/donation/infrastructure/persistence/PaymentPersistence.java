@@ -55,12 +55,19 @@ public class PaymentPersistence implements PaymentRepository {
             numOrder = Long.parseLong(order);
         } catch (Exception ignored) {}
 
+        UUID donationUuid = null;
+        try {
+            donationUuid = UUID.fromString(order);
+        } catch (Exception ignored) {}
+
         return jdbc.sql("""
             select id from dut_connect.payment_transactions
             where provider=:provider and (
                 provider_order_id = :order
                 or provider_order_id like :likeOrder
                 or (payos_order_code is not null and payos_order_code = :numOrder)
+                or (:donationUuid is not null and donation_id = :donationUuid)
+                or cast(donation_id as text) like :likeOrder
             )
             order by created_at desc
             limit 1
@@ -69,6 +76,7 @@ public class PaymentPersistence implements PaymentRepository {
         .param("order", order)
         .param("likeOrder", order + "%")
         .param("numOrder", numOrder)
+        .param("donationUuid", donationUuid)
         .query(UUID.class)
         .optional();
     }

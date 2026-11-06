@@ -34,7 +34,9 @@ export interface Creation {
     paymentTransactionId: string;
     status: DonationStatus;
     checkoutUrl: string | null;
-    message: string | null
+    message: string | null;
+    orderCode?: string | null;
+    qrCodeUrl?: string | null;
 }
 
 export interface DonationSettings {

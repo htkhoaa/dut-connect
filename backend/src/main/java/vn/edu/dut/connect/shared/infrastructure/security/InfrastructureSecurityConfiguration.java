@@ -106,6 +106,7 @@ public class InfrastructureSecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/v1/activities", "/api/v1/activities/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/donation-settings").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/zalopay/callback", "/api/v1/payments/payos/webhook").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/payments/payos/webhook").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/campaign-categories", "/api/v1/campaigns", "/api/v1/campaigns/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/campaigns/*/financial-summary", "/api/v1/campaigns/*/expenses").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/campaigns/*/expenses/*/receipt", "/api/v1/campaigns/*/payout/receipt").permitAll()

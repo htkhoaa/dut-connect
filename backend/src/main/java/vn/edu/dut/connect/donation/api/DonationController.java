@@ -36,7 +36,7 @@ public class DonationController {
 
     @GetMapping("/donations/{id}")
     public DonationDto detail(@PathVariable UUID id, Authentication a) {
-        return reads.detail(id, UUID.fromString(a.getName()));
+        return payments.checkAndDetail(id, UUID.fromString(a.getName()));
     }
 
     @GetMapping("/me/donations")

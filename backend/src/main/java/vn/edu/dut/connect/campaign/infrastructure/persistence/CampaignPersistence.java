@@ -27,6 +27,10 @@ public class CampaignPersistence implements CampaignRepository {
                 .param("id",id).param("user",user).query(String.class).optional().map(ManagerRole::valueOf);
     }
     public Set<UUID> managedCampaigns(Set<UUID> ids,UUID user){if(ids.isEmpty())return Set.of();return new HashSet<>(jdbc.sql("select campaign_id from dut_connect.campaign_managers where campaign_id in(:ids) and user_id=:u").param("ids",ids).param("u",user).query(UUID.class).list());}
+    public List<UUID> managers(UUID campaignId) {
+        return jdbc.sql("select user_id from dut_connect.campaign_managers where campaign_id=:id")
+                .param("id", campaignId).query(UUID.class).list();
+    }
     public void addManager(UUID id, UUID user, ManagerRole role) {
         jdbc.sql("insert into dut_connect.campaign_managers(campaign_id,user_id,manager_role,created_at) values(:id,:user,:role,:now)")
                 .param("id",id).param("user",user).param("role",role.name()).param("now",java.sql.Timestamp.from(Instant.now())).update();

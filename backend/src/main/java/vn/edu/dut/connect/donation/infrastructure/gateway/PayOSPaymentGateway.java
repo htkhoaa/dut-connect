@@ -124,23 +124,24 @@ public class PayOSPaymentGateway implements PaymentGateway {
             JsonNode payload = json.readTree(callback.data());
             JsonNode data = payload.has("data") ? payload.get("data") : payload;
 
-            String checksumKey = settings.payos("checksum-key");
-            if (!checksumKey.isBlank() && payload.has("signature")) {
-                // Verify signature if provided
-                String signature = payload.path("signature").asText();
-                String dataStr = json.writeValueAsString(data);
-                // Accept if signature valid or dev fallback
-            }
-
             long amountVal = data.path("amount").asLong(0);
             String desc = data.path("description").asText("");
             long orderCode = data.path("orderCode").asLong(0);
             String reference = data.path("reference").asText(UUID.randomUUID().toString());
 
             String orderId = orderCode > 0 ? String.valueOf(orderCode) : "";
-            if (orderId.isBlank() && desc.startsWith("DUT ")) {
-                orderId = desc.substring(4).trim();
+            if (orderId.isBlank()) {
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\b(\\d{8,18})\\b").matcher(desc);
+                if (m.find()) {
+                    orderId = m.group(1);
+                } else if (desc.startsWith("DUT ")) {
+                    orderId = desc.substring(4).trim();
+                } else {
+                    orderId = desc.trim();
+                }
             }
+
+            log.info("PayOS verifyCallback: orderCode={} desc={} resolvedOrderId={} amount={}", orderCode, desc, orderId, amountVal);
 
             return new VerifiedResult("payos", orderId, Outcome.PAID,
                     BigDecimal.valueOf(amountVal), reference, Instant.now(), "00");
@@ -152,6 +153,43 @@ public class PayOSPaymentGateway implements PaymentGateway {
 
     @Override
     public VerifiedResult query(String orderId) {
+        String clientId = settings.payos("client-id");
+        String apiKey = settings.payos("api-key");
+        if (clientId.isBlank() || apiKey.isBlank()) {
+            return new VerifiedResult("payos", orderId, Outcome.PENDING, BigDecimal.ZERO, null, null, "PENDING");
+        }
+        try {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(PAYOS_API + "/" + orderId))
+                    .header("x-client-id", clientId)
+                    .header("x-api-key", apiKey)
+                    .GET()
+                    .timeout(Duration.ofSeconds(10))
+                    .build();
+            HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
+            log.info("PayOS query orderId={} status={} body={}", orderId, resp.statusCode(), resp.body());
+            JsonNode root = json.readTree(resp.body());
+            if ("00".equals(root.path("code").asText())) {
+                JsonNode data = root.path("data");
+                String status = data.path("status").asText();
+                long amount = data.path("amount").asLong(0);
+                long amountPaid = data.path("amountPaid").asLong(0);
+                String transactionId = "TX-" + orderId;
+                if (data.has("transactions") && data.path("transactions").isArray() && !data.path("transactions").isEmpty()) {
+                    transactionId = data.path("transactions").get(0).path("reference").asText(transactionId);
+                }
+
+                if ("PAID".equalsIgnoreCase(status) || (amount > 0 && amountPaid >= amount)) {
+                    return new VerifiedResult("payos", orderId, Outcome.PAID,
+                            BigDecimal.valueOf(amountPaid > 0 ? amountPaid : amount),
+                            transactionId, Instant.now(), "00");
+                } else if ("CANCELLED".equalsIgnoreCase(status)) {
+                    return new VerifiedResult("payos", orderId, Outcome.CANCELLED, BigDecimal.ZERO, null, null, "CANCELLED");
+                }
+            }
+        } catch (Exception e) {
+            log.error("PayOS query failed orderId={}", orderId, e);
+        }
         return new VerifiedResult("payos", orderId, Outcome.PENDING, BigDecimal.ZERO, null, null, "PENDING");
     }
 }
