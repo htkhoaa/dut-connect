@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.edu.dut.connect.organization.domain.*;
 import vn.edu.dut.connect.shared.application.*;
+import vn.edu.dut.connect.notification.application.NotificationService;
 import static vn.edu.dut.connect.organization.application.OrganizationContracts.*;
 @Service
 public class OrganizationService {
@@ -16,10 +17,12 @@ public class OrganizationService {
     private final OrganizationRepository organizations;
     private final OrganizationAuthorization access;
     private final OrganizationAccessPort representation;
-    public OrganizationService(OrganizationRepository organizations, OrganizationAuthorization access, OrganizationAccessPort representation) {
+    private final NotificationService notifications;
+    public OrganizationService(OrganizationRepository organizations, OrganizationAuthorization access, OrganizationAccessPort representation, NotificationService notifications) {
         this.organizations=organizations;
         this.access=access;
         this.representation=representation;
+        this.notifications=notifications;
     }
     @Transactional(readOnly=true)
     public PageResult<Summary> browse(OrganizationQuery query, OrganizationStatus status) {
@@ -86,7 +89,21 @@ public class OrganizationService {
         Organization organization=locked(id);
         requireVersion(organization, request.version());
         switch (command) {
-            case VERIFY -> organization.verify(actor);
+            case VERIFY -> {
+                organization.verify(actor);
+                try {
+                    notifications.notifyUser(
+                        organization.creatorId(),
+                        "ORGANIZATION_VERIFIED",
+                        "Tổ chức đã được xác minh!",
+                        "Tổ chức '" + organization.name() + "' đã được Quản trị viên hệ thống phê duyệt và xác minh thành công.",
+                        "ORGANIZATION",
+                        organization.id()
+                    );
+                } catch (Exception e) {
+                    log.warn("Failed sending organization verified notification: {}", e.getMessage());
+                }
+            }
             case SUSPEND -> organization.suspend();
             case RESTORE -> organization.restore(actor);
         }

@@ -212,7 +212,7 @@ export function CampaignDetailPage() {
 
                 <aside className="min-w-0 space-y-5">
                     {renderText(
-                        c.content.contributionMode !== 'DONATION_ONLY' && (
+                        user?.role !== 'ADMIN' && c.content.contributionMode !== 'DONATION_ONLY' && (
                             <ApplyPanel key={c.id} campaign={c} />
                         )
                     )}

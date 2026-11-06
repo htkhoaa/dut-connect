@@ -15,6 +15,7 @@ import vn.edu.dut.connect.identity.application.IdentityDirectoryPort;
 import vn.edu.dut.connect.shared.application.*;
 import static vn.edu.dut.connect.volunteer.application.VolunteerContracts.*;
 import vn.edu.dut.connect.shared.application.EmailNotificationService;
+import vn.edu.dut.connect.notification.application.NotificationService;
 
 @Service @Transactional(readOnly=true)
 public class VolunteerService {
@@ -23,8 +24,9 @@ public class VolunteerService {
     private final CampaignAccessPort campaigns;
     private final IdentityDirectoryPort identities;
     private final EmailNotificationService email;
-    public VolunteerService(VolunteerRepository registrations,CampaignAccessPort campaigns,IdentityDirectoryPort identities, EmailNotificationService email) {
-        this.registrations=registrations;this.campaigns=campaigns;this.identities=identities;this.email=email;
+    private final NotificationService notifications;
+    public VolunteerService(VolunteerRepository registrations,CampaignAccessPort campaigns,IdentityDirectoryPort identities, EmailNotificationService email, NotificationService notifications) {
+        this.registrations=registrations;this.campaigns=campaigns;this.identities=identities;this.email=email;this.notifications=notifications;
     }
     @Transactional
     public ApplicationDto apply(UUID campaignId,UUID actor,ApplyRequest request) {
@@ -36,6 +38,22 @@ public class VolunteerService {
             throw new ApplicationFailure(409,"CAMPAIGN_NOT_ACCEPTING_VOLUNTEERS","The application deadline has passed");
         var v=registrations.save(new VolunteerRegistration(campaignId,actor,request.preferredTrack(),request.motivation(),request.availability()));
         log.info("Volunteer applied actor={} campaign={} application={}",actor,campaignId,v.id());
+        try {
+            var applicantAccount = identities.findAccount(actor);
+            String applicantName = applicantAccount.map(IdentityDirectoryPort.Account::fullName).orElse("Một tình nguyện viên");
+            if (campaign.ownerId() != null) {
+                notifications.notifyUser(
+                    campaign.ownerId(),
+                    "VOLUNTEER_APPLIED",
+                    "Đăng ký tình nguyện mới",
+                    applicantName + " vừa nộp đơn đăng ký tham gia chiến dịch '" + campaign.title() + "'.",
+                    "CAMPAIGN",
+                    campaignId
+                );
+            }
+        } catch (Exception e) {
+            log.warn("Failed sending volunteer applied notification: {}", e.getMessage());
+        }
         return dto(v);
     }
     @Transactional
@@ -43,13 +61,41 @@ public class VolunteerService {
         var v=reviewable(id,actor);v.requireVersion(request.version());activeLocked(v.userId());
         v.accept(request.assignedTrack(),actor);registrations.save(v);logTransition(v,actor);
         var account = identities.findAccount(v.userId()).orElseThrow();
-        email.participationAccepted(account.email(), account.fullName(), campaigns.getCampaign(v.campaignId()).title());
+        var campaign = campaigns.getCampaign(v.campaignId());
+        email.participationAccepted(account.email(), account.fullName(), campaign.title());
+        try {
+            notifications.notifyUser(
+                v.userId(),
+                "VOLUNTEER_ACCEPTED",
+                "Đăng ký tình nguyện được chấp nhận!",
+                "Đơn đăng ký tham gia chiến dịch '" + campaign.title() + "' của bạn đã được chấp nhận.",
+                "CAMPAIGN",
+                v.campaignId()
+            );
+        } catch (Exception e) {
+            log.warn("Failed sending volunteer accepted notification: {}", e.getMessage());
+        }
         return dto(v);
     }
     @Transactional
     public ApplicationDto reject(UUID id,UUID actor,RejectRequest request) {
         var v=reviewable(id,actor);v.requireVersion(request.version());v.reject(request.reason(),actor);
-        registrations.save(v);logTransition(v,actor);return dto(v);
+        registrations.save(v);logTransition(v,actor);
+        try {
+            var campaign = campaigns.getCampaign(v.campaignId());
+            String reason = (request.reason() != null && !request.reason().isBlank()) ? ": " + request.reason() : ".";
+            notifications.notifyUser(
+                v.userId(),
+                "VOLUNTEER_REJECTED",
+                "Đăng ký tình nguyện chưa được chấp nhận",
+                "Đơn đăng ký tham gia chiến dịch '" + campaign.title() + "' chưa được chấp nhận" + reason,
+                "CAMPAIGN",
+                v.campaignId()
+            );
+        } catch (Exception e) {
+            log.warn("Failed sending volunteer rejected notification: {}", e.getMessage());
+        }
+        return dto(v);
     }
     @Transactional
     public ApplicationDto cancel(UUID id,UUID actor,VersionRequest request) {

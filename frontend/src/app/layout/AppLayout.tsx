@@ -15,7 +15,6 @@ const adminItems: AdminItem[] = [
     {to: '/admin', label: 'Tổng quan', icon: 'grid'},
     {to: '/admin/proposals', label: 'Duyệt đề xuất', icon: 'file'},
     {to: '/admin/organizations', label: 'Xác minh tổ chức', icon: 'shield'},
-    {to: '/admin/expenses', label: 'Duyệt chi phí', icon: 'file'},
     {to: '/admin/payouts', label: 'Giải ngân quyên góp', icon: 'heart'},
     {to: '/admin/users', label: 'Người dùng', icon: 'users'},
     {to: '/admin/categories', label: 'Danh mục', icon: 'grid'},
@@ -122,7 +121,7 @@ export function AppLayout() {
                         >
                             {tr("Tổ chức")}
                         </NavLink>
-                        {user && (
+                        {user && !isAdmin && (
                             <NavLink
                                 to="/manage/campaigns"
                                 className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
@@ -136,7 +135,7 @@ export function AppLayout() {
                                 {tr("Chiến dịch của tôi")}
                             </NavLink>
                         )}
-                        {user && (
+                        {user && !isAdmin && (
                             <NavLink
                                 to="/proposals"
                                 className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
@@ -148,6 +147,23 @@ export function AppLayout() {
                                 }`}
                             >
                                 {tr("Đề xuất")}
+                            </NavLink>
+                        )}
+                        {isAdmin && (
+                            <NavLink
+                                to="/admin"
+                                className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
+                                    isActive
+                                        ? 'bg-primary text-white font-semibold shadow-2xs'
+                                        : headerScrolled
+                                            ? 'text-primary hover:bg-primary-light hover:text-primary'
+                                            : 'text-primary hover:bg-white/60 hover:text-primary'
+                                }`}
+                            >
+                                <span className="flex items-center gap-1.5">
+                                    <Icon name="shield" size={15} />
+                                    {tr("Quản trị hệ thống")}
+                                </span>
                             </NavLink>
                         )}
                     </nav>
@@ -184,46 +200,67 @@ export function AppLayout() {
                                                 <p className="font-semibold text-sm truncate">{renderText(user.fullName)}</p>
                                                 <p className="text-xs text-text-secondary truncate">{renderText(user.email)}</p>
                                                 <p className="mt-1 inline-block rounded-md bg-primary-light px-2 py-0.5 text-[10px] font-bold text-primary">
-                                                    {renderText(user.studentId)}
+                                                    {isAdmin ? tr("Quản trị viên hệ thống") : renderText(user.studentId)}
                                                 </p>
                                             </div>
 
                                             <div className="py-1">
-                                                <Link to="/me/settings?tab=profile" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
-                                                    <Icon name="users" size={16} className="text-primary"/>
-                                                    <span>{tr("Hồ sơ & kỹ năng")}</span>
-                                                </Link>
-                                                <Link to="/me/tasks" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
-                                                    <Icon name="check" size={16} className="text-primary"/>
-                                                    <span>{tr("Nhiệm vụ của tôi")}</span>
-                                                </Link>
-                                                <Link to="/me/applications" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
-                                                    <Icon name="heart" size={16} className="text-primary"/>
-                                                    <span>{tr("Đăng ký tình nguyện")}</span>
-                                                </Link>
-                                                <Link to="/me/settings?tab=history" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
-                                                    <Icon name="calendar" size={16} className="text-primary"/>
-                                                    <span>{tr("Lịch sử đóng góp")}</span>
-                                                </Link>
-                                                <Link to="/me/settings?tab=donations" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
-                                                    <Icon name="heart" size={16} className="text-primary"/>
-                                                    <span>{tr("Khoản ủng hộ")}</span>
-                                                </Link>
-                                                <Link to="/me/settings?tab=organizations" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
-                                                    <Icon name="building" size={16} className="text-primary"/>
-                                                    <span>{tr("Tổ chức của tôi")}</span>
-                                                </Link>
-                                                <Link to="/me/settings?tab=proposals" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
-                                                    <Icon name="file" size={16} className="text-primary"/>
-                                                    <span>{tr("Đề xuất chiến dịch")}</span>
-                                                </Link>
-
-                                                {isAdmin && (
+                                                {isAdmin ? (
                                                     <>
-                                                        <div className="my-1 border-t border-border" />
                                                         <Link to="/admin" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-primary hover:bg-primary-light transition-colors">
-                                                            <Icon name="shield" size={16} />
-                                                            <span>{tr("Quản trị hệ thống")}</span>
+                                                            <Icon name="grid" size={16} />
+                                                            <span>{tr("Tổng quan hệ thống")}</span>
+                                                        </Link>
+                                                        <Link to="/admin/proposals" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
+                                                            <Icon name="file" size={16} className="text-primary"/>
+                                                            <span>{tr("Duyệt đề xuất")}</span>
+                                                        </Link>
+                                                        <Link to="/admin/organizations" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
+                                                            <Icon name="shield" size={16} className="text-primary"/>
+                                                            <span>{tr("Xác minh tổ chức")}</span>
+                                                        </Link>
+                                                        <Link to="/admin/payouts" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
+                                                            <Icon name="heart" size={16} className="text-primary"/>
+                                                            <span>{tr("Giải ngân quyên góp")}</span>
+                                                        </Link>
+                                                        <Link to="/admin/users" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
+                                                            <Icon name="users" size={16} className="text-primary"/>
+                                                            <span>{tr("Quản lý người dùng")}</span>
+                                                        </Link>
+                                                        <Link to="/admin/categories" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
+                                                            <Icon name="grid" size={16} className="text-primary"/>
+                                                            <span>{tr("Danh mục")}</span>
+                                                        </Link>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Link to="/me/settings?tab=profile" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
+                                                            <Icon name="users" size={16} className="text-primary"/>
+                                                            <span>{tr("Hồ sơ & kỹ năng")}</span>
+                                                        </Link>
+                                                        <Link to="/me/tasks" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
+                                                            <Icon name="check" size={16} className="text-primary"/>
+                                                            <span>{tr("Nhiệm vụ của tôi")}</span>
+                                                        </Link>
+                                                        <Link to="/me/applications" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
+                                                            <Icon name="heart" size={16} className="text-primary"/>
+                                                            <span>{tr("Đăng ký tình nguyện")}</span>
+                                                        </Link>
+                                                        <Link to="/me/settings?tab=history" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
+                                                            <Icon name="calendar" size={16} className="text-primary"/>
+                                                            <span>{tr("Lịch sử đóng góp")}</span>
+                                                        </Link>
+                                                        <Link to="/me/settings?tab=donations" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
+                                                            <Icon name="heart" size={16} className="text-primary"/>
+                                                            <span>{tr("Khoản ủng hộ")}</span>
+                                                        </Link>
+                                                        <Link to="/me/settings?tab=organizations" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
+                                                            <Icon name="building" size={16} className="text-primary"/>
+                                                            <span>{tr("Tổ chức của tôi")}</span>
+                                                        </Link>
+                                                        <Link to="/me/settings?tab=proposals" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
+                                                            <Icon name="file" size={16} className="text-primary"/>
+                                                            <span>{tr("Đề xuất chiến dịch")}</span>
                                                         </Link>
                                                     </>
                                                 )}
@@ -274,7 +311,7 @@ export function AppLayout() {
                         <NavLink to="/organizations" className="block rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted">
                             {tr("Tổ chức")}
                         </NavLink>
-                        {user && (
+                        {user && !isAdmin && (
                             <>
                                 <NavLink to="/manage/campaigns" className="block rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted">
                                     {tr("Chiến dịch của tôi")}
@@ -289,7 +326,10 @@ export function AppLayout() {
                         )}
                         {isAdmin && (
                             <NavLink to="/admin" className="block rounded-lg px-3 py-2 text-sm font-semibold text-primary hover:bg-primary-light">
-                                {tr("Quản trị hệ thống")}
+                                <span className="flex items-center gap-1.5">
+                                    <Icon name="shield" size={16} />
+                                    {tr("Quản trị hệ thống")}
+                                </span>
                             </NavLink>
                         )}
                     </div>

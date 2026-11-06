@@ -37,7 +37,7 @@ export function OrganizationListPage({scope = 'public'}: {scope?: OrganizationSc
     const list = useOrganizations(scope, page, search, status);
     const user = useAuth(state => state.user);
     return <>
-        <PageHeader eyebrow={scope === 'public' ? tr("CỘNG ĐỒNG DUT") : 'KẾT NỐI & QUẢN LÝ'} title={scope === 'mine' ? tr("Tổ chức của bạn") : scope === 'admin' ? tr("Xác minh tổ chức") : tr("Cùng một mục tiêu. Cùng tạo thay đổi.")} description={scope === 'public' ? tr("Gặp gỡ các đoàn, hội, câu lạc bộ và đội sinh viên. Tìm một cộng đồng phù hợp để cùng bạn cống hiến.") : tr("Theo dõi tổ chức, vai trò thành viên và trạng thái xác minh.")} actions={user && scope !== 'admin' ? <Link className="button-link" to="/organizations/new"><Icon name="building" size={17}/>{tr("Tạo tổ chức")}</Link> : undefined}/>
+        <PageHeader eyebrow={scope === 'public' ? tr("CỘNG ĐỒNG DUT") : 'KẾT NỐI & QUẢN LÝ'} title={scope === 'mine' ? tr("Tổ chức của bạn") : scope === 'admin' ? tr("Xác minh tổ chức") : tr("Cùng một mục tiêu. Cùng tạo thay đổi.")} description={scope === 'public' ? tr("Gặp gỡ các đoàn, hội, câu lạc bộ và đội sinh viên. Tìm một cộng đồng phù hợp để cùng bạn cống hiến.") : tr("Theo dõi tổ chức, vai trò thành viên và trạng thái xác minh.")} actions={user && user.role !== 'ADMIN' && scope !== 'admin' ? <Link className="button-link" to="/organizations/new"><Icon name="building" size={17}/>{tr("Tạo tổ chức")}</Link> : undefined}/>
         {scope !== 'mine' && <form onSubmit={form.handleSubmit(input => {
             const parsed = z.string().trim().max(200).safeParse(input.q);
             if (!parsed.success) {form.setError('q', {message: tr("Tìm kiếm tối đa 200 ký tự")}); return;}
