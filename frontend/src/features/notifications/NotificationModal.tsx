@@ -60,7 +60,7 @@ export function NotificationModal({open, onClose}: {open: boolean; onClose: () =
                         </span>
                         <div>
                             <h2 className="text-base font-bold text-text-primary">{tr("Tất cả thông báo")}</h2>
-                            <p className="text-xs text-text-secondary">{tr("Cập nhật thời gian thực về hoạt động của bạn")}</p>
+                            <p className="text-xs text-text-secondary">{tr("Cập nhật các hoạt động mới nhất của bạn")}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">

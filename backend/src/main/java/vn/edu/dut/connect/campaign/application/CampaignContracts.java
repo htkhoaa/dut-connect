@@ -37,7 +37,11 @@ public final class CampaignContracts {
             return new ContentDto(c.organizerType(), c.organizationId(), c.categoryId(), c.title(), c.summary(), c.description(), c.expectedImpact(), c.contributionMode(), c.startDate(), c.endDate(), c.applicationDeadline(), c.fundraisingDeadline(), c.targetVolunteerCount(), c.targetTechnicalCount(), c.targetLogisticsCount(), c.volunteerRequirements(), c.fundraisingGoal() == null ? null : c.fundraisingGoal().toPlainString(), c.institutionalFunding() == null ? null : c.institutionalFunding().toPlainString(), c.sponsorName(), c.sponsorFunding() == null ? null : c.sponsorFunding().toPlainString(), c.estimatedBudget() == null ? null : c.estimatedBudget().toPlainString(), c.donationBankName(), c.donationAccountNumber(), c.donationAccountHolder());
         }
     }
-    public record CreateRequest(@NotNull @Valid ContentInput content) {}
+    public record CreateRequest(@NotNull @Valid ContentInput content, Boolean asDraft) {
+        public CreateRequest(ContentInput content) {
+            this(content, Boolean.FALSE);
+        }
+    }
     public record PatchRequest(@NotNull @Valid ContentInput content, @Size(max=11) Set<@NotBlank String> clearFields, @NotNull @PositiveOrZero Long version) {}
     public record VersionRequest(@NotNull @PositiveOrZero Long version) {}
     public record RejectRequest(@NotBlank @Size(max=1000) String reason, @NotNull @PositiveOrZero Long version) {}

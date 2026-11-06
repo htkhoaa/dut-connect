@@ -63,12 +63,7 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
     return (
         <Card className="overflow-hidden">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-light text-primary">
-                        <Icon name="spark" size={17} />
-                    </span>
-                    <h2 className="text-xl font-semibold text-text-primary">{tr("Thư viện ảnh chiến dịch")}</h2>
-                </div>
+                <h2 className="text-xl font-semibold text-text-primary">{tr("Thư viện ảnh")}</h2>
                 {items.length > 0 && (
                     <span className="text-xs font-semibold text-text-secondary">
                         {items.length} {tr("hình ảnh")}

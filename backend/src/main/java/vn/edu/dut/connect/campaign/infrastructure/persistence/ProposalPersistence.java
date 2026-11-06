@@ -22,6 +22,7 @@ public class ProposalPersistence implements ProposalRepository {
         if (!catalog.proposals().isEmpty()) {where+=" and p.id not in (:hidden)"; args.put("hidden",catalog.proposals());}
         if (proposer != null) { where += " and p.proposerUserId=:proposer"; args.put("proposer",proposer); }
         if (status != null) { where += " and p.status=:status"; args.put("status",status); }
+        else if (proposer == null) { where += " and p.status != vn.edu.dut.connect.campaign.domain.ProposalStatus.DRAFT"; }
         var count = em.createQuery("select count(p)" + where,Long.class);
         var select = em.createQuery("select p" + where + " order by p.createdAt desc,p.id",Proposal.class);
         args.forEach((key,value) -> { count.setParameter(key,value); select.setParameter(key,value); });

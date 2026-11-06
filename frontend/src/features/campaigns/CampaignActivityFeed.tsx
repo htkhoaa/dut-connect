@@ -41,11 +41,8 @@ export function CampaignActivityFeed({campaignId}: {campaignId: string}) {
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
                         <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
                     </span>
-                    <h3 className="text-sm font-bold text-text-primary">{tr("Tương tác trực tiếp")}</h3>
+                    <h3 className="text-sm font-bold text-text-primary">{tr("Nhịp đập chiến dịch")}</h3>
                 </div>
-                <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 rounded-full px-2 py-0.5 border border-emerald-200">
-                    {tr("Thời gian thực")}
-                </span>
             </div>
 
             {/* Activities list */}

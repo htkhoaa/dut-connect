@@ -28,4 +28,8 @@ public class ProposalController {
     public ProposalDetail cancel(Authentication auth, @PathVariable UUID id, @RequestBody VersionRequest request) {
         return service.cancel(id, UUID.fromString(auth.getName()), request);
     }
+    @PostMapping("/{id}/submit")
+    public ProposalDetail submit(Authentication auth, @PathVariable UUID id, @RequestBody VersionRequest request) {
+        return service.submit(id, UUID.fromString(auth.getName()), request);
+    }
 }

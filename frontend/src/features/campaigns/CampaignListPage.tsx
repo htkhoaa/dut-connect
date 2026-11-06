@@ -10,7 +10,7 @@ import {CampaignCard} from './components/CampaignCard';
 import {catalogLabel} from '../../shared/lib/catalogLabels';
 import {errorMessage} from '../../shared/api/errors';
 import {Input} from '../../shared/components/Input';
-import {Select} from '../../shared/components/Select';
+import {FilterDropdown} from '../../shared/components/FilterDropdown';
 import {Button} from '../../shared/components/Button';
 import {Icon} from '../../shared/components/Icon';
 import {PageHeader} from '../../shared/components/PageHeader';
@@ -37,6 +37,23 @@ export function CampaignListPage({scope = 'public'}: {scope?: 'public' | 'mine' 
     const organizations = useOrganizationOptions('public');
     const progress = useFundraisingProgress((list.data?.items || []).filter(c => c.contributionMode !== 'VOLUNTEER_ONLY').map(c => c.id));
     function change<K extends keyof CampaignFilters>(key: K, value: CampaignFilters[K]) {setFilters(f => ({...f, page: 0, [key]: value}));}
+    const categoryOptions = [
+        {value: '', label: tr("Tất cả lĩnh vực")},
+        ...(categories.data?.map(c => ({value: c.id, label: catalogLabel(c.name)})) || [])
+    ];
+    const orgOptions = [
+        {value: '', label: tr("Tất cả tổ chức")},
+        ...(organizations.data?.map(o => ({value: o.id, label: o.name})) || [])
+    ];
+    const modeOptions = [
+        {value: '', label: tr("Tất cả hình thức")},
+        ...Object.entries(modes).map(([value, label]) => ({value, label}))
+    ];
+    const sortOptions = [
+        {value: 'newest', label: tr("Mới nhất")},
+        {value: 'startDate', label: tr("Ngày bắt đầu")}
+    ];
+
     return <div className="space-y-7">
         <PageHeader eyebrow={scope === 'public' ? tr("KHÁM PHÁ & ĐÓNG GÓP") : tr("KHÔNG GIAN QUẢN LÝ")} title={scope === 'mine' ? tr("Chiến dịch của bạn") : scope === 'admin' ? tr("Quản lý chiến dịch") : tr("Tìm nơi bạn muốn góp sức.")} description={scope === 'public' ? tr("Dành thời gian cho điều bạn quan tâm. Khám phá những chiến dịch cùng cộng đồng sinh viên DUT.") : tr("Theo dõi chiến dịch, điều phối hoạt động và quản lý những đóng góp.")} actions={scope === 'mine' ? <Link to="/proposals/new" className="button-link"><Icon name="file" size={17}/>{tr("Đề xuất chiến dịch")}</Link> : undefined}/>
         <div className="filter-panel space-y-4">
@@ -46,10 +63,22 @@ export function CampaignListPage({scope = 'public'}: {scope?: 'public' | 'mine' 
 
             {renderText(form.formState.errors.q && <p role="alert" className="text-sm text-danger">{renderText(form.formState.errors.q.message)}</p>)}
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <label className="filter-label">{tr("Lĩnh vực")}<Select value={filters.categoryId} onChange={e => change('categoryId', e.target.value)}><option value="">{tr("Tất cả lĩnh vực")}</option>{renderText(categories.data?.map(c => <option key={c.id} value={c.id}>{renderText(catalogLabel(c.name))}</option>))}</Select></label>
-                <label className="filter-label">{tr("Tổ chức")}<Select value={filters.organizationId} onChange={e => change('organizationId', e.target.value)}><option value="">{tr("Tất cả tổ chức")}</option>{renderText(organizations.data?.map(o => <option key={o.id} value={o.id}>{renderText(o.name)}</option>))}</Select></label>
-                <label className="filter-label">{tr("Cách đóng góp")}<Select value={filters.contributionMode} onChange={e => change('contributionMode', e.target.value as CampaignFilters['contributionMode'])}><option value="">{tr("Tất cả hình thức")}</option>{renderText(Object.entries(modes).map(([value, label]) => <option key={value} value={value}>{renderText(label)}</option>))}</Select></label>
-                <label className="filter-label">{tr("Sắp xếp")}<Select value={filters.sort} onChange={e => change('sort', e.target.value as CampaignFilters['sort'])}><option value="newest">{tr("Mới nhất")}</option><option value="startDate">{tr("Ngày bắt đầu")}</option></Select></label>
+                <div className="filter-label">
+                    <span>{tr("Lĩnh vực")}</span>
+                    <FilterDropdown value={filters.categoryId} onChange={val => change('categoryId', val)} options={categoryOptions} />
+                </div>
+                <div className="filter-label">
+                    <span>{tr("Tổ chức")}</span>
+                    <FilterDropdown value={filters.organizationId} onChange={val => change('organizationId', val)} options={orgOptions} />
+                </div>
+                <div className="filter-label">
+                    <span>{tr("Cách đóng góp")}</span>
+                    <FilterDropdown value={filters.contributionMode} onChange={val => change('contributionMode', val as CampaignFilters['contributionMode'])} options={modeOptions} />
+                </div>
+                <div className="filter-label">
+                    <span>{tr("Sắp xếp")}</span>
+                    <FilterDropdown value={filters.sort} onChange={val => change('sort', val as CampaignFilters['sort'])} options={sortOptions} />
+                </div>
             </div>
         </div>
         {renderText((categories.isError || organizations.isError) && <ErrorState message={tr("Chưa tải được bộ lọc.")} onRetry={() => {void categories.refetch(); void organizations.refetch();}}/>)}

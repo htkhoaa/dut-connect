@@ -10,7 +10,7 @@ import {useAuth} from '../auth/store';
 import {errorMessage} from '../../shared/api/errors';
 import {Button} from '../../shared/components/Button';
 import {Input} from '../../shared/components/Input';
-import {Select} from '../../shared/components/Select';
+import {FilterDropdown} from '../../shared/components/FilterDropdown';
 import {Badge} from '../../shared/components/Badge';
 import {Table} from '../../shared/components/Table';
 import {Pagination} from '../../shared/components/Pagination';
@@ -46,9 +46,17 @@ export function OrganizationListPage({scope = 'public'}: {scope?: OrganizationSc
             <div className="min-w-0 flex-1"><Input aria-label={tr("Tìm kiếm tổ chức")} placeholder={tr("Tìm theo tên")} maxLength={200} {...form.register('q')}/></div>
             <Button type="submit">{tr("Tìm kiếm")}</Button>
 
-            {renderText(scope === 'admin' && <div className="w-full sm:w-56"><Select aria-label={tr("Trạng thái tổ chức")} value={status} onChange={event => {setStatus(event.target.value as OrganizationStatus | ''); setPage(0);}}>
-                <option value="">{tr("Tất cả trạng thái")}</option>{renderText(Object.entries(organizationStatuses).map(([value, presentation]) => <option key={value} value={value}>{renderText(presentation.label)}</option>))}
-            </Select></div>)}
+            {renderText(scope === 'admin' && <div className="w-full sm:w-56">
+                <FilterDropdown
+                    ariaLabel={tr("Trạng thái tổ chức")}
+                    value={status}
+                    onChange={val => {setStatus(val as OrganizationStatus | ''); setPage(0);}}
+                    options={[
+                        {value: '', label: tr("Tất cả trạng thái")},
+                        ...Object.entries(organizationStatuses).map(([value, presentation]) => ({value: value as OrganizationStatus, label: presentation.label}))
+                    ]}
+                />
+            </div>)}
             {renderText(form.formState.errors.q && <p role="alert" className="w-full text-danger">{renderText(form.formState.errors.q.message)}</p>)}
         </form>}
         {list.isPending ? <LoadingState/> : list.isError ? <ErrorState message={errorMessage(list.error)} onRetry={() => void list.refetch()}/> : <>

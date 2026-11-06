@@ -30,11 +30,11 @@ export function CampaignDashboard({campaignId, title, completed=false}:{campaign
                 [tr("Tình nguyện viên đã duyệt"),query.data.operations.applications.ACCEPTED],[tr("Đăng ký đã từ chối"),query.data.operations.applications.REJECTED],[tr("Đăng ký đã hủy"),query.data.operations.applications.CANCELLED],
                 [tr("Đã phân công kỹ thuật"),query.data.operations.assignedTracks.TECHNICAL],[tr("Đã phân công hậu cần"),query.data.operations.assignedTracks.LOGISTICS],
                 [tr("Nhiệm vụ cần làm"),query.data.operations.tasks.TODO],[tr("Nhiệm vụ đang thực hiện"),query.data.operations.tasks.IN_PROGRESS],[tr("Nhiệm vụ đã làm xong"),query.data.operations.tasks.DONE],[tr("Nhiệm vụ đã xác minh"),query.data.operations.tasks.VERIFIED],
-                [tr("Buổi điểm danh"),query.data.operations.attendanceSessionCount],[tr("Hoàn thành đã xác minh"),query.data.operations.verifiedCompletionCount],[tr("Số giờ đã xác minh"),query.data.operations.verifiedVolunteerHours],[tr("Chi phí chờ duyệt"),query.data.operations.pendingExpenseCount],
-                [tr("Kinh phí nhà trường"),vnd(query.data.financialSummary.institutionalFunding)],[tr("Kinh phí tài trợ"),vnd(query.data.financialSummary.sponsorFunding)],[tr("Đóng góp đã xác nhận"),vnd(query.data.financialSummary.verifiedDonations)],
-                [tr("Tổng kinh phí"),vnd(query.data.financialSummary.totalFunding)],[tr("Chi phí đã duyệt"),vnd(query.data.financialSummary.approvedExpenses)],[tr("Kinh phí còn lại"),vnd(query.data.financialSummary.remainingFunds)],[tr("Lượt đóng góp thành công"),query.data.financialSummary.successfulDonationCount],
-                [tr("Mục tiêu gây quỹ"),query.data.financialSummary.fundraisingGoal===null?tr("Chưa thiết lập"):vnd(query.data.financialSummary.fundraisingGoal)]
-            ]}/><p className="mt-5 text-sm text-text-secondary">{tr("Các tổng chỉ tính giờ hoàn thành đã xác minh, khoản đóng góp đã thanh toán và chi phí đã duyệt.")}</p>
+                [tr("Buổi điểm danh"),query.data.operations.attendanceSessionCount],[tr("Hoàn thành đã xác minh"),query.data.operations.verifiedCompletionCount],[tr("Số giờ đã xác minh"),query.data.operations.verifiedVolunteerHours],
+                [tr("Đã quyên góp"),vnd(query.data.financialSummary.verifiedDonations)],
+                [tr("Mục tiêu gây quỹ"),query.data.financialSummary.fundraisingGoal===null?tr("Chưa thiết lập"):vnd(query.data.financialSummary.fundraisingGoal)],
+                [tr("Lượt đóng góp thành công"),query.data.financialSummary.successfulDonationCount]
+            ]}/><p className="mt-5 text-sm text-text-secondary">{tr("Các tổng chỉ tính giờ hoàn thành đã xác minh và các khoản đóng góp đã thanh toán thành công.")}</p>
         </>)}
         {renderText((completed || showPoster) && query.data && <div className="mt-6"><CampaignFinalResult title={title||tr("Chiến dịch")} data={query.data}/></div>)}
     </Card>;

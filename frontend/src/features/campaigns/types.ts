@@ -2,7 +2,7 @@ import type {PageResponse} from '../../shared/api/errors';
 export type OrganizerType = 'INDIVIDUAL' | 'ORGANIZATION';
 export type ContributionMode = 'VOLUNTEER_ONLY' | 'DONATION_ONLY' | 'HYBRID';
 export type CampaignStatus = 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-export type ProposalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+export type ProposalStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 export type ManagerRole = 'OWNER';
 export type SkillTrack = 'TECHNICAL' | 'LOGISTICS';
 export interface Content {
@@ -42,7 +42,7 @@ export interface SkillInput {skillId:string;track:SkillTrack;importance:number}
 export interface OrganizationOption {id:string;name:string;status:string}
 export interface SkillOption {id:string;name:string}
 export interface CampaignFilters {page:number;q:string;status:CampaignStatus|'';categoryId:string;organizationId:string;contributionMode:ContributionMode|'';sort:'newest'|'startDate'}
-export interface PlanWrite {content:Content;version?:number}
+export interface PlanWrite {content:Content;version?:number;asDraft?:boolean}
 export type CampaignAction = {command:'open'|'start'|'complete'|'cancel';version:number};
 export type ReviewAction = {command:'approve';version:number}|{command:'reject';reason:string;version:number};
 export type CategoryWrite = {name:string;description:string;active:boolean;version?:number;clearDescription?:boolean};

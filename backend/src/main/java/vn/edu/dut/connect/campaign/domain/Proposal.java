@@ -16,15 +16,18 @@ public class Proposal {
     @Version private Long version;
     protected Proposal() {}
     public Proposal(UUID proposer, CampaignContent content) {
+        this(proposer, content, ProposalStatus.PENDING);
+    }
+    public Proposal(UUID proposer, CampaignContent content, ProposalStatus status) {
         id = UUID.randomUUID();
         proposerUserId = proposer;
         this.content = content;
-        status = ProposalStatus.PENDING;
+        this.status = status != null ? status : ProposalStatus.PENDING;
         createdAt = Instant.now(); updatedAt = createdAt;
     }
     public void edit(CampaignContent content) {
-        if (status != ProposalStatus.PENDING && status != ProposalStatus.REJECTED)
-            throw new CampaignViolation("INVALID_STATE_TRANSITION", "Only pending or rejected proposals can be changed");
+        if (status != ProposalStatus.DRAFT && status != ProposalStatus.PENDING && status != ProposalStatus.REJECTED)
+            throw new CampaignViolation("INVALID_STATE_TRANSITION", "Only draft, pending or rejected proposals can be changed");
         this.content = content; touch();
         if (status == ProposalStatus.REJECTED) {
             status = ProposalStatus.PENDING;
@@ -32,6 +35,12 @@ public class Proposal {
             reviewedByUserId = null;
             reviewedAt = null;
         }
+    }
+    public void submit() {
+        if (status != ProposalStatus.DRAFT)
+            throw new CampaignViolation("INVALID_STATE_TRANSITION", "Only draft proposals can be submitted");
+        status = ProposalStatus.PENDING;
+        touch();
     }
     public void requirePending() {
         if (status != ProposalStatus.PENDING) throw new CampaignViolation("INVALID_STATE_TRANSITION", "Only pending proposals can be changed or reviewed");
@@ -45,8 +54,8 @@ public class Proposal {
         rejectionReason = reason.trim(); status = ProposalStatus.REJECTED; review(actor);
     }
     public void cancel() {
-        if (status != ProposalStatus.REJECTED)
-            throw new CampaignViolation("INVALID_STATE_TRANSITION", "Only rejected proposals can be cancelled");
+        if (status != ProposalStatus.REJECTED && status != ProposalStatus.DRAFT)
+            throw new CampaignViolation("INVALID_STATE_TRANSITION", "Only rejected or draft proposals can be cancelled");
         status = ProposalStatus.CANCELLED;
         touch();
     }
