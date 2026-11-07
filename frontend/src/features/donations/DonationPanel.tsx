@@ -215,6 +215,31 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                         >
                             {checking ? tr("Đang kiểm tra…") : tr("Kiểm tra trạng thái thanh toán")}
                         </Button>
+                        {user?.role === 'ADMIN' && (
+                            <button
+                                type="button"
+                                disabled={checking}
+                                className="w-full rounded-xl border border-amber-300 bg-amber-50 py-2 text-xs font-bold text-amber-800 hover:bg-amber-100 transition-colors shadow-2xs disabled:opacity-50"
+                                onClick={async () => {
+                                    setChecking(true);
+                                    setCheckMessage(null);
+                                    try {
+                                        await api.adminSettle(activeDonation.donationId);
+                                        setIsPaid(true);
+                                        setCheckMessage(tr("Quản trị viên đã xác nhận thanh toán thành công!"));
+                                        void queryClient.invalidateQueries({queryKey: ['campaign', campaign.id]});
+                                        void queryClient.invalidateQueries({queryKey: ['financial-summary', campaign.id]});
+                                        void queryClient.invalidateQueries({queryKey: ['campaign-dashboard', campaign.id]});
+                                    } catch (e) {
+                                        setCheckMessage(errorMessage(e));
+                                    } finally {
+                                        setChecking(false);
+                                    }
+                                }}
+                            >
+                                ⚡ {tr("Xác nhận đã nhận tiền (Dành cho Quản trị viên)")}
+                            </button>
+                        )}
                         <div className="flex items-center justify-between text-xs px-1">
                             <button
                                 type="button"

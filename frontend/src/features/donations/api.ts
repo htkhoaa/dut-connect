@@ -22,6 +22,10 @@ export async function refresh(paymentId: string) {
     return (await apiClient.post<Donation>('/payments/' + paymentId + '/refresh')).data;
 }
 
+export async function adminSettle(donationId: string) {
+    return (await apiClient.post<Donation>('/admin/donations/' + donationId + '/settle')).data;
+}
+
 export async function mockCheckout(paymentId: string) {
     return (await apiClient.get<Payment>('/dev/mock-payments/' + paymentId)).data;
 }

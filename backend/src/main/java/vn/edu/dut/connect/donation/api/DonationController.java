@@ -48,4 +48,9 @@ public class DonationController {
     public DonationDto refresh(@PathVariable UUID id, Authentication a) {
         return payments.refresh(id, UUID.fromString(a.getName()));
     }
+
+    @PostMapping("/admin/donations/{id}/settle")
+    public DonationDto adminSettle(@PathVariable UUID id, Authentication a) {
+        return payments.adminSettle(id, UUID.fromString(a.getName()));
+    }
 }

@@ -6,6 +6,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import vn.edu.dut.connect.identity.application.IdentityDirectoryPort;
+import vn.edu.dut.connect.shared.application.ApplicationFailure;
 
 import static vn.edu.dut.connect.donation.application.DonationContracts.*;
 import static vn.edu.dut.connect.donation.application.PaymentGateway.*;
@@ -17,12 +19,14 @@ public class PaymentService {
     private final PaymentTransactions transactions;
     private final DonationReadService reads;
     private final DonationPolicy policy;
+    private final IdentityDirectoryPort identities;
 
-    public PaymentService(PaymentGateways gateways, PaymentTransactions transactions, DonationReadService reads, DonationPolicy policy) {
+    public PaymentService(PaymentGateways gateways, PaymentTransactions transactions, DonationReadService reads, DonationPolicy policy, IdentityDirectoryPort identities) {
         this.gateways = gateways;
         this.transactions = transactions;
         this.reads = reads;
         this.policy = policy;
+        this.identities = identities;
     }
 
     public CreationDto create(UUID campaign, UUID actor, BigDecimal amount) {
@@ -60,6 +64,33 @@ public class PaymentService {
                         log.debug("Auto-check query failed for order={}: {}", p.providerOrderId(), e.getMessage());
                     }
                 }
+            }
+        }
+        return d;
+    }
+
+    public DonationDto adminSettle(UUID donationId, UUID actor) {
+        var account = identities.lockAccount(actor).orElseThrow(() -> ApplicationFailure.missing("Account not found"));
+        if (!account.active() || !account.admin()) {
+            throw new ApplicationFailure(403, "ACCESS_DENIED", "Admin access required");
+        }
+        var d = reads.detail(donationId, actor);
+        if (d.status() == vn.edu.dut.connect.donation.domain.DonationStatus.PAID) {
+            return d;
+        }
+        for (var p : d.payments()) {
+            if (p.status() != vn.edu.dut.connect.donation.domain.PaymentStatus.PAID) {
+                var verified = new VerifiedResult(
+                        p.provider(),
+                        p.providerOrderId(),
+                        Outcome.PAID,
+                        new BigDecimal(p.amount()),
+                        "ADMIN_MANUAL_" + UUID.randomUUID().toString().substring(0, 8),
+                        java.time.Instant.now(),
+                        "00"
+                );
+                transactions.settle(verified);
+                return reads.detail(donationId, actor);
             }
         }
         return d;
