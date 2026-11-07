@@ -36,6 +36,8 @@ public class PaymentTransaction {
     private Instant createdAt;
     @Column(nullable = false)
     private Instant updatedAt;
+    @Column(name = "payos_order_code")
+    private Long payosOrderCode;
     @Version
     private Long version;
 
@@ -47,6 +49,11 @@ public class PaymentTransaction {
         donationId = donation;
         this.provider = provider;
         providerOrderId = order;
+        if ("payos".equalsIgnoreCase(provider) && order != null) {
+            try {
+                this.payosOrderCode = Long.parseLong(order.trim());
+            } catch (Exception ignored) {}
+        }
         this.amount = Donation.integerAmount(amount);
         expiresAt = expires;
         status = PaymentStatus.CREATED;
@@ -124,6 +131,10 @@ public class PaymentTransaction {
 
     public String providerOrderId() {
         return providerOrderId;
+    }
+
+    public Long payosOrderCode() {
+        return payosOrderCode;
     }
 
     public String providerTransactionId() {

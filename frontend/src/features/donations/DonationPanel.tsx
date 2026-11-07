@@ -27,6 +27,10 @@ interface ActiveDonation {
     orderCode: string;
     checkoutUrl?: string;
     paymentId?: string;
+    accountNumber?: string;
+    accountName?: string;
+    bankName?: string;
+    isDirectPayos?: boolean;
 }
 
 export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
@@ -41,6 +45,13 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
     const [checking, setChecking] = useState(false);
     const [checkMessage, setCheckMessage] = useState<string | null>(null);
     const [isPaid, setIsPaid] = useState(false);
+    const [copiedField, setCopiedField] = useState<string | null>(null);
+
+    const copyToClipboard = (text: string, fieldName: string) => {
+        void navigator.clipboard.writeText(text);
+        setCopiedField(fieldName);
+        setTimeout(() => setCopiedField(null), 2000);
+    };
 
     const mutation = useDonationMutation((amount: string) => api.create(campaign.id, amount));
 
@@ -212,8 +223,15 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
             ) : activeDonation ? (
                 <div className="space-y-4 rounded-2xl border-2 border-primary/30 bg-primary-light/20 p-4 text-center">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-primary">
-                            ⚡ {tr("Mã VietQR tiếp sức")}
+                        <span className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+                            {activeDonation.isDirectPayos ? (
+                                <>
+                                    <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    {tr("Cổng PayOS Trực Tuyến")}
+                                </>
+                            ) : (
+                                <>⚡ {tr("Mã VietQR tiếp sức")}</>
+                            )}
                         </span>
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
                             <span className="relative flex h-2 w-2">
@@ -243,28 +261,61 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                         </span>
                     </div>
 
-                    <div className="rounded-xl bg-white p-3 text-left text-xs space-y-1.5 border border-border/80">
-                        <div className="flex justify-between">
+                    {activeDonation.isDirectPayos && activeDonation.checkoutUrl && (
+                        <a
+                            href={activeDonation.checkoutUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center justify-center gap-2 w-full rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-hover transition-colors shadow-xs"
+                        >
+                            <span>💳</span> {tr("Mở trang thanh toán PayOS (VietQR / Thẻ)")} ↗
+                        </a>
+                    )}
+
+                    <div className="rounded-xl bg-white p-3 text-left text-xs space-y-2 border border-border/80">
+                        <div className="flex justify-between items-center">
                             <span className="text-text-secondary">{tr("Số tiền:")}</span>
                             <strong className="text-sm font-bold text-primary">{vnd(activeDonation.amount)}</strong>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex justify-between items-center">
                             <span className="text-text-secondary">{tr("Ngân hàng:")}</span>
-                            <span className="font-semibold text-text-primary">MB Bank</span>
+                            <span className="font-semibold text-text-primary">{activeDonation.bankName || "MB Bank"}</span>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex justify-between items-center">
                             <span className="text-text-secondary">{tr("Số tài khoản:")}</span>
-                            <span className="font-mono font-semibold text-text-primary">4310072005</span>
+                            <div className="flex items-center gap-1.5">
+                                <span className="font-mono font-semibold text-text-primary select-all">
+                                    {activeDonation.accountNumber || "4310072005"}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => copyToClipboard(activeDonation.accountNumber || "4310072005", "accountNumber")}
+                                    className="rounded border border-border px-1.5 py-0.5 text-[10px] text-text-secondary hover:bg-surface-muted transition-colors"
+                                    title={tr("Sao chép số tài khoản")}
+                                >
+                                    {copiedField === 'accountNumber' ? '✓ ' + tr("Đã chép") : tr("Chép")}
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex justify-between items-center">
                             <span className="text-text-secondary">{tr("Chủ tài khoản:")}</span>
-                            <span className="font-semibold text-text-primary">HUYNH TUAN KHOA</span>
+                            <span className="font-semibold text-text-primary">{activeDonation.accountName || "HUYNH TUAN KHOA"}</span>
                         </div>
-                        <div className="flex justify-between items-center pt-1 border-t border-border">
+                        <div className="flex justify-between items-center pt-1.5 border-t border-border">
                             <span className="text-text-secondary">{tr("Nội dung:")}</span>
-                            <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-[11px] font-bold text-primary">
-                                DUT {activeDonation.orderCode}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                                <span className="rounded bg-surface-muted px-2 py-0.5 font-mono text-[11px] font-bold text-primary select-all">
+                                    DUT {activeDonation.orderCode}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => copyToClipboard(`DUT ${activeDonation.orderCode}`, "memo")}
+                                    className="rounded border border-border px-1.5 py-0.5 text-[10px] text-text-secondary hover:bg-surface-muted transition-colors"
+                                    title={tr("Sao chép nội dung chuyển khoản")}
+                                >
+                                    {copiedField === 'memo' ? '✓ ' + tr("Đã chép") : tr("Chép")}
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -425,6 +476,7 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                                                 // ignore
                                             }
                                         }
+                                        const isDirectPayos = Boolean(r.checkoutUrl && r.checkoutUrl.startsWith('https://pay.payos.vn'));
                                         setActiveDonation({
                                             donationId: r.donationId,
                                             amount: confirm,
@@ -432,6 +484,10 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                                             orderCode: orderCode,
                                             checkoutUrl: r.checkoutUrl || undefined,
                                             paymentId: r.paymentTransactionId,
+                                            accountNumber: r.accountNumber || undefined,
+                                            accountName: r.accountName || undefined,
+                                            bankName: r.bankName || undefined,
+                                            isDirectPayos,
                                         });
                                     },
                                     onError: e => {

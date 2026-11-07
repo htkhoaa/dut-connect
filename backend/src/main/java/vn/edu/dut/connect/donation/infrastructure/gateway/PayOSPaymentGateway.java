@@ -61,12 +61,12 @@ public class PayOSPaymentGateway implements PaymentGateway {
         String description = "DUT " + orderCode;
 
         if (clientId.isBlank() || apiKey.isBlank() || checksumKey.isBlank()) {
-            // Local fallback: create dynamic VietQR link that any banking app can scan
+            log.warn("PayOS credentials not configured (PAYOS_CLIENT_ID, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY is blank). Using VietQR direct transfer fallback.");
             String encodedDesc = URLEncoder.encode(description, StandardCharsets.UTF_8);
             String vietQrUrl = "https://img.vietqr.io/image/MB-4310072005-compact2.png?amount="
                     + command.amount().toPlainString() + "&addInfo=" + encodedDesc + "&accountName=HUYNH+TUAN+KHOA";
             String checkoutUrl = "/payment/result?donationId=" + command.donationId() + "&vietqr=" + URLEncoder.encode(vietQrUrl, StandardCharsets.UTF_8);
-            return new CreationResult(Outcome.PENDING, checkoutUrl, "00", "VietQR dynamic code generated");
+            return new CreationResult(Outcome.PENDING, checkoutUrl, "00", "VietQR fallback created", vietQrUrl, "4310072005", "HUYNH TUAN KHOA", "970422");
         }
 
         try {
@@ -100,24 +100,24 @@ public class PayOSPaymentGateway implements PaymentGateway {
                     .build();
 
             HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
+            log.info("PayOS createPayment response status={} body={}", resp.statusCode(), resp.body());
             JsonNode root = json.readTree(resp.body());
             if ("00".equals(root.path("code").asText())) {
                 JsonNode data = root.path("data");
                 String checkoutUrl = data.path("checkoutUrl").asText();
                 String qrCode = data.path("qrCode").asText("");
-                log.info("PayOS order created orderCode={} qrCodeLength={}", orderCode, qrCode.length());
-                return new CreationResult(Outcome.PENDING, checkoutUrl, "00", "PayOS order created", qrCode);
+                String accountNumber = data.path("accountNumber").asText("");
+                String accountName = data.path("accountName").asText("");
+                String bin = data.path("bin").asText("");
+                log.info("PayOS order created orderCode={} qrCodeLength={} account={}", orderCode, qrCode.length(), accountNumber);
+                return new CreationResult(Outcome.PENDING, checkoutUrl, "00", "PayOS order created", qrCode, accountNumber, accountName, bin);
             } else {
                 log.warn("PayOS order creation failed: {}", resp.body());
                 return new CreationResult(Outcome.FAILED, null, root.path("code").asText(), root.path("desc").asText());
             }
         } catch (Exception e) {
             log.error("PayOS creation error", e);
-            // Fallback to VietQR image link
-            String vietQrUrl = "https://img.vietqr.io/image/MB-4310072005-compact2.png?amount="
-                    + command.amount().toPlainString() + "&addInfo=" + URLEncoder.encode(description, StandardCharsets.UTF_8) + "&accountName=HUYNH+TUAN+KHOA";
-            String checkoutUrl = "/payment/result?donationId=" + command.donationId() + "&vietqr=" + URLEncoder.encode(vietQrUrl, StandardCharsets.UTF_8);
-            return new CreationResult(Outcome.PENDING, checkoutUrl, "00", "VietQR fallback created");
+            return new CreationResult(Outcome.FAILED, null, "500", "Lỗi kết nối cổng thanh toán PayOS: " + e.getMessage());
         }
     }
 

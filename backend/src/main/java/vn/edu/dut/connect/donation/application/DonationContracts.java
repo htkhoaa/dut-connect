@@ -33,10 +33,17 @@ public final class DonationContracts {
             String checkoutUrl,
             String message,
             String orderCode,
-            String qrCodeUrl
+            String qrCodeUrl,
+            String accountNumber,
+            String accountName,
+            String bankName
     ) {
         public CreationDto(UUID donationId, UUID paymentTransactionId, DonationStatus status, String checkoutUrl, String message) {
-            this(donationId, paymentTransactionId, status, checkoutUrl, message, null, null);
+            this(donationId, paymentTransactionId, status, checkoutUrl, message, null, null, null, null, null);
+        }
+
+        public CreationDto(UUID donationId, UUID paymentTransactionId, DonationStatus status, String checkoutUrl, String message, String orderCode, String qrCodeUrl) {
+            this(donationId, paymentTransactionId, status, checkoutUrl, message, orderCode, qrCodeUrl, null, null, null);
         }
     }
 

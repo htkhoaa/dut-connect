@@ -11,9 +11,14 @@ public interface PaymentGateway {
                            Instant expiresAt) {
     }
 
-    record CreationResult(Outcome outcome, String checkoutUrl, String code, String message, String qrCode) {
+    record CreationResult(Outcome outcome, String checkoutUrl, String code, String message, String qrCode,
+                          String accountNumber, String accountName, String bin) {
         public CreationResult(Outcome outcome, String checkoutUrl, String code, String message) {
-            this(outcome, checkoutUrl, code, message, null);
+            this(outcome, checkoutUrl, code, message, null, null, null, null);
+        }
+
+        public CreationResult(Outcome outcome, String checkoutUrl, String code, String message, String qrCode) {
+            this(outcome, checkoutUrl, code, message, qrCode, null, null, null);
         }
     }
 

@@ -45,17 +45,40 @@ public class PaymentService {
         String description = "DUT " + orderCode;
 
         String qrCodeUrl;
-        if (result.qrCode() != null && !result.qrCode().isBlank()) {
+        if (result.qrCode() != null && !result.qrCode().isBlank() && !result.qrCode().startsWith("http")) {
             qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=350x350&data="
                     + URLEncoder.encode(result.qrCode(), StandardCharsets.UTF_8);
+        } else if (result.qrCode() != null && result.qrCode().startsWith("http")) {
+            qrCodeUrl = result.qrCode();
         } else {
             qrCodeUrl = "https://img.vietqr.io/image/MB-4310072005-compact2.png?amount="
                     + amount.toPlainString() + "&addInfo=" + URLEncoder.encode(description, StandardCharsets.UTF_8)
                     + "&accountName=HUYNH+TUAN+KHOA";
         }
 
+        String bankName = "MB Bank";
+        if ("970422".equals(result.bin())) bankName = "MB Bank";
+        else if ("970415".equals(result.bin())) bankName = "VietinBank";
+        else if ("970436".equals(result.bin())) bankName = "Vietcombank";
+        else if ("970407".equals(result.bin())) bankName = "Techcombank";
+        else if ("970418".equals(result.bin())) bankName = "BIDV";
+        else if ("970432".equals(result.bin())) bankName = "VPBank";
+        else if ("970416".equals(result.bin())) bankName = "ACB";
+        else if ("970423".equals(result.bin())) bankName = "TPBank";
+        else if ("970441".equals(result.bin())) bankName = "VIB";
+        else if ("970405".equals(result.bin())) bankName = "Agribank";
+        else if ("970448".equals(result.bin())) bankName = "OCB";
+        else if ("970443".equals(result.bin())) bankName = "SHB";
+        else if ("970403".equals(result.bin())) bankName = "Sacombank";
+        else if (result.bin() != null && !result.bin().isBlank()) bankName = "Ngân hàng (BIN " + result.bin() + ")";
+
+        String accountNumber = (result.accountNumber() != null && !result.accountNumber().isBlank())
+                ? result.accountNumber() : "4310072005";
+        String accountName = (result.accountName() != null && !result.accountName().isBlank())
+                ? result.accountName() : "HUYNH TUAN KHOA";
+
         // A callback may settle the intent before the create-order response arrives.
-        return new CreationDto(d.id(), p.id(), d.status(), p.checkoutUrl(), p.failureReason(), orderCode, qrCodeUrl);
+        return new CreationDto(d.id(), p.id(), d.status(), p.checkoutUrl(), p.failureReason(), orderCode, qrCodeUrl, accountNumber, accountName, bankName);
     }
 
     public DonationDto checkAndDetail(UUID donationId, UUID actor) {

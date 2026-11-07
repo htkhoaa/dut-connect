@@ -37,6 +37,9 @@ export interface Creation {
     message: string | null;
     orderCode?: string | null;
     qrCodeUrl?: string | null;
+    accountNumber?: string | null;
+    accountName?: string | null;
+    bankName?: string | null;
 }
 
 export interface DonationSettings {
