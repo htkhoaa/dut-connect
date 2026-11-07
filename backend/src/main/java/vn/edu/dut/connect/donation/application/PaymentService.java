@@ -34,6 +34,10 @@ public class PaymentService {
         var command = transactions.prepare(campaign, actor, amount, gateway.provider());
         var result = gateway.createPayment(command);
         transactions.finalizeCreation(command.paymentId(), result);
+        if (result.outcome() == PaymentGateway.Outcome.FAILED) {
+            log.error("Payment gateway failed to create order: code={} message={}", result.code(), result.message());
+            throw new ApplicationFailure(502, "PAYMENT_CREATION_FAILED", "Cổng thanh toán từ chối tạo đơn: " + result.message());
+        }
         var d = reads.detail(command.donationId(), actor);
         var p = d.payments().stream().filter(v -> v.id().equals(command.paymentId())).findFirst().orElseThrow();
 
