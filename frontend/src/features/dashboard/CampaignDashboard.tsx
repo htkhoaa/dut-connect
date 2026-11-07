@@ -12,6 +12,7 @@ import {errorMessage} from '../../shared/api/errors';
 import {CampaignFinalResult} from './CampaignFinalResult';
 import {ConfirmDialog} from '../../shared/components/ConfirmDialog';
 import {useTransitionCampaign, useCampaign} from '../campaigns/hooks';
+import {CampaignThankYouModal} from '../campaigns/components/CampaignThankYouModal';
 import {useAuth} from '../auth/store';
 import {useQueryClient} from '@tanstack/react-query';
 
@@ -45,6 +46,7 @@ export function CampaignDashboard({
     const hasManageAccess = canManage || Boolean(campaignDetail.data?.ownRole || campaignDetail.data?.canManage || user?.role === 'ADMIN');
     const [showPoster, setShowPoster] = useState(isCompleted);
     const [confirmEndOpen, setConfirmEndOpen] = useState(false);
+    const [showThankYouModal, setShowThankYouModal] = useState(false);
 
     const getItems = () => {
         if (!query.data) return [];
@@ -76,19 +78,32 @@ export function CampaignDashboard({
         return [...volunteerItems, ...financialItems];
     };
 
+    const campaignTitle = title || campaignDetail.data?.content.title || tr("Chiến dịch");
+
     return (
         <Card>
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xl font-semibold">{tr("Tổng quan chiến dịch")}</h2>
                 <div className="flex flex-wrap gap-2">
                     {isCompleted ? (
-                        <Button
-                            variant="secondary"
-                            onClick={() => setShowPoster(!showPoster)}
-                            className="font-semibold shadow-2xs"
-                        >
-                            🖼️ {renderText(showPoster ? tr("Ẩn poster kết quả") : tr("Tạo poster kết quả"))}
-                        </Button>
+                        <>
+                            <Button
+                                variant="primary"
+                                onClick={() => setShowPoster(!showPoster)}
+                                className="font-semibold shadow-2xs"
+                            >
+                                📢 {renderText(showPoster ? tr("Ẩn post kết quả") : tr("Tạo post kết quả"))}
+                            </Button>
+                            {hasManageAccess && (
+                                <Button
+                                    variant="secondary"
+                                    onClick={() => setShowThankYouModal(true)}
+                                    className="border-primary/50 text-primary hover:bg-primary/10 font-semibold shadow-2xs"
+                                >
+                                    💌 {tr("Gửi lời cảm ơn")}
+                                </Button>
+                            )}
+                        </>
                     ) : hasManageAccess && currentVersion !== undefined ? (
                         <Button
                             variant="danger"
@@ -121,7 +136,14 @@ export function CampaignDashboard({
             {renderText(
                 (isCompleted && showPoster) && query.data && (
                     <div className="mt-6">
-                        <CampaignFinalResult title={title || tr("Chiến dịch")} data={query.data} />
+                        <CampaignFinalResult
+                            title={campaignTitle}
+                            data={query.data}
+                            campaignId={campaignId}
+                            categoryName={campaignDetail.data?.categoryName}
+                            organizerName={campaignDetail.data?.organizerName}
+                            mode={mode}
+                        />
                     </div>
                 )
             )}
@@ -129,7 +151,7 @@ export function CampaignDashboard({
             <ConfirmDialog
                 open={confirmEndOpen}
                 title={tr("Kết thúc chiến dịch sớm?")}
-                message={tr("Sau khi kết thúc, chiến dịch sẽ chuyển sang trạng thái Đã hoàn thành (COMPLETED), ngừng tiếp nhận ủng hộ và nút này sẽ chuyển thành 'Tạo poster kết quả'. Bạn có chắc chắn muốn kết thúc chiến dịch?")}
+                message={tr("Sau khi kết thúc, chiến dịch sẽ chuyển sang trạng thái Đã hoàn thành (COMPLETED), ngừng tiếp nhận ủng hộ và sẽ hiện ra 2 nút: 'Tạo post kết quả' và 'Gửi lời cảm ơn'. Bạn có chắc chắn muốn kết thúc chiến dịch?")}
                 confirmLabel={tr("Xác nhận kết thúc")}
                 busy={transitionMutation.isPending}
                 onClose={() => setConfirmEndOpen(false)}
@@ -149,6 +171,16 @@ export function CampaignDashboard({
                     }
                 }}
             />
+
+            {showThankYouModal && (
+                <CampaignThankYouModal
+                    open={showThankYouModal}
+                    campaignId={campaignId}
+                    campaignTitle={campaignTitle}
+                    mode={mode}
+                    onClose={() => setShowThankYouModal(false)}
+                />
+            )}
         </Card>
     );
 }

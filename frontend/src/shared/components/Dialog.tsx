@@ -1,8 +1,8 @@
 import {useLanguage, renderText} from "../lib/i18n";
 import {useEffect, useId, useRef, type ReactNode} from 'react';
 
-export function Dialog({open, title, children, onClose, busy = false}: {
-    open: boolean; title: string; children: ReactNode; onClose: () => void; busy?: boolean;
+export function Dialog({open, title, children, onClose, busy = false, className}: {
+    open: boolean; title: string; children: ReactNode; onClose: () => void; busy?: boolean; className?: string;
 }) {
     useLanguage();
     const ref = useRef<HTMLDialogElement>(null);
@@ -13,7 +13,7 @@ export function Dialog({open, title, children, onClose, busy = false}: {
         if (!open && dialog?.open) dialog.close();
     }, [open]);
     return <dialog ref={ref} aria-labelledby={titleId} aria-busy={busy}
-                   className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl border border-border bg-surface p-6 text-text-primary backdrop:bg-black/40"
+                   className={className ? `fixed inset-0 m-auto w-[calc(100%-2rem)] rounded-2xl border border-border bg-surface p-6 text-text-primary backdrop:bg-black/40 ${className}` : "fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl border border-border bg-surface p-6 text-text-primary backdrop:bg-black/40"}
                    onCancel={(event) => {event.preventDefault(); if (!busy) onClose();}}
                    onClick={(event) => {if (event.target === event.currentTarget && !busy) {
                        const bounds = event.currentTarget.getBoundingClientRect();

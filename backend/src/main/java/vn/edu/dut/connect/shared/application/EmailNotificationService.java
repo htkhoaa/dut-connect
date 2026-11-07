@@ -43,6 +43,33 @@ public class EmailNotificationService {
         send(email, title, body, new Attachment("certificate.html", body));
     }
 
+    public void sendWithImageAttachment(String recipient, String subject, String html, String attachmentName, byte[] imageBytes, String contentType) {
+        if (!enabled) {
+            log.info("Email notification skipped because APP_MAIL_ENABLED=false recipient={} subject={}", recipient, subject);
+            return;
+        }
+        JavaMailSender mail = sender.orElseThrow(() -> new IllegalStateException("Email is enabled but SMTP is not configured"));
+        try {
+            var message = mail.createMimeMessage();
+            var helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
+            helper.setFrom(from);
+            helper.setTo(recipient);
+            helper.setSubject(subject);
+            helper.setText(html, true);
+            if (imageBytes != null && imageBytes.length > 0) {
+                var resource = new ByteArrayResource(imageBytes);
+                helper.addAttachment(attachmentName, resource, contentType != null ? contentType : "image/png");
+                try {
+                    helper.addInline("certificateImage", resource, contentType != null ? contentType : "image/png");
+                } catch (Exception ignored) {}
+            }
+            mail.send(message);
+        } catch (Exception ex) {
+            log.error("Email notification failed recipient={} subject={} error={}", recipient, subject, ex.getClass().getSimpleName());
+            throw new IllegalStateException("Email notification could not be sent", ex);
+        }
+    }
+
     private void send(String recipient, String subject, String html, Attachment attachment) {
         if (!enabled) {
             log.info("Email notification skipped because APP_MAIL_ENABLED=false recipient={} subject={}", recipient, subject);

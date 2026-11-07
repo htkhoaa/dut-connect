@@ -27,6 +27,7 @@ import {CampaignShare} from './components/CampaignShare';
 import {CampaignGallery} from './CampaignGallery';
 import {CampaignActivityFeed} from './CampaignActivityFeed';
 import {CampaignFinalResult} from '../dashboard/CampaignFinalResult';
+import {CampaignThankYouModal} from './components/CampaignThankYouModal';
 import {useCampaignDashboard} from '../dashboard/hooks';
 import {
     VolunteerTeamTab,
@@ -48,6 +49,7 @@ export function CampaignDetailPage() {
     const myApps = useApplications(id, {page: 0, status: '', track: ''}, true);
     const [showEndModal, setShowEndModal] = useState(false);
     const [showResultModal, setShowResultModal] = useState(false);
+    const [showThankYouModal, setShowThankYouModal] = useState(false);
     const transitionMutation = useTransitionCampaign(id);
     const dashboardQuery = useCampaignDashboard(id);
     const galleryQuery = useQuery({
@@ -123,15 +125,24 @@ export function CampaignDetailPage() {
                                 >
                                     🏁 {tr("Kết thúc chiến dịch")}
                                 </Button>
-                            ) : (
-                                <Button
-                                    variant="primary"
-                                    className="text-xs font-semibold py-1.5 px-3 shadow-xs"
-                                    onClick={() => setShowResultModal(true)}
-                                >
-                                    🖼️ {tr("Tạo poster kết quả")}
-                                </Button>
-                            )}
+                            ) : c.status === 'COMPLETED' ? (
+                                <>
+                                    <Button
+                                        variant="primary"
+                                        className="text-xs font-semibold py-1.5 px-3 shadow-xs"
+                                        onClick={() => setShowResultModal(true)}
+                                    >
+                                        📢 {tr("Tạo post kết quả")}
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        className="border-primary/50 text-primary hover:bg-primary/10 text-xs font-semibold py-1.5 px-3 shadow-xs"
+                                        onClick={() => setShowThankYouModal(true)}
+                                    >
+                                        💌 {tr("Gửi lời cảm ơn")}
+                                    </Button>
+                                </>
+                            ) : null}
                             <Link className="ui-button ui-button-secondary text-xs py-1.5 px-3" to={'/manage/campaigns/' + c.id}>
                                 <Icon name="grid" size={15} />
                                 {tr("Quản lý chiến dịch")}
@@ -254,13 +265,22 @@ export function CampaignDetailPage() {
                                 {tr("Chiến dịch hiện đã hoàn thành và ngừng tiếp nhận đóng góp. Chân thành cảm ơn sự chung tay tiếp sức của bạn!")}
                             </p>
                             {isManager && (
-                                <Button
-                                    variant="primary"
-                                    className="mt-4 w-full text-xs font-semibold"
-                                    onClick={() => setShowResultModal(true)}
-                                >
-                                    🖼️ {tr("Tạo poster kết quả")}
-                                </Button>
+                                <div className="mt-4 flex flex-col gap-2">
+                                    <Button
+                                        variant="primary"
+                                        className="w-full text-xs font-semibold shadow-xs"
+                                        onClick={() => setShowResultModal(true)}
+                                    >
+                                        📢 {tr("Tạo post kết quả")}
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        className="w-full text-xs font-semibold border-primary/50 text-primary hover:bg-primary/10 shadow-xs"
+                                        onClick={() => setShowThankYouModal(true)}
+                                    >
+                                        💌 {tr("Gửi lời cảm ơn")}
+                                    </Button>
+                                </div>
                             )}
                         </div>
                     ) : (
@@ -288,7 +308,7 @@ export function CampaignDetailPage() {
             <ConfirmDialog
                 open={showEndModal}
                 title={tr("Kết thúc chiến dịch sớm?")}
-                message={tr("Sau khi kết thúc, chiến dịch sẽ chuyển sang chế độ Chỉ đọc (Read-only), ngừng nhận ủng hộ và nút này sẽ chuyển thành 'Tạo poster kết quả'. Bạn có chắc chắn muốn kết thúc chiến dịch?")}
+                message={tr("Sau khi kết thúc, chiến dịch sẽ chuyển sang chế độ Chỉ đọc (Read-only), ngừng nhận ủng hộ và sẽ hiện ra 2 nút: 'Tạo post kết quả' và 'Gửi lời cảm ơn'. Bạn có chắc chắn muốn kết thúc chiến dịch?")}
                 confirmLabel={tr("Xác nhận kết thúc")}
                 busy={transitionMutation.isPending}
                 onClose={() => setShowEndModal(false)}
@@ -301,10 +321,22 @@ export function CampaignDetailPage() {
 
             {/* Final Result Poster Modal */}
             {showResultModal && (
-                <Dialog open={true} title={tr("Poster kết quả chiến dịch")} onClose={() => setShowResultModal(false)}>
+                <Dialog
+                    open={true}
+                    title={tr("Báo cáo kết quả chiến dịch")}
+                    onClose={() => setShowResultModal(false)}
+                    className="max-w-5xl max-h-[92vh] overflow-y-auto"
+                >
                     {dashboardQuery.data ? (
                         <div className="space-y-4">
-                            <CampaignFinalResult title={c.content.title} data={dashboardQuery.data} />
+                            <CampaignFinalResult
+                                title={c.content.title}
+                                data={dashboardQuery.data}
+                                campaignId={c.id}
+                                categoryName={c.categoryName}
+                                organizerName={c.organizerName}
+                                mode={c.content.contributionMode}
+                            />
                             <div className="flex justify-end pt-2">
                                 <Button variant="secondary" onClick={() => setShowResultModal(false)}>
                                     {tr("Đóng")}
@@ -315,6 +347,17 @@ export function CampaignDetailPage() {
                         <LoadingState message={tr("Đang tải dữ liệu tổng kết…")} />
                     )}
                 </Dialog>
+            )}
+
+            {/* Thank You Modal */}
+            {showThankYouModal && (
+                <CampaignThankYouModal
+                    open={showThankYouModal}
+                    campaignId={c.id}
+                    campaignTitle={c.content.title}
+                    mode={c.content.contributionMode}
+                    onClose={() => setShowThankYouModal(false)}
+                />
             )}
         </div>
     );
