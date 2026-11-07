@@ -19,11 +19,13 @@ public class CampaignAuthorization {
     }
     public void admin(UUID actor) { if (!active(actor).admin()) denied(); }
     public void manager(UUID campaign, UUID actor) {
-        active(actor);
+        var account = active(actor);
+        if (account.admin()) return;
         if (campaigns.role(campaign,actor).orElse(null)!=ManagerRole.OWNER) denied();
     }
     public void owner(UUID campaign, UUID actor) {
-        active(actor);
+        var account = active(actor);
+        if (account.admin()) return;
         if (campaigns.role(campaign,actor).orElse(null)!=ManagerRole.OWNER) denied();
     }
     public void proposer(Proposal proposal, UUID actor) {

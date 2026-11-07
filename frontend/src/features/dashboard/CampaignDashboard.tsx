@@ -11,7 +11,8 @@ import {ErrorState} from '../../shared/components/ErrorState';
 import {errorMessage} from '../../shared/api/errors';
 import {CampaignFinalResult} from './CampaignFinalResult';
 import {ConfirmDialog} from '../../shared/components/ConfirmDialog';
-import {useTransitionCampaign} from '../campaigns/hooks';
+import {useTransitionCampaign, useCampaign} from '../campaigns/hooks';
+import {useAuth} from '../auth/store';
 import {useQueryClient} from '@tanstack/react-query';
 
 export function CampaignDashboard({
@@ -35,9 +36,13 @@ export function CampaignDashboard({
 }) {
     useLanguage();
     const qc = useQueryClient();
+    const user = useAuth(s => s.user);
+    const campaignDetail = useCampaign(campaignId);
     const query = useCampaignDashboard(campaignId);
     const transitionMutation = useTransitionCampaign(campaignId);
-    const isCompleted = completed || campaignStatus === 'COMPLETED';
+    const currentVersion = campaignVersion ?? campaignDetail.data?.version;
+    const isCompleted = completed || campaignStatus === 'COMPLETED' || campaignDetail.data?.status === 'COMPLETED';
+    const hasManageAccess = canManage || Boolean(campaignDetail.data?.ownRole || campaignDetail.data?.canManage || user?.role === 'ADMIN');
     const [showPoster, setShowPoster] = useState(isCompleted);
     const [confirmEndOpen, setConfirmEndOpen] = useState(false);
 
@@ -84,7 +89,7 @@ export function CampaignDashboard({
                         >
                             🖼️ {renderText(showPoster ? tr("Ẩn poster kết quả") : tr("Tạo poster kết quả"))}
                         </Button>
-                    ) : canManage && campaignVersion !== undefined ? (
+                    ) : hasManageAccess && currentVersion !== undefined ? (
                         <Button
                             variant="danger"
                             onClick={() => setConfirmEndOpen(true)}
@@ -129,9 +134,9 @@ export function CampaignDashboard({
                 busy={transitionMutation.isPending}
                 onClose={() => setConfirmEndOpen(false)}
                 onConfirm={async () => {
-                    if (campaignVersion !== undefined) {
+                    if (currentVersion !== undefined) {
                         try {
-                            await transitionMutation.mutateAsync({command: 'complete', version: campaignVersion});
+                            await transitionMutation.mutateAsync({command: 'complete', version: currentVersion});
                             setConfirmEndOpen(false);
                             setShowPoster(true);
                             void qc.invalidateQueries({queryKey: ['campaign', campaignId]});

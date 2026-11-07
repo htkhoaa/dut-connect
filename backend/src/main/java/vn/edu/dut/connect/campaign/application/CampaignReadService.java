@@ -37,9 +37,10 @@ public class CampaignReadService {
         var contact=identities.findAccount(c.contactId()).orElseThrow(()->ApplicationFailure.missing("Contact not found"));
         String organizer=c.content().organizationId()==null?contact.fullName():organizations.names(Set.of(c.content().organizationId())).get(c.content().organizationId());
         ManagerRole role=actor==null?null:campaigns.role(c.id(),actor).orElse(null);
-        boolean mutable=c.status()!=CampaignStatus.ACTIVE && c.status()!=CampaignStatus.COMPLETED && c.status()!=CampaignStatus.CANCELLED;
+        boolean isAdmin = actor != null && identities.findAccount(actor).map(IdentityDirectoryPort.Account::admin).orElse(false);
+        boolean canManage = role == ManagerRole.OWNER || isAdmin;
         return new CampaignDetail(c.id(),c.slug(),c.proposalId(),c.contactId(),contact.fullName(),organizer,categories.find(c.content().categoryId()).orElseThrow().name(),
-                ContentDto.from(c.content()),c.status(),c.createdAt(),c.updatedAt(),c.version(),role,mutable && role==ManagerRole.OWNER, false,skills(c.id()));
+                ContentDto.from(c.content()),c.status(),c.createdAt(),c.updatedAt(),c.version(),role,canManage, false,skills(c.id()));
     }
     public List<SkillDto> skills(UUID id) {
         var items=campaigns.skills(id);
