@@ -92,11 +92,9 @@ public class DutCatalogueSeedService {
 
     private List<CampaignStatus> steps(CampaignStatus status) {
         return switch (status) {
-            case DRAFT -> List.of();
-            case OPEN -> List.of(CampaignStatus.OPEN);
-            case ACTIVE -> List.of(CampaignStatus.OPEN, CampaignStatus.ACTIVE);
-            case COMPLETED -> List.of(CampaignStatus.OPEN, CampaignStatus.ACTIVE, CampaignStatus.COMPLETED);
-            case CANCELLED -> List.of(CampaignStatus.OPEN, CampaignStatus.CANCELLED);
+            case DRAFT, OPEN, ACTIVE -> List.of();
+            case COMPLETED -> List.of(CampaignStatus.COMPLETED);
+            case CANCELLED -> List.of(CampaignStatus.CANCELLED);
         };
     }
 }

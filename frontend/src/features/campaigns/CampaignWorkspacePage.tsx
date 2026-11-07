@@ -96,7 +96,7 @@ function CampaignWorkspace({campaignId}: {campaignId: string}) {
 
             <CampaignGallery campaignId={c.id} canManage={c.canManage} />
 
-            {canEdit && (
+            {canEdit ? (
                 <Card>
                     <h2 className="mb-5 text-xl font-semibold">{tr("Chỉnh sửa chiến dịch")}</h2>
                     <PlanForm
@@ -110,7 +110,23 @@ function CampaignWorkspace({campaignId}: {campaignId: string}) {
                         modeLocked={c.status !== 'DRAFT'}
                     />
                 </Card>
-            )}
+            ) : (c.status === 'ACTIVE' || c.status === 'COMPLETED') ? (
+                <Card>
+                    <div className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50/60 p-4 text-sm text-sky-800">
+                        <span className="text-xl">🔒</span>
+                        <div>
+                            <p className="font-semibold">
+                                {c.status === 'COMPLETED' ? tr("Chiến dịch đã hoàn thành") : tr("Chiến dịch đang hoạt động")}
+                            </p>
+                            <p className="mt-1 text-xs text-sky-700">
+                                {c.status === 'COMPLETED'
+                                    ? tr("Chiến dịch đã kết thúc, không thể chỉnh sửa nội dung.")
+                                    : tr("Chiến dịch đã được duyệt và đang diễn ra nên thông tin không thể chỉnh sửa.")}
+                            </p>
+                        </div>
+                    </div>
+                </Card>
+            ) : null}
 
             <Card>
                 <div className="flex items-start gap-4">

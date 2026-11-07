@@ -28,7 +28,7 @@ public class Campaign {
         primaryContactUserId = proposal.proposerId();
         this.content = new CampaignContent(proposal.content().values());
         this.slug = slug;
-        status = CampaignStatus.DRAFT;
+        status = CampaignStatus.ACTIVE;
         createdAt = Instant.now(); updatedAt = createdAt;
     }
     public void edit(CampaignContent content) {
@@ -45,9 +45,9 @@ public class Campaign {
     }
     public void transition(CampaignStatus next) {
         boolean allowed = switch (status) {
-            case DRAFT -> next == CampaignStatus.OPEN || next == CampaignStatus.CANCELLED;
+            case DRAFT -> next == CampaignStatus.OPEN || next == CampaignStatus.ACTIVE || next == CampaignStatus.CANCELLED;
             case OPEN -> next == CampaignStatus.ACTIVE || next == CampaignStatus.COMPLETED || next == CampaignStatus.CANCELLED;
-            case ACTIVE -> next == CampaignStatus.COMPLETED;
+            case ACTIVE -> next == CampaignStatus.COMPLETED || next == CampaignStatus.CANCELLED;
             default -> false;
         };
         if (!allowed) throw new CampaignViolation("INVALID_STATE_TRANSITION", "Campaign cannot perform this transition");
