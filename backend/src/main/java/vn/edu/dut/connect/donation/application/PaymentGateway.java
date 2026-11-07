@@ -11,7 +11,10 @@ public interface PaymentGateway {
                            Instant expiresAt) {
     }
 
-    record CreationResult(Outcome outcome, String checkoutUrl, String code, String message) {
+    record CreationResult(Outcome outcome, String checkoutUrl, String code, String message, String qrCode) {
+        public CreationResult(Outcome outcome, String checkoutUrl, String code, String message) {
+            this(outcome, checkoutUrl, code, message, null);
+        }
     }
 
     record Callback(String data, String mac, Integer type) {

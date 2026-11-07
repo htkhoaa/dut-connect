@@ -256,9 +256,9 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                                     href={activeDonation.checkoutUrl}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-primary hover:underline"
+                                    className="font-semibold text-primary hover:underline"
                                 >
-                                    {tr("Mở PayOS")} ↗
+                                    {tr("Mở trang thanh toán PayOS")} ↗
                                 </a>
                             )}
                         </div>

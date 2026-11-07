@@ -102,8 +102,11 @@ public class PayOSPaymentGateway implements PaymentGateway {
             HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
             JsonNode root = json.readTree(resp.body());
             if ("00".equals(root.path("code").asText())) {
-                String checkoutUrl = root.path("data").path("checkoutUrl").asText();
-                return new CreationResult(Outcome.PENDING, checkoutUrl, "00", "PayOS order created");
+                JsonNode data = root.path("data");
+                String checkoutUrl = data.path("checkoutUrl").asText();
+                String qrCode = data.path("qrCode").asText("");
+                log.info("PayOS order created orderCode={} qrCodeLength={}", orderCode, qrCode.length());
+                return new CreationResult(Outcome.PENDING, checkoutUrl, "00", "PayOS order created", qrCode);
             } else {
                 log.warn("PayOS order creation failed: {}", resp.body());
                 return new CreationResult(Outcome.FAILED, null, root.path("code").asText(), root.path("desc").asText());

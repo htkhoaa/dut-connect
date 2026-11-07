@@ -39,9 +39,16 @@ public class PaymentService {
 
         String orderCode = command.orderId();
         String description = "DUT " + orderCode;
-        String qrCodeUrl = "https://img.vietqr.io/image/MB-4310072005-compact2.png?amount="
-                + amount.toPlainString() + "&addInfo=" + URLEncoder.encode(description, StandardCharsets.UTF_8)
-                + "&accountName=HUYNH+TUAN+KHOA";
+
+        String qrCodeUrl;
+        if (result.qrCode() != null && !result.qrCode().isBlank()) {
+            qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=350x350&data="
+                    + URLEncoder.encode(result.qrCode(), StandardCharsets.UTF_8);
+        } else {
+            qrCodeUrl = "https://img.vietqr.io/image/MB-4310072005-compact2.png?amount="
+                    + amount.toPlainString() + "&addInfo=" + URLEncoder.encode(description, StandardCharsets.UTF_8)
+                    + "&accountName=HUYNH+TUAN+KHOA";
+        }
 
         // A callback may settle the intent before the create-order response arrives.
         return new CreationDto(d.id(), p.id(), d.status(), p.checkoutUrl(), p.failureReason(), orderCode, qrCodeUrl);

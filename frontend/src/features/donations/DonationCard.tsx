@@ -33,7 +33,8 @@ export function DonationCard({donation: d}: { donation: Donation }) {
         vietQrImgUrl = urlParams.get('vietqr');
     }
     if (pending && !vietQrImgUrl) {
-        vietQrImgUrl = `https://img.vietqr.io/image/MB-4310072005-compact2.png?amount=${d.amount}&addInfo=${encodeURIComponent('DUT ' + d.id.substring(0, 16))}&accountName=HUYNH+TUAN+KHOA`;
+        const orderCode = p?.providerOrderId || d.id.substring(0, 16);
+        vietQrImgUrl = `https://img.vietqr.io/image/MB-4310072005-compact2.png?amount=${d.amount}&addInfo=${encodeURIComponent('DUT ' + orderCode)}&accountName=HUYNH+TUAN+KHOA`;
     }
 
     return <Card>
