@@ -88,41 +88,15 @@ function CampaignWorkspace({campaignId}: {campaignId: string}) {
                 title={c.content.title}
                 completed={c.status === 'COMPLETED'}
                 mode={c.content.contributionMode}
+                canManage={c.canManage}
+                campaignVersion={c.version}
+                campaignStatus={c.status}
+                onCampaignCompleted={() => void query.refetch()}
             />
 
-            <Card>
-                <h2 className="mb-4 text-xl font-semibold">{tr("Trạng thái chiến dịch")}</h2>
-                {c.canManage && commands[c.status].length > 0 && (
-                    <div className="flex flex-wrap gap-3">
-                        {commands[c.status].map(a => (
-                            <Button
-                                key={a.command}
-                                disabled={mutation.isPending}
-                                onClick={() => setAction({command: a.command, version: c.version})}
-                            >
-                                {renderText(a.label)}
-                            </Button>
-                        ))}
-                    </div>
-                )}
-                {c.status === 'ACTIVE' && (
-                    <p className="mt-2 text-xs text-text-secondary">
-                        {tr("Chiến dịch đang diễn ra. Khi các hoạt động kết thúc, bấm 'Hoàn thành chiến dịch' để chuyển sang tổng kết.")}
-                    </p>
-                )}
-                {mutation.isError && (
-                    <div className="mt-4">
-                        <ErrorState message={errorMessage(mutation.error)} />
-                    </div>
-                )}
-                {mutation.isSuccess && (
-                    <p role="status" className="mt-4 text-success">
-                        {tr("Đã cập nhật trạng thái chiến dịch.")}
-                    </p>
-                )}
-            </Card>
+            <CampaignGallery campaignId={c.id} canManage={c.canManage} />
 
-            {canEdit ? (
+            {canEdit && (
                 <Card>
                     <h2 className="mb-5 text-xl font-semibold">{tr("Chỉnh sửa chiến dịch")}</h2>
                     <PlanForm
@@ -136,21 +110,7 @@ function CampaignWorkspace({campaignId}: {campaignId: string}) {
                         modeLocked={c.status !== 'DRAFT'}
                     />
                 </Card>
-            ) : c.status === 'ACTIVE' ? (
-                <Card>
-                    <div className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50/60 p-4 text-sm text-sky-800">
-                        <span className="text-xl">🔒</span>
-                        <div>
-                            <p className="font-semibold">{tr("Chiến dịch đang hoạt động")}</p>
-                            <p className="mt-1 text-xs text-sky-700">
-                                {tr("Sau khi chiến dịch đã bắt đầu, thông tin chiến dịch không thể chỉnh sửa và không thể hủy bỏ.")}
-                            </p>
-                        </div>
-                    </div>
-                </Card>
-            ) : null}
-
-            <CampaignGallery campaignId={c.id} canManage={c.canManage} />
+            )}
 
             <Card>
                 <div className="flex items-start gap-4">

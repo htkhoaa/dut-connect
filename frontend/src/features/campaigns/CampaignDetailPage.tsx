@@ -1,6 +1,8 @@
 import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
 import {useState} from 'react';
 import {useParams, Link} from 'react-router-dom';
+import {useQuery} from '@tanstack/react-query';
+import {apiClient} from '../../shared/api/client';
 import {useCampaign, useTransitionCampaign} from './hooks';
 import {useApplications} from '../volunteers/hooks';
 import {useAuth} from '../auth/store';
@@ -48,6 +50,10 @@ export function CampaignDetailPage() {
     const [showResultModal, setShowResultModal] = useState(false);
     const transitionMutation = useTransitionCampaign(id);
     const dashboardQuery = useCampaignDashboard(id);
+    const galleryQuery = useQuery({
+        queryKey: ['campaign-gallery', id],
+        queryFn: async () => (await apiClient.get<Array<{id: string; imageUrl: string}>>(`/campaigns/${id}/gallery`)).data,
+    });
 
     if (query.isPending) return <LoadingState />;
     if (query.isError) return <ErrorState message={errorMessage(query.error)} onRetry={() => void query.refetch()} />;
@@ -76,7 +82,7 @@ export function CampaignDetailPage() {
 
             <section className="detail-hero">
                 <img
-                    src={campaignVisual(c.categoryName, c.content.title).image}
+                    src={galleryQuery.data && galleryQuery.data.length > 0 ? galleryQuery.data[0].imageUrl : campaignVisual(c.categoryName, c.content.title).image}
                     alt={campaignVisual(c.categoryName, c.content.title).alt}
                 />
                 <div className="detail-hero-shade" />

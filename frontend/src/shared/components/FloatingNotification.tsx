@@ -18,23 +18,26 @@ export function FloatingNotificationContainer() {
     };
 
     useEffect(() => {
-        // 1. Listen for donation WebSocket events
-        const handleDonation = (e: Event) => {
+        // 1. Listen for user-specific notification WebSocket events
+        // - Donor gets: "Ủng hộ thành công!" (DONATION_SUCCESS)
+        // - Campaign Admin gets: "Ủng hộ mới: <amount>" (DONATION_RECEIVED)
+        // - Other system notifications (Proposal approved/rejected, etc.)
+        const handleNotification = (e: Event) => {
             const event = e as CustomEvent;
             const data = event.detail;
             if (!data) return;
 
-            const id = 'don-' + (data.donationId || Date.now());
-            const donor = data.donorName || tr("Một nhà hảo tâm");
-            const formatted = data.amount ? Number(data.amount).toLocaleString('vi-VN') + ' đ' : '';
-            const campaign = data.campaignTitle || tr("chiến dịch");
+            const notif = data.notification || data;
+            const notifType = notif.type || '';
+            const isDonationRelated = notifType === 'DONATION_RECEIVED' || notifType === 'DONATION_SUCCESS';
+            const id = notif.id ? `notif-${notif.id}` : `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
 
             const newBanner: BannerItem = {
                 id,
-                type: 'donation',
-                title: tr("Tiếp sức chiến dịch thành công! 🎉"),
-                message: `${donor} ${tr("vừa đóng góp")} ${formatted} ${tr("cho")} "${campaign}".`,
-                actionUrl: data.campaignId ? `/campaigns/${data.campaignId}` : undefined,
+                type: isDonationRelated ? 'donation' : 'notification',
+                title: notif.title || tr("Thông báo mới 🔔"),
+                message: notif.body || notif.content || notif.message || '',
+                actionUrl: notif.entityType === 'CAMPAIGN' && notif.entityId ? `/campaigns/${notif.entityId}` : undefined,
             };
 
             setBanners((prev) => {
@@ -42,35 +45,12 @@ export function FloatingNotificationContainer() {
                 return [newBanner, ...prev.slice(0, 3)];
             });
 
-            // Auto-dismiss after 8 seconds
             setTimeout(() => {
                 setBanners((prev) => prev.filter((b) => b.id !== id));
             }, 8000);
         };
 
-        // 2. Listen for general notification WebSocket events
-        const handleNotification = (e: Event) => {
-            const event = e as CustomEvent;
-            const data = event.detail;
-            if (!data) return;
-
-            const notif = data.notification || data;
-            const id = 'notif-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6);
-            const newBanner: BannerItem = {
-                id,
-                type: 'notification',
-                title: notif.title || tr("Thông báo mới 🔔"),
-                message: notif.body || notif.content || notif.message || '',
-            };
-
-            setBanners((prev) => [newBanner, ...prev.slice(0, 3)]);
-
-            setTimeout(() => {
-                setBanners((prev) => prev.filter((b) => b.id !== id));
-            }, 8000);
-        };
-
-        // 3. Custom trigger for any UI component
+        // 2. Custom trigger for any UI component
         const handleCustom = (e: Event) => {
             const event = e as CustomEvent<BannerItem>;
             if (!event.detail) return;
@@ -81,12 +61,10 @@ export function FloatingNotificationContainer() {
             }, 8000);
         };
 
-        window.addEventListener('app:donation_received', handleDonation);
         window.addEventListener('app:new_notification', handleNotification);
         window.addEventListener('app:show_banner', handleCustom);
 
         return () => {
-            window.removeEventListener('app:donation_received', handleDonation);
             window.removeEventListener('app:new_notification', handleNotification);
             window.removeEventListener('app:show_banner', handleCustom);
         };

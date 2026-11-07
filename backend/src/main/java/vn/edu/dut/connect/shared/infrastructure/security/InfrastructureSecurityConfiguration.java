@@ -98,7 +98,7 @@ public class InfrastructureSecurityConfiguration {
                 .addFilterBefore(new CookieOriginFilter(settings, errors), AuthorizationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/ws", "/ws/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/campaigns/*/gallery", "/api/v1/campaigns/gallery/*/image").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/campaigns/*/gallery", "/api/v1/proposals/*/gallery", "/api/v1/campaigns/gallery/*/image").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/campaigns/*/activities").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/actuator/health", "/api/actuator/health/**").permitAll()
                         .requestMatchers(HttpMethod.HEAD, "/api/actuator/health", "/api/actuator/health/**").permitAll()

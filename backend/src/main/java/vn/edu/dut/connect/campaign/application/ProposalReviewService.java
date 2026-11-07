@@ -20,10 +20,13 @@ public class ProposalReviewService {
     private final ProposalService proposalViews;
     private final CampaignReadService campaignViews;
     private final NotificationService notificationService;
+    private final vn.edu.dut.connect.campaign.infrastructure.persistence.CampaignGalleryRepository galleryRepository;
     public ProposalReviewService(ProposalRepository proposals, CampaignRepository campaigns, CampaignAuthorization access, PlanEligibility eligibility,
-            ProposalService proposalViews, CampaignReadService campaignViews, NotificationService notificationService) {
+            ProposalService proposalViews, CampaignReadService campaignViews, NotificationService notificationService,
+            vn.edu.dut.connect.campaign.infrastructure.persistence.CampaignGalleryRepository galleryRepository) {
         this.proposals=proposals; this.campaigns=campaigns; this.access=access; this.eligibility=eligibility; this.proposalViews=proposalViews; this.campaignViews=campaignViews;
         this.notificationService=notificationService;
+        this.galleryRepository=galleryRepository;
     }
     @Transactional
     public CampaignDetail approve(UUID id, UUID actor, VersionRequest request) {
@@ -40,6 +43,11 @@ public class ProposalReviewService {
         proposal.approve(actor); proposals.save(proposal);
         var campaign=campaigns.save(new Campaign(proposal,slug));
         campaigns.addManager(campaign.id(),proposal.proposerId(),ManagerRole.OWNER);
+        try {
+            galleryRepository.linkProposalImagesToCampaign(proposal.id(), campaign.id());
+        } catch (Exception e) {
+            log.warn("Failed linking proposal images to campaign: {}", e.getMessage());
+        }
         log.info("Proposal approved actor={} proposal={} campaign={}",actor,id,campaign.id());
         try {
             notificationService.notifyUser(

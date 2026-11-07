@@ -10,21 +10,36 @@ import {LoadingState} from '../../shared/components/LoadingState';
 import {ErrorState} from '../../shared/components/ErrorState';
 import {errorMessage} from '../../shared/api/errors';
 import {CampaignFinalResult} from './CampaignFinalResult';
+import {ConfirmDialog} from '../../shared/components/ConfirmDialog';
+import {useTransitionCampaign} from '../campaigns/hooks';
+import {useQueryClient} from '@tanstack/react-query';
 
 export function CampaignDashboard({
     campaignId,
     title,
     completed = false,
-    mode
+    mode,
+    canManage = false,
+    campaignVersion,
+    campaignStatus,
+    onCampaignCompleted
 }: {
     campaignId: string;
     title?: string;
     completed?: boolean;
     mode?: ContributionMode;
+    canManage?: boolean;
+    campaignVersion?: number;
+    campaignStatus?: string;
+    onCampaignCompleted?: () => void;
 }) {
     useLanguage();
+    const qc = useQueryClient();
     const query = useCampaignDashboard(campaignId);
-    const [showPoster, setShowPoster] = useState(completed);
+    const transitionMutation = useTransitionCampaign(campaignId);
+    const isCompleted = completed || campaignStatus === 'COMPLETED';
+    const [showPoster, setShowPoster] = useState(isCompleted);
+    const [confirmEndOpen, setConfirmEndOpen] = useState(false);
 
     const getItems = () => {
         if (!query.data) return [];
@@ -61,9 +76,24 @@ export function CampaignDashboard({
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xl font-semibold">{tr("Tổng quan chiến dịch")}</h2>
                 <div className="flex flex-wrap gap-2">
-                    <Button variant="secondary" onClick={() => setShowPoster(!showPoster)}>
-                        🖼️ {renderText(showPoster ? tr("Ẩn poster kết quả") : tr("Tạo poster kết quả"))}
-                    </Button>
+                    {isCompleted ? (
+                        <Button
+                            variant="secondary"
+                            onClick={() => setShowPoster(!showPoster)}
+                            className="font-semibold shadow-2xs"
+                        >
+                            🖼️ {renderText(showPoster ? tr("Ẩn poster kết quả") : tr("Tạo poster kết quả"))}
+                        </Button>
+                    ) : canManage && campaignVersion !== undefined ? (
+                        <Button
+                            variant="danger"
+                            onClick={() => setConfirmEndOpen(true)}
+                            disabled={transitionMutation.isPending}
+                            className="font-semibold shadow-2xs"
+                        >
+                            🏁 {tr("Kết thúc chiến dịch")}
+                        </Button>
+                    ) : null}
                     <Button disabled={query.isFetching} onClick={() => void query.refetch()}>
                         {tr("Làm mới tổng quan")}
                     </Button>
@@ -84,12 +114,36 @@ export function CampaignDashboard({
                 )
             )}
             {renderText(
-                (completed || showPoster) && query.data && (
+                (isCompleted && showPoster) && query.data && (
                     <div className="mt-6">
                         <CampaignFinalResult title={title || tr("Chiến dịch")} data={query.data} />
                     </div>
                 )
             )}
+
+            <ConfirmDialog
+                open={confirmEndOpen}
+                title={tr("Kết thúc chiến dịch sớm?")}
+                message={tr("Sau khi kết thúc, chiến dịch sẽ chuyển sang trạng thái Đã hoàn thành (COMPLETED), ngừng tiếp nhận ủng hộ và nút này sẽ chuyển thành 'Tạo poster kết quả'. Bạn có chắc chắn muốn kết thúc chiến dịch?")}
+                confirmLabel={tr("Xác nhận kết thúc")}
+                busy={transitionMutation.isPending}
+                onClose={() => setConfirmEndOpen(false)}
+                onConfirm={async () => {
+                    if (campaignVersion !== undefined) {
+                        try {
+                            await transitionMutation.mutateAsync({command: 'complete', version: campaignVersion});
+                            setConfirmEndOpen(false);
+                            setShowPoster(true);
+                            void qc.invalidateQueries({queryKey: ['campaign', campaignId]});
+                            void qc.invalidateQueries({queryKey: ['campaigns']});
+                            void qc.invalidateQueries({queryKey: ['dashboard']});
+                            onCampaignCompleted?.();
+                        } catch (err) {
+                            alert(errorMessage(err));
+                        }
+                    }
+                }}
+            />
         </Card>
     );
 }
