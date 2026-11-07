@@ -1,23 +1,11 @@
-import {useEffect, useRef} from 'react';
+import {useEffect} from 'react';
 import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
 import {useAuth} from '../auth/store';
 import * as api from './api';
 
-function getWsUrl(): string {
-    const apiBase = import.meta.env.VITE_API_BASE_URL || '';
-    if (apiBase.startsWith('http://') || apiBase.startsWith('https://')) {
-        const url = new URL(apiBase);
-        const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-        return `${protocol}//${url.host}/ws/notifications`;
-    }
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${window.location.host}/ws/notifications`;
-}
-
 export function useNotifications() {
-    const {user, accessToken} = useAuth();
+    const {user} = useAuth();
     const qc = useQueryClient();
-    const wsRef = useRef<WebSocket | null>(null);
 
     const unreadQuery = useQuery({
         queryKey: ['notifications', 'unread-count'],
@@ -48,68 +36,16 @@ export function useNotifications() {
     });
 
     useEffect(() => {
-        if (!user) {
-            if (wsRef.current) {
-                wsRef.current.close();
-                wsRef.current = null;
-            }
-            return;
-        }
-
-        let isUnmounted = false;
-        let reconnectTimer: ReturnType<typeof setTimeout>;
-
-        function connect() {
-            try {
-                const token = useAuth.getState().accessToken;
-                const wsBase = getWsUrl();
-                const wsUrl = token ? `${wsBase}?token=${encodeURIComponent(token)}` : wsBase;
-                const ws = new WebSocket(wsUrl);
-                wsRef.current = ws;
-
-                ws.onmessage = (event) => {
-                    try {
-                        const data = JSON.parse(event.data);
-                        if (data.action === 'NEW_NOTIFICATION') {
-                            void qc.invalidateQueries({queryKey: ['notifications']});
-                            // Optional gentle audio beep or vibration
-                            if ('vibrate' in navigator) navigator.vibrate(100);
-                        } else if (data.action === 'DONATION_RECEIVED' || data.action === 'CAMPAIGN_UPDATED') {
-                            void qc.invalidateQueries({queryKey: ['notifications']});
-                            void qc.invalidateQueries({queryKey: ['campaign']});
-                            void qc.invalidateQueries({queryKey: ['campaigns']});
-                            void qc.invalidateQueries({queryKey: ['financial-summary']});
-                            void qc.invalidateQueries({queryKey: ['campaign-dashboard']});
-                            void qc.invalidateQueries({queryKey: ['activities']});
-                        }
-                    } catch (ignored) {}
-                };
-
-                ws.onclose = () => {
-                    if (!isUnmounted) {
-                        reconnectTimer = setTimeout(connect, 5000);
-                    }
-                };
-
-                ws.onerror = () => {
-                    ws.close();
-                };
-            } catch (err) {
-                if (!isUnmounted) reconnectTimer = setTimeout(connect, 5000);
-            }
-        }
-
-        connect();
-
-        return () => {
-            isUnmounted = true;
-            clearTimeout(reconnectTimer);
-            if (wsRef.current) {
-                wsRef.current.close();
-                wsRef.current = null;
-            }
+        const handler = () => {
+            void qc.invalidateQueries({queryKey: ['notifications']});
         };
-    }, [user, accessToken, qc]);
+        window.addEventListener('app:new_notification', handler);
+        window.addEventListener('app:donation_received', handler);
+        return () => {
+            window.removeEventListener('app:new_notification', handler);
+            window.removeEventListener('app:donation_received', handler);
+        };
+    }, [qc]);
 
     return {
         unreadCount: unreadQuery.data?.count ?? 0,

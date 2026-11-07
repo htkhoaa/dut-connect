@@ -9,6 +9,7 @@ import {errorMessage} from '../../shared/api/errors';
 import {UserAvatar} from '../../features/profile/avatar';
 import {LanguageSwitch} from '../../shared/components/LanguageSwitch';
 import {NotificationBell} from '../../features/notifications/NotificationBell';
+import {useGlobalRealtime} from '../../shared/lib/useRealtimeWs';
 
 type AdminItem = {to: string; label: string; icon: IconName};
 const adminItems: AdminItem[] = [
@@ -33,6 +34,7 @@ function Brand() {
 export function AppLayout() {
     useLanguage();
     useInitializeAuth();
+    useGlobalRealtime();
     const {user, initialized} = useAuth();
     const logout = useLogout();
     const {pathname} = useLocation();

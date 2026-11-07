@@ -171,16 +171,23 @@ public class PaymentTransactions {
                 log.warn("Failed sending notification to donor={}: {}", d.donorUserId(), e.getMessage());
             }
 
-            // 3. Broadcast realtime update event to all connected clients
+            // 3. Broadcast realtime update event to all connected clients & notify donor directly
             java.util.Map<String, Object> event = new java.util.HashMap<>();
             event.put("action", "DONATION_RECEIVED");
             event.put("campaignId", d.campaignId().toString());
             event.put("donationId", d.id().toString());
+            event.put("orderCode", p.providerOrderId());
+            event.put("paymentId", p.id().toString());
             event.put("amount", d.amount().toPlainString());
             event.put("donorName", donorName);
             event.put("campaignTitle", c.title());
             wsHandler.broadcast(event);
-            log.info("Settled donation notification broadcast for donation={} campaign={}", d.id(), d.campaignId());
+
+            java.util.Map<String, Object> donorEvent = new java.util.HashMap<>(event);
+            donorEvent.put("action", "DONATION_SUCCESS");
+            wsHandler.sendToUser(d.donorUserId(), donorEvent);
+
+            log.info("Settled donation notification broadcast for donation={} campaign={} orderCode={}", d.id(), d.campaignId(), p.providerOrderId());
         } catch (Exception e) {
             log.error("Failed to execute donation notifications for donation={}", d.id(), e);
         }

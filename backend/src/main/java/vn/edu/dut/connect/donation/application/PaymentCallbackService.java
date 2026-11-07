@@ -43,6 +43,18 @@ public class PaymentCallbackService {
     public Acknowledgment receivePayOS(String body) {
         if (body == null || body.length() > 65536) return invalid();
         try {
+            log.info("PayOS webhook received body: {}", body);
+            var root = json.readTree(body);
+            String desc = root.path("desc").asText("");
+            var data = root.has("data") ? root.get("data") : root;
+            long orderCode = data.path("orderCode").asLong(0);
+
+            // Handle PayOS test / confirm webhook verification ping
+            if (orderCode == 123 || desc.toLowerCase().contains("confirm") || data.path("description").asText("").toLowerCase().contains("test")) {
+                log.info("PayOS test/confirm webhook acknowledged successfully");
+                return new Acknowledgment(0, "Webhook confirmed");
+            }
+
             payments.callback("payos", new PaymentGateway.Callback(body, "", 0));
             return new Acknowledgment(0, "Success");
         } catch (PaymentViolation | DataIntegrityViolationException e) {

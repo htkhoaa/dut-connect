@@ -43,24 +43,36 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
 
     const mutation = useDonationMutation((amount: string) => api.create(campaign.id, amount));
 
-    // Polling payment status when QR code is active
+    // Realtime WebSocket listener for donation settlement (Zero polling)
     useEffect(() => {
         if (!activeDonation || isPaid) return;
-        const interval = setInterval(async () => {
-            try {
-                const res = await api.detail(activeDonation.donationId);
-                if (res.status === 'PAID') {
-                    setIsPaid(true);
-                    setCheckMessage(tr("Đã nhận được tiền ủng hộ thành công!"));
-                    void queryClient.invalidateQueries({queryKey: ['campaign', campaign.id]});
-                    void queryClient.invalidateQueries({queryKey: ['financial-summary', campaign.id]});
-                    void queryClient.invalidateQueries({queryKey: ['campaign-dashboard', campaign.id]});
-                }
-            } catch {
-                // ignore polling errors
+
+        const onDonationEvent = (e: Event) => {
+            const event = e as CustomEvent;
+            const data = event.detail;
+            if (!data) return;
+
+            const isCurrentDonation =
+                (data.donationId && data.donationId === activeDonation.donationId) ||
+                (data.orderCode && data.orderCode === activeDonation.orderCode);
+
+            if (isCurrentDonation) {
+                setIsPaid(true);
+                setCheckMessage(tr("Đã nhận được tiền ủng hộ thành công!"));
+                if ('vibrate' in navigator) navigator.vibrate([100, 50, 200]);
+                void queryClient.invalidateQueries({queryKey: ['campaign', campaign.id]});
+                void queryClient.invalidateQueries({queryKey: ['financial-summary', campaign.id]});
+                void queryClient.invalidateQueries({queryKey: ['campaign-dashboard', campaign.id]});
+                void queryClient.invalidateQueries({queryKey: ['notifications']});
+                void queryClient.invalidateQueries({queryKey: ['donations']});
+                void queryClient.invalidateQueries({queryKey: ['me', 'donations']});
             }
-        }, 3000);
-        return () => clearInterval(interval);
+        };
+
+        window.addEventListener('app:donation_received', onDonationEvent);
+        return () => {
+            window.removeEventListener('app:donation_received', onDonationEvent);
+        };
     }, [activeDonation, isPaid, campaign.id, queryClient]);
 
     const checkManual = async () => {
@@ -161,8 +173,12 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                         <span className="text-xs font-bold uppercase tracking-wider text-primary">
                             ⚡ {tr("Mã VietQR tiếp sức")}
                         </span>
-                        <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
-                            {tr("Chờ quét mã")}
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            {tr("WebSocket Realtime")}
                         </span>
                     </div>
 

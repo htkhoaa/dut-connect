@@ -50,35 +50,52 @@ public class PaymentPersistence implements PaymentRepository {
     }
 
     public Optional<UUID> paymentByOrder(String provider, String order) {
-        long numOrder = 0;
-        try {
-            numOrder = Long.parseLong(order);
-        } catch (Exception ignored) {}
+        if (order == null || order.isBlank()) return Optional.empty();
+        String trimmedOrder = order.trim();
 
-        UUID donationUuid = null;
-        try {
-            donationUuid = UUID.fromString(order);
-        } catch (Exception ignored) {}
-
-        return jdbc.sql("""
+        // 1. Direct match on provider_order_id
+        var direct = jdbc.sql("""
             select id from dut_connect.payment_transactions
-            where provider=:provider and (
-                provider_order_id = :order
-                or provider_order_id like :likeOrder
-                or (payos_order_code is not null and payos_order_code = :numOrder)
-                or (:donationUuid is not null and donation_id = :donationUuid)
-                or cast(donation_id as text) like :likeOrder
-            )
-            order by created_at desc
-            limit 1
-        """)
-        .param("provider", provider)
-        .param("order", order)
-        .param("likeOrder", order + "%")
-        .param("numOrder", numOrder)
-        .param("donationUuid", donationUuid)
-        .query(UUID.class)
-        .optional();
+            where provider = :provider and provider_order_id = :order
+            order by created_at desc limit 1
+        """).param("provider", provider).param("order", trimmedOrder).query(UUID.class).optional();
+        if (direct.isPresent()) return direct;
+
+        // 2. Prefix or substring match
+        var pattern = jdbc.sql("""
+            select id from dut_connect.payment_transactions
+            where provider = :provider and (provider_order_id like :likeOrder or :order like concat('%', provider_order_id, '%'))
+            order by created_at desc limit 1
+        """).param("provider", provider)
+            .param("order", trimmedOrder)
+            .param("likeOrder", trimmedOrder + "%")
+            .query(UUID.class).optional();
+        if (pattern.isPresent()) return pattern;
+
+        // 3. Match numeric order code
+        try {
+            long numOrder = Long.parseLong(trimmedOrder);
+            if (numOrder > 0) {
+                var byNum = jdbc.sql("""
+                    select id from dut_connect.payment_transactions
+                    where provider = :provider and payos_order_code = :numOrder
+                    order by created_at desc limit 1
+                """).param("provider", provider).param("numOrder", numOrder).query(UUID.class).optional();
+                if (byNum.isPresent()) return byNum;
+            }
+        } catch (NumberFormatException ignored) {}
+
+        // 4. Fallback match by donation_id if order is a UUID
+        try {
+            UUID donationUuid = UUID.fromString(trimmedOrder);
+            return jdbc.sql("""
+                select id from dut_connect.payment_transactions
+                where provider = :provider and donation_id = :donationUuid
+                order by created_at desc limit 1
+            """).param("provider", provider).param("donationUuid", donationUuid).query(UUID.class).optional();
+        } catch (IllegalArgumentException ignored) {
+            return Optional.empty();
+        }
     }
 
     public List<PaymentTransaction> payments(Set<UUID> ids) {

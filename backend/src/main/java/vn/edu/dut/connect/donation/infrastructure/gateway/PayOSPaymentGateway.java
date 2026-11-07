@@ -127,10 +127,13 @@ public class PayOSPaymentGateway implements PaymentGateway {
             JsonNode payload = json.readTree(callback.data());
             JsonNode data = payload.has("data") ? payload.get("data") : payload;
 
-            long amountVal = data.path("amount").asLong(0);
-            String desc = data.path("description").asText("");
-            long orderCode = data.path("orderCode").asLong(0);
-            String reference = data.path("reference").asText(UUID.randomUUID().toString());
+            long amountVal = data.has("amount") ? data.path("amount").asLong(0) : payload.path("amount").asLong(0);
+            String desc = data.has("description") ? data.path("description").asText("") : payload.path("description").asText("");
+            long orderCode = data.has("orderCode") ? data.path("orderCode").asLong(0) : payload.path("orderCode").asLong(0);
+            String reference = data.has("reference") ? data.path("reference").asText("") : payload.path("reference").asText("");
+            if (reference.isBlank()) {
+                reference = "PAYOS-" + (orderCode > 0 ? orderCode : System.currentTimeMillis());
+            }
 
             String orderId = orderCode > 0 ? String.valueOf(orderCode) : "";
             if (orderId.isBlank()) {
