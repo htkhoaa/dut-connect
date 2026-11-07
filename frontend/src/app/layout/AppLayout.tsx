@@ -22,10 +22,10 @@ const adminItems: AdminItem[] = [
     {to: '/admin/categories', label: 'Danh mục', icon: 'grid'},
 ];
 
-function Brand({isAdmin}: {isAdmin?: boolean}) {
+function Brand() {
     useLanguage();
     return (
-        <Link to={isAdmin ? "/admin" : "/"} className="brand" aria-label={tr("DUT Connect – Trang chủ")}>
+        <Link to="/" className="brand" aria-label={tr("DUT Connect – Trang chủ")}>
             <img className="brand-logo" src="/images/dut-logo-51.png" alt={tr("Logo kỷ niệm 51 năm Đại học Bách khoa Đà Nẵng")}/>
             <span>DUT<span className="font-normal"> Connect</span><small>{tr("KẾT NỐI ĐỂ CỐNG HIẾN")}</small></span>
         </Link>
@@ -82,97 +82,92 @@ export function AppLayout() {
                 <div className="mx-auto grid max-w-7xl grid-cols-[auto_1fr] md:grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 sm:px-6">
                     {/* Left: Brand */}
                     <div className="flex items-center justify-start min-w-0">
-                        <Brand isAdmin={isAdmin} />
+                        <Brand />
                     </div>
 
-                    {/* Center: Nav links - Admin or User */}
-                    <nav className="hidden md:flex items-center justify-center gap-1 lg:gap-1.5 text-xs lg:text-sm font-medium" aria-label={tr("Điều hướng chính")}>
+                    {/* Center: Nav links */}
+                    <nav className="hidden md:flex items-center justify-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium" aria-label={tr("Điều hướng chính")}>
+                        <NavLink
+                            to="/"
+                            end
+                            className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
+                                isActive
+                                    ? 'bg-primary-light text-primary font-semibold shadow-2xs'
+                                    : headerScrolled
+                                        ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                                        : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
+                            }`}
+                        >
+                            {tr("Trang chủ")}
+                        </NavLink>
+                        <NavLink
+                            to="/campaigns"
+                            className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
+                                isActive
+                                    ? 'bg-primary-light text-primary font-semibold shadow-2xs'
+                                    : headerScrolled
+                                        ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                                        : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
+                            }`}
+                        >
+                            {tr("Chiến dịch")}
+                        </NavLink>
+                        <NavLink
+                            to="/organizations"
+                            className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
+                                isActive
+                                    ? 'bg-primary-light text-primary font-semibold shadow-2xs'
+                                    : headerScrolled
+                                        ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                                        : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
+                            }`}
+                        >
+                            {tr("Tổ chức")}
+                        </NavLink>
+
                         {isAdmin ? (
-                            adminItems.map(item => (
-                                <NavLink
-                                    key={item.to}
-                                    to={item.to}
-                                    end={item.to === '/admin'}
-                                    className={({isActive}) => `flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 lg:px-3 lg:py-2 whitespace-nowrap transition-all ${
-                                        isActive
-                                            ? 'bg-primary text-white font-semibold shadow-2xs'
-                                            : headerScrolled
-                                                ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
-                                                : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
-                                    }`}
-                                >
-                                    <Icon name={item.icon} size={15} />
-                                    <span>{renderText(tr(item.label))}</span>
-                                </NavLink>
-                            ))
+                            <NavLink
+                                to="/admin"
+                                className={({isActive}) => `flex items-center gap-1.5 rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
+                                    isActive || isAdminRoute
+                                        ? 'bg-primary text-white font-semibold shadow-2xs'
+                                        : headerScrolled
+                                            ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                                            : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
+                                }`}
+                            >
+                                <Icon name="shield" size={15} />
+                                <span>{tr("Quản trị hệ thống")}</span>
+                            </NavLink>
                         ) : (
-                            <>
-                                <NavLink
-                                    to="/"
-                                    end
-                                    className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
-                                        isActive
-                                            ? 'bg-primary-light text-primary font-semibold shadow-2xs'
-                                            : headerScrolled
-                                                ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
-                                                : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
-                                    }`}
-                                >
-                                    {tr("Trang chủ")}
-                                </NavLink>
-                                <NavLink
-                                    to="/campaigns"
-                                    className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
-                                        isActive
-                                            ? 'bg-primary-light text-primary font-semibold shadow-2xs'
-                                            : headerScrolled
-                                                ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
-                                                : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
-                                    }`}
-                                >
-                                    {tr("Chiến dịch")}
-                                </NavLink>
-                                <NavLink
-                                    to="/organizations"
-                                    className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
-                                        isActive
-                                            ? 'bg-primary-light text-primary font-semibold shadow-2xs'
-                                            : headerScrolled
-                                                ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
-                                                : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
-                                    }`}
-                                >
-                                    {tr("Tổ chức")}
-                                </NavLink>
-                                {user && (
-                                    <>
-                                        <NavLink
-                                            to="/manage/campaigns"
-                                            className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
-                                                isActive
-                                                    ? 'bg-primary-light text-primary font-semibold shadow-2xs'
-                                                    : headerScrolled
-                                                        ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
-                                                        : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
-                                            }`}
-                                        >
-                                            {tr("Chiến dịch của tôi")}
-                                        </NavLink>
-                                        <NavLink
-                                            to="/proposals"
-                                            className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
-                                                isActive
-                                                    ? 'bg-primary-light text-primary font-semibold shadow-2xs'
-                                                    : headerScrolled
-                                                        ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
-                                                        : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
-                                            }`}
-                                        >
-                                            {tr("Đề xuất")}
-                                        </NavLink>
-                                    </>
-                                )}
-                            </>
+                            user && (
+                                <>
+                                    <NavLink
+                                        to="/manage/campaigns"
+                                        className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
+                                            isActive
+                                                ? 'bg-primary-light text-primary font-semibold shadow-2xs'
+                                                : headerScrolled
+                                                    ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                                                    : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
+                                        }`}
+                                    >
+                                        {tr("Chiến dịch của tôi")}
+                                    </NavLink>
+                                    <NavLink
+                                        to="/proposals"
+                                        className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
+                                            isActive
+                                                ? 'bg-primary-light text-primary font-semibold shadow-2xs'
+                                                : headerScrolled
+                                                    ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
+                                                    : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
+                                        }`}
+                                    >
+                                        {tr("Đề xuất")}
+                                    </NavLink>
+                                </>
+                            )
                         )}
                     </nav>
 
@@ -310,45 +305,44 @@ export function AppLayout() {
                 {/* MOBILE NAV ACCORDION */}
                 {mobileNavOpen && (
                     <div className="border-t border-border px-4 py-3 md:hidden space-y-1 bg-white">
+                        <NavLink to="/" end className="block rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted" onClick={() => setMobileNavOpen(false)}>
+                            {tr("Trang chủ")}
+                        </NavLink>
+                        <NavLink to="/campaigns" className="block rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted" onClick={() => setMobileNavOpen(false)}>
+                            {tr("Chiến dịch")}
+                        </NavLink>
+                        <NavLink to="/organizations" className="block rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted" onClick={() => setMobileNavOpen(false)}>
+                            {tr("Tổ chức")}
+                        </NavLink>
                         {isAdmin ? (
-                            adminItems.map(item => (
-                                <NavLink
-                                    key={item.to}
-                                    to={item.to}
-                                    end={item.to === '/admin'}
-                                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted"
-                                    onClick={() => setMobileNavOpen(false)}
-                                >
-                                    <Icon name={item.icon} size={16} className="text-primary" />
-                                    <span>{renderText(tr(item.label))}</span>
-                                </NavLink>
-                            ))
-                        ) : (
+                            <div className="pt-2 border-t border-border">
+                                <p className="px-3 py-1 text-xs font-bold uppercase text-primary tracking-wider">{tr("Quản trị hệ thống")}</p>
+                                {adminItems.map(item => (
+                                    <NavLink
+                                        key={item.to}
+                                        to={item.to}
+                                        end={item.to === '/admin'}
+                                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted"
+                                        onClick={() => setMobileNavOpen(false)}
+                                    >
+                                        <Icon name={item.icon} size={16} className="text-primary" />
+                                        <span>{renderText(tr(item.label))}</span>
+                                    </NavLink>
+                                ))}
+                            </div>
+                        ) : user ? (
                             <>
-                                <NavLink to="/" end className="block rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted" onClick={() => setMobileNavOpen(false)}>
-                                    {tr("Trang chủ")}
+                                <NavLink to="/manage/campaigns" className="block rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted" onClick={() => setMobileNavOpen(false)}>
+                                    {tr("Chiến dịch của tôi")}
                                 </NavLink>
-                                <NavLink to="/campaigns" className="block rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted" onClick={() => setMobileNavOpen(false)}>
-                                    {tr("Chiến dịch")}
+                                <NavLink to="/proposals" className="block rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted" onClick={() => setMobileNavOpen(false)}>
+                                    {tr("Đề xuất")}
                                 </NavLink>
-                                <NavLink to="/organizations" className="block rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted" onClick={() => setMobileNavOpen(false)}>
-                                    {tr("Tổ chức")}
+                                <NavLink to="/me/settings" className="block rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted" onClick={() => setMobileNavOpen(false)}>
+                                    {tr("Cài đặt cá nhân")}
                                 </NavLink>
-                                {user && (
-                                    <>
-                                        <NavLink to="/manage/campaigns" className="block rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted" onClick={() => setMobileNavOpen(false)}>
-                                            {tr("Chiến dịch của tôi")}
-                                        </NavLink>
-                                        <NavLink to="/proposals" className="block rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted" onClick={() => setMobileNavOpen(false)}>
-                                            {tr("Đề xuất")}
-                                        </NavLink>
-                                        <NavLink to="/me/settings" className="block rounded-lg px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted" onClick={() => setMobileNavOpen(false)}>
-                                            {tr("Cài đặt cá nhân")}
-                                        </NavLink>
-                                    </>
-                                )}
                             </>
-                        )}
+                        ) : null}
                     </div>
                 )}
 

@@ -23,8 +23,13 @@ public class CampaignPersistence implements CampaignRepository {
     public void lockSlug(String slug) { jdbc.sql("select pg_advisory_xact_lock(hashtextextended('campaign-slug:' || :slug,0))").param("slug",slug).query((r,n)->true).single(); }
     public boolean slugExists(String slug) { return campaigns.existsBySlug(slug); }
     public Optional<ManagerRole> role(UUID id, UUID user) {
-        return jdbc.sql("select manager_role from dut_connect.campaign_managers where campaign_id=:id and user_id=:user")
+        var byManager = jdbc.sql("select manager_role from dut_connect.campaign_managers where campaign_id=:id and user_id=:user")
                 .param("id",id).param("user",user).query(String.class).optional().map(ManagerRole::valueOf);
+        if (byManager.isPresent()) return byManager;
+        Boolean isOwner = jdbc.sql("select exists(select 1 from dut_connect.campaigns where id=:id and primary_contact_user_id=:user)")
+                .param("id", id).param("user", user).query(Boolean.class).single();
+        if (Boolean.TRUE.equals(isOwner)) return Optional.of(ManagerRole.OWNER);
+        return Optional.empty();
     }
     public Set<UUID> managedCampaigns(Set<UUID> ids,UUID user){if(ids.isEmpty())return Set.of();return new HashSet<>(jdbc.sql("select campaign_id from dut_connect.campaign_managers where campaign_id in(:ids) and user_id=:u").param("ids",ids).param("u",user).query(UUID.class).list());}
     public List<UUID> managers(UUID campaignId) {

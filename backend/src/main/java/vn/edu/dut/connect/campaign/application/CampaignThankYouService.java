@@ -229,8 +229,7 @@ public class CampaignThankYouService {
     }
 
     @Transactional(readOnly = true)
-    public String previewCertificateSvg(UUID campaignId, UUID actorId, String type) {
-        access.manager(campaignId, actorId);
+    public String previewCertificateSvg(UUID campaignId, String type) {
         var campaign = campaigns.getCampaign(campaignId);
         boolean isVolunteer = "VOLUNTEER".equalsIgnoreCase(type);
         String todayStr = LocalDate.now().format(DateTimeFormatter.ofPattern("'ngày' dd 'tháng' MM 'năm' yyyy"));
@@ -246,6 +245,11 @@ public class CampaignThankYouService {
         );
 
         return certificateGenerator.generateSvg(certData);
+    }
+
+    @Transactional(readOnly = true)
+    public String previewCertificateSvg(UUID campaignId, UUID actorId, String type) {
+        return previewCertificateSvg(campaignId, type);
     }
 
     private List<ThankYouRecipientDto> getDonors(UUID campaignId) {

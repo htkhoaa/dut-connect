@@ -23,6 +23,9 @@ public class CampaignThankYouController {
             @PathVariable UUID id,
             Authentication auth
     ) {
+        if (auth == null) {
+            throw new vn.edu.dut.connect.shared.application.ApplicationFailure(401, "AUTHENTICATION_REQUIRED", "Login required");
+        }
         UUID actorId = UUID.fromString(auth.getName());
         return thankYouService.recipientsSummary(id, actorId);
     }
@@ -33,6 +36,9 @@ public class CampaignThankYouController {
             Authentication auth,
             @RequestBody(required = false) SendThankYouRequest request
     ) {
+        if (auth == null) {
+            throw new vn.edu.dut.connect.shared.application.ApplicationFailure(401, "AUTHENTICATION_REQUIRED", "Login required");
+        }
         UUID actorId = UUID.fromString(auth.getName());
         return thankYouService.sendThankYou(id, actorId, request);
     }
@@ -40,11 +46,9 @@ public class CampaignThankYouController {
     @GetMapping(value = "/campaigns/{id}/certificate/preview", produces = "image/svg+xml;charset=UTF-8")
     public ResponseEntity<String> previewCertificateSvg(
             @PathVariable UUID id,
-            @RequestParam(defaultValue = "DONATION") String type,
-            Authentication auth
+            @RequestParam(defaultValue = "DONATION") String type
     ) {
-        UUID actorId = UUID.fromString(auth.getName());
-        String svg = thankYouService.previewCertificateSvg(id, actorId, type);
+        String svg = thankYouService.previewCertificateSvg(id, type);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType("image/svg+xml;charset=UTF-8"))
                 .body(svg);
@@ -53,11 +57,9 @@ public class CampaignThankYouController {
     @GetMapping("/campaigns/{id}/certificate/preview-data")
     public Map<String, String> previewCertificateData(
             @PathVariable UUID id,
-            @RequestParam(defaultValue = "DONATION") String type,
-            Authentication auth
+            @RequestParam(defaultValue = "DONATION") String type
     ) {
-        UUID actorId = UUID.fromString(auth.getName());
-        String svg = thankYouService.previewCertificateSvg(id, actorId, type);
+        String svg = thankYouService.previewCertificateSvg(id, type);
         return Map.of("svg", svg, "type", type);
     }
 }

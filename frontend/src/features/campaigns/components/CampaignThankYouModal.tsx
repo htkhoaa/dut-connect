@@ -382,6 +382,12 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
                         </div>
                     )}
 
+                    {sendMutation.isError && (
+                        <div className="pt-2">
+                            <ErrorState message={errorMessage(sendMutation.error)} />
+                        </div>
+                    )}
+
                     {/* Action buttons footer */}
                     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
                         <div className="text-xs text-text-secondary">

@@ -99,6 +99,7 @@ public class InfrastructureSecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/ws", "/ws/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/campaigns/*/gallery", "/api/v1/proposals/*/gallery", "/api/v1/campaigns/gallery/*/image").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/campaigns/*/certificate/preview", "/api/v1/campaigns/*/certificate/preview-data").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/campaigns/*/activities").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/actuator/health", "/api/actuator/health/**").permitAll()
                         .requestMatchers(HttpMethod.HEAD, "/api/actuator/health", "/api/actuator/health/**").permitAll()
