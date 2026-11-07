@@ -16,13 +16,55 @@ import {ConfirmDialog} from '../../../shared/components/ConfirmDialog';
 export function UsersPage() {
     useLanguage();
     const [page, setPage] = useState(0);
+    const [nameFilter, setNameFilter] = useState('');
+    const [studentIdFilter, setStudentIdFilter] = useState('');
     const [selected, setSelected] = useState<UserSummary | null>(null);
-    const users = useUsers(page);
+    const users = useUsers(page, nameFilter, studentIdFilter);
     const change = useChangeStatus();
     if (users.isPending) return <LoadingState message={tr("Đang tải người dùng…")}/>;
     if (users.isError) return <ErrorState message={errorMessage(users.error)} onRetry={() => void users.refetch()}/>;
     return <><h1 className="mb-3 text-3xl font-semibold">{tr("Quản lý người dùng")}</h1>
-        <p className="mb-6 text-text-secondary">{renderText(users.data.totalElements)} {tr("tài khoản")}</p>
+        <p className="mb-4 text-text-secondary">{renderText(users.data.totalElements)} {tr("tài khoản")}</p>
+
+        {/* Filter by name and student ID */}
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div>
+                <label className="block text-xs font-semibold text-text-secondary mb-1">
+                    {tr("Tìm theo họ tên")}
+                </label>
+                <input
+                    type="text"
+                    value={nameFilter}
+                    onChange={(e) => { setNameFilter(e.target.value); setPage(0); }}
+                    placeholder={tr("Nhập họ và tên…")}
+                    className="w-full rounded-xl border border-border bg-white px-3.5 py-2 text-sm focus:border-primary focus:outline-none shadow-2xs"
+                />
+            </div>
+            <div>
+                <label className="block text-xs font-semibold text-text-secondary mb-1">
+                    {tr("Tìm theo mã sinh viên")}
+                </label>
+                <input
+                    type="text"
+                    value={studentIdFilter}
+                    onChange={(e) => { setStudentIdFilter(e.target.value); setPage(0); }}
+                    placeholder={tr("Nhập mã sinh viên…")}
+                    className="w-full rounded-xl border border-border bg-white px-3.5 py-2 text-sm focus:border-primary focus:outline-none shadow-2xs font-mono"
+                />
+            </div>
+            {(nameFilter || studentIdFilter) && (
+                <div className="flex items-end">
+                    <Button
+                        variant="secondary"
+                        className="text-xs h-[38px] w-full sm:w-auto"
+                        onClick={() => { setNameFilter(''); setStudentIdFilter(''); setPage(0); }}
+                    >
+                        ✕ {tr("Xóa bộ lọc")}
+                    </Button>
+                </div>
+            )}
+        </div>
+
         {change.isError && <ErrorState message={errorMessage(change.error)}/>}
         {change.isSuccess && <p role="status" className="mb-4 text-success">{tr("Đã cập nhật trạng thái tài khoản.")}</p>}
         <Table caption={tr("Người dùng đã đăng ký và trạng thái tài khoản")}>

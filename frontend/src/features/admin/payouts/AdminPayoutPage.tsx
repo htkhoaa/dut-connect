@@ -135,6 +135,8 @@ export function AdminPayoutPage() {
                                         label: item.payoutStatus,
                                         tone: 'neutral' as const
                                     };
+                                    const isEnded = ['COMPLETED', 'CLOSED', 'ENDED'].includes(item.campaignStatus) || item.payoutStatus === 'READY_FOR_PAYOUT';
+                                    const hasBalance = BigInt(item.currentBalance || '0') > 0n;
                                     return (
                                         <tr key={item.id} className="hover:bg-surface-muted/50 transition-colors">
                                             <td className="py-3.5 px-3">
@@ -185,13 +187,21 @@ export function AdminPayoutPage() {
                                                         )}
                                                     </div>
                                                 ) : (
-                                                    <Button
-                                                        variant="primary"
-                                                        onClick={() => openPayoutModal(item)}
-                                                        disabled={BigInt(item.currentBalance || '0') <= 0n}
-                                                    >
-                                                        {tr("Giải ngân")}
-                                                    </Button>
+                                                    <div className="inline-flex flex-col items-end gap-1">
+                                                        <Button
+                                                            variant="primary"
+                                                            onClick={() => openPayoutModal(item)}
+                                                            disabled={!isEnded || !hasBalance}
+                                                            title={!isEnded ? tr("Chỉ giải ngân khi chiến dịch kết thúc") : !hasBalance ? tr("Số dư hiện tại bằng 0") : undefined}
+                                                        >
+                                                            {tr("Giải ngân")}
+                                                        </Button>
+                                                        {!isEnded && (
+                                                            <span className="text-[10px] text-text-muted italic">
+                                                                {tr("Chờ kết thúc chiến dịch")}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </td>
                                         </tr>

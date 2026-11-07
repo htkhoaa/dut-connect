@@ -1,4 +1,5 @@
 import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
+import {useState, useEffect} from 'react';
 import {useFinancialSummary} from './hooks';
 import {vnd} from '../campaigns/presentation';
 import {Button} from '../../shared/components/Button';
@@ -10,6 +11,27 @@ import {Icon} from '../../shared/components/Icon';
 export function FinancialSummaryCard({campaignId}: {campaignId: string}) {
     useLanguage();
     const query = useFinancialSummary(campaignId);
+    const [recentDonationNotice, setRecentDonationNotice] = useState<string | null>(null);
+
+    // Realtime WebSocket update for Financial Stats
+    useEffect(() => {
+        const handler = (e: Event) => {
+            const event = e as CustomEvent;
+            const data = event.detail;
+            if (!data) return;
+            if (!data.campaignId || data.campaignId === campaignId) {
+                void query.refetch();
+                if (data.amount) {
+                    const donor = data.donorName || 'Một tấm lòng hảo tâm';
+                    setRecentDonationNotice(`+${Number(data.amount).toLocaleString('vi-VN')} đ từ ${donor}`);
+                    setTimeout(() => setRecentDonationNotice(null), 6000);
+                }
+            }
+        };
+
+        window.addEventListener('app:donation_received', handler);
+        return () => window.removeEventListener('app:donation_received', handler);
+    }, [campaignId, query]);
 
     if (query.isPending) return <div className="rounded-2xl border border-border bg-white p-6 shadow-xs"><LoadingState /></div>;
     if (query.isError) return <div className="rounded-2xl border border-border bg-white p-6 shadow-xs"><ErrorState message={errorMessage(query.error)} onRetry={() => void query.refetch()} /></div>;
@@ -39,15 +61,34 @@ export function FinancialSummaryCard({campaignId}: {campaignId: string}) {
                         </p>
                     </div>
                 </div>
-                <Button
-                    variant="secondary"
-                    className="text-xs py-1.5 px-3 rounded-xl"
-                    disabled={query.isFetching}
-                    onClick={() => void query.refetch()}
-                >
-                    {query.isFetching ? tr("Đang tải…") : tr("Làm mới số liệu")}
-                </Button>
+                <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold px-2.5 py-1 shadow-2xs">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        Live Realtime
+                    </span>
+                    <Button
+                        variant="secondary"
+                        className="text-xs py-1.5 px-3 rounded-xl"
+                        disabled={query.isFetching}
+                        onClick={() => void query.refetch()}
+                    >
+                        {query.isFetching ? tr("Đang tải…") : tr("Làm mới số liệu")}
+                    </Button>
+                </div>
             </div>
+
+            {recentDonationNotice && (
+                <div className="mb-4 flex items-center justify-between gap-2 rounded-2xl border border-emerald-300 bg-emerald-100/80 px-4 py-2 text-xs font-bold text-emerald-900 shadow-sm animate-fade-in">
+                    <div className="flex items-center gap-2">
+                        <span className="text-base">🎉</span>
+                        <span>{tr("Giao dịch mới vừa được ghi nhận:")} <span className="text-emerald-700 font-extrabold">{recentDonationNotice}</span></span>
+                    </div>
+                    <span className="text-[10px] text-emerald-600 uppercase tracking-wider">{tr("Tức thì")}</span>
+                </div>
+            )}
 
             {/* Raised Amount & Target Highlight */}
             <div className="my-5 flex flex-wrap items-baseline justify-between gap-3">

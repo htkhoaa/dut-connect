@@ -145,6 +145,12 @@ public class AdminCampaignPayoutController {
         Campaign campaign = campaigns.lock(id).orElseThrow(() -> ApplicationFailure.missing("Campaign not found"));
         campaign.requireVersion(version);
 
+        boolean isEnded = campaign.status() == CampaignStatus.COMPLETED
+                || (campaign.content().fundraisingDeadline() != null && !Instant.now().isBefore(campaign.content().fundraisingDeadline()));
+        if (!isEnded) {
+            throw new ApplicationFailure(400, "CAMPAIGN_NOT_ENDED", "Chỉ có thể giải ngân khi chiến dịch đã kết thúc");
+        }
+
         byte[] receiptBytes = null;
         String contentType = null;
         if (file != null && !file.isEmpty()) {

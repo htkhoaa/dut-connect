@@ -48,12 +48,16 @@ export function useGlobalRealtime() {
 
                         if (data.action === 'DONATION_RECEIVED' || data.action === 'DONATION_SUCCESS') {
                             window.dispatchEvent(new CustomEvent('app:donation_received', { detail: data }));
-                            void qc.invalidateQueries({ queryKey: ['notifications'] });
-                            void qc.invalidateQueries({ queryKey: ['campaign'] });
+                            void qc.invalidateQueries({ queryKey: ['finance'] });
+                            void qc.refetchQueries({ queryKey: ['finance'] });
                             void qc.invalidateQueries({ queryKey: ['campaigns'] });
+                            void qc.refetchQueries({ queryKey: ['campaigns'] });
+                            void qc.invalidateQueries({ queryKey: ['campaign'] });
                             void qc.invalidateQueries({ queryKey: ['financial-summary'] });
                             void qc.invalidateQueries({ queryKey: ['campaign-dashboard'] });
+                            void qc.invalidateQueries({ queryKey: ['dashboard'] });
                             void qc.invalidateQueries({ queryKey: ['activities'] });
+                            void qc.invalidateQueries({ queryKey: ['notifications'] });
                             void qc.invalidateQueries({ queryKey: ['donations'] });
                             void qc.invalidateQueries({ queryKey: ['me', 'donations'] });
                         } else if (data.action === 'NEW_NOTIFICATION') {

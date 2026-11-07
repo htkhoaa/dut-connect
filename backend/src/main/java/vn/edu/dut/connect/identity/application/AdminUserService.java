@@ -25,8 +25,13 @@ public class AdminUserService {
 
     @Transactional(readOnly = true)
     public PageResult<UserSummary> list(UUID actor, int page, int size) {
+        return list(actor, page, size, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResult<UserSummary> list(UUID actor, int page, int size, String name, String studentId) {
         IdentityAccess.requireAdmin(users.findUser(actor).orElseThrow(() -> ApplicationFailure.missing("User not found")));
-        return users.listUsers(new Pagination(page, size)).map(UserSummary::from);
+        return users.listUsers(new Pagination(page, size), name, studentId).map(UserSummary::from);
     }
 
     @Transactional

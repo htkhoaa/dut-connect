@@ -10,6 +10,7 @@ import {UserAvatar} from '../../features/profile/avatar';
 import {LanguageSwitch} from '../../shared/components/LanguageSwitch';
 import {NotificationBell} from '../../features/notifications/NotificationBell';
 import {useGlobalRealtime} from '../../shared/lib/useRealtimeWs';
+import {FloatingNotificationContainer} from '../../shared/components/FloatingNotification';
 
 type AdminItem = {to: string; label: string; icon: IconName};
 const adminItems: AdminItem[] = [
@@ -362,6 +363,7 @@ export function AppLayout() {
             </header>
 
             {/* MAIN CONTENT AREA */}
+            <FloatingNotificationContainer />
             <main id="main-content" className="flex-1 w-full max-w-7xl mx-auto px-4 py-8 sm:px-6">
                 {renderText(logout.isError && <p role="alert" className="mb-4 text-danger">{renderText(errorMessage(logout.error))}</p>)}
                 <Suspense fallback={<LoadingState message={tr("Đang tải trang…")} />}>

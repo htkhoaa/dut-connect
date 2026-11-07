@@ -3,8 +3,8 @@ import {getUsers, changeStatus} from './api';
 import {useAuth} from '../../auth/store';
 import {clearSession} from '../../../shared/api/client';
 
-export function useUsers(page: number) {
-    return useQuery({queryKey: ['admin-users', page], queryFn: () => getUsers(page)});
+export function useUsers(page: number, name?: string, studentId?: string) {
+    return useQuery({queryKey: ['admin-users', page, name, studentId], queryFn: () => getUsers(page, name, studentId)});
 }
 
 export function useChangeStatus() {

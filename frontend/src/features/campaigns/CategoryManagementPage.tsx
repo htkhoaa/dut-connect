@@ -1,35 +1,241 @@
 import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
 import {catalogLabel} from '../../shared/lib/catalogLabels';
-import {useState,useEffect} from 'react';
-import {useForm} from 'react-hook-form';
-import {z} from 'zod';
-import type {Category,CategoryWrite} from './types';
-import {useCategories,useSaveCategory} from './hooks';
-import {apiError,errorMessage} from '../../shared/api/errors';
-import {Card} from '../../shared/components/Card';
-import {Input} from '../../shared/components/Input';
-import {Textarea} from '../../shared/components/Textarea';
+import {useState, useRef} from 'react';
+import type {Category} from './types';
+import {useCategories, useSaveCategory} from './hooks';
+import {errorMessage} from '../../shared/api/errors';
 import {Button} from '../../shared/components/Button';
-import {FormField} from '../../shared/components/FormField';
 import {Table} from '../../shared/components/Table';
 import {Pagination} from '../../shared/components/Pagination';
-import {ConfirmDialog} from '../../shared/components/ConfirmDialog';
 import {LoadingState} from '../../shared/components/LoadingState';
 import {ErrorState} from '../../shared/components/ErrorState';
 import {EmptyState} from '../../shared/components/EmptyState';
-const schema=z.object({name:z.string().trim().min(1,'Nhập tên danh mục').max(120),description:z.string().max(300),active:z.boolean()});
-export function CategoryManagementPage(){
+import {Badge} from '../../shared/components/Badge';
+
+export function CategoryManagementPage() {
     useLanguage();
-    const [page,setPage]=useState(0);const [selected,setSelected]=useState<Category|undefined>();const [feedback,setFeedback]=useState('');const [confirm,setConfirm]=useState<{id?:string;values:CategoryWrite}|null>(null);
-    const list=useCategories(page,true);const mutation=useSaveCategory();const form=useForm<{name:string;description:string;active:boolean}>({defaultValues:{name:'',description:'',active:true}});
-    useEffect(()=>{form.reset({name:selected?.name||'',description:selected?.description||'',active:selected?.active??true});mutation.reset();},[selected,form]); 
-    return <div className="space-y-6"><h1 className="text-3xl font-semibold">{tr("Danh mục chiến dịch")}</h1><Card><h2 className="mb-4 text-xl font-semibold">{renderText(selected?tr("Chỉnh sửa danh mục"):tr("Tạo danh mục"))}</h2><form noValidate className="space-y-4" onSubmit={form.handleSubmit(async input=>{
-        setFeedback('');const parsed=schema.safeParse(input);if(!parsed.success){for(const issue of parsed.error.issues)form.setError(issue.path[0] as 'name'|'description'|'active',{message:issue.message});return;}
-        const values={...parsed.data,version:selected?.version};
-        if(selected?.active&&!values.active){setConfirm({id:selected.id,values});return;}
-        try{const saved=await mutation.mutateAsync({id:selected?.id,values});setSelected(saved);setFeedback(tr("Đã lưu danh mục."));}catch(error){for(const field of apiError(error)?.fieldErrors||[])if(field.field==='name'||field.field==='description')form.setError(field.field,{message:field.message});}
-    })}><fieldset disabled={mutation.isPending} className="space-y-4"><FormField id="category-name" label={tr("Tên")} error={form.formState.errors.name?.message}><Input id="category-name" maxLength={120} {...form.register('name')}/></FormField><FormField id="category-description" label={tr("Mô tả")} error={form.formState.errors.description?.message}><Textarea id="category-description" maxLength={300} {...form.register('description')}/></FormField><label className="flex items-center gap-3"><input type="checkbox" {...form.register('active')}/>{tr("Đang hoạt động")}</label></fieldset><div className="flex gap-3"><Button type="submit" disabled={mutation.isPending}>{renderText(mutation.isPending?tr("Đang lưu…"):tr("Lưu danh mục"))}</Button>{renderText(selected&&<Button disabled={mutation.isPending} onClick={()=>{setSelected(undefined);setFeedback('');}}>{tr("Danh mục mới")}</Button>)}</div>{renderText(feedback&&<p role="status" className="text-success">{renderText(feedback)}</p>)}{renderText(mutation.isError&&<ErrorState message={errorMessage(mutation.error)}/>)}</form></Card>
-        {renderText(list.isPending?<LoadingState/>:list.isError?<ErrorState message={errorMessage(list.error)} onRetry={()=>void list.refetch()}/>:<>{list.data.items.length===0?<EmptyState message={tr("Chưa có danh mục.")}/>:<Table caption={tr("Danh mục chiến dịch")}><thead><tr>{renderText([tr("Tên"),tr("Trạng thái"),tr("Thao tác")].map(x=><th key={x} scope="col" className="p-4">{renderText(x)}</th>))}</tr></thead><tbody>{renderText(list.data.items.map(c=><tr key={c.id} className="border-t border-border"><td className="p-4">{renderText(catalogLabel(c.name))}</td><td className="p-4">{renderText(c.active?tr("Đang hoạt động"):tr("Ngừng sử dụng"))}</td><td className="p-4"><Button disabled={mutation.isPending} onClick={()=>{setSelected(c);setFeedback('');}}>{tr("Chỉnh sửa")}</Button></td></tr>))}</tbody></Table>}<Pagination {...list.data} onPageChange={setPage}/></>)}
-        <ConfirmDialog open={confirm!==null} title={tr("Ngừng sử dụng danh mục?")} message={tr("Danh mục sẽ không còn dùng cho đề xuất mới. Các bản ghi hiện có vẫn giữ danh mục.")} busy={mutation.isPending} confirmLabel={tr("Ngừng sử dụng")} onClose={()=>setConfirm(null)} onConfirm={()=>{if(confirm)mutation.mutate(confirm,{onSuccess:saved=>{setSelected(saved);setFeedback(tr("Đã lưu danh mục."));},onSettled:()=>setConfirm(null)});}}/>
-    </div>;
+    const [page, setPage] = useState(0);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingName, setEditingName] = useState<string>('');
+    const [newCategoryName, setNewCategoryName] = useState<string>('');
+    const [feedback, setFeedback] = useState<string | null>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const list = useCategories(page, true);
+    const mutation = useSaveCategory();
+
+    const startEditing = (c: Category) => {
+        setEditingId(c.id);
+        setEditingName(c.name);
+        setTimeout(() => inputRef.current?.focus(), 50);
+    };
+
+    const cancelEditing = () => {
+        setEditingId(null);
+        setEditingName('');
+    };
+
+    const saveInlineEdit = async (c: Category) => {
+        const trimmed = editingName.trim();
+        if (!trimmed || trimmed === c.name) {
+            cancelEditing();
+            return;
+        }
+        try {
+            await mutation.mutateAsync({
+                id: c.id,
+                values: {
+                    name: trimmed,
+                    description: c.description || '',
+                    active: c.active,
+                    version: c.version,
+                }
+            });
+            setEditingId(null);
+            setFeedback(tr(`Đã đổi tên danh mục thành "${trimmed}".`));
+            setTimeout(() => setFeedback(null), 4000);
+        } catch (err) {
+            setFeedback(errorMessage(err));
+        }
+    };
+
+    const toggleStatus = async (c: Category) => {
+        try {
+            await mutation.mutateAsync({
+                id: c.id,
+                values: {
+                    name: c.name,
+                    description: c.description || '',
+                    active: !c.active,
+                    version: c.version,
+                }
+            });
+            setFeedback(tr(`Đã cập nhật trạng thái danh mục.`));
+            setTimeout(() => setFeedback(null), 4000);
+        } catch (err) {
+            setFeedback(errorMessage(err));
+        }
+    };
+
+    const handleCreateNew = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const trimmed = newCategoryName.trim();
+        if (!trimmed) return;
+        try {
+            await mutation.mutateAsync({
+                values: {
+                    name: trimmed,
+                    description: '',
+                    active: true,
+                }
+            });
+            setNewCategoryName('');
+            setFeedback(tr(`Đã tạo danh mục mới "${trimmed}".`));
+            setTimeout(() => setFeedback(null), 4000);
+        } catch (err) {
+            setFeedback(errorMessage(err));
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold">{tr("Danh mục chiến dịch")}</h1>
+                    <p className="mt-1 text-sm text-text-secondary">
+                        {tr("Quản lý danh mục trực tiếp. Nhấp vào tên để chỉnh sửa nhanh và bấm Enter để lưu.")}
+                    </p>
+                </div>
+            </div>
+
+            {/* Quick Add Bar */}
+            <form onSubmit={handleCreateNew} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-white p-3 shadow-xs">
+                <div className="relative flex-1 min-w-[240px]">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-secondary text-sm">
+                        📁
+                    </span>
+                    <input
+                        type="text"
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        placeholder={tr("Nhập tên danh mục mới và nhấn Enter…")}
+                        className="w-full rounded-xl border border-border bg-surface-muted/40 pl-10 pr-4 py-2.5 text-sm focus:border-primary focus:bg-white focus:outline-none transition-all shadow-2xs"
+                        maxLength={120}
+                        disabled={mutation.isPending}
+                    />
+                </div>
+                <Button
+                    type="submit"
+                    variant="primary"
+                    disabled={!newCategoryName.trim() || mutation.isPending}
+                    className="text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xs"
+                >
+                    + {tr("Thêm danh mục")}
+                </Button>
+            </form>
+
+            {feedback && (
+                <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-xs font-semibold text-emerald-900 shadow-2xs flex items-center justify-between animate-fade-in">
+                    <span>✓ {feedback}</span>
+                    <button type="button" onClick={() => setFeedback(null)} className="text-emerald-700 hover:text-emerald-950 font-bold">✕</button>
+                </div>
+            )}
+
+            {mutation.isError && <ErrorState message={errorMessage(mutation.error)} />}
+
+            {list.isPending ? (
+                <LoadingState message={tr("Đang tải danh mục…")} />
+            ) : list.isError ? (
+                <ErrorState message={errorMessage(list.error)} onRetry={() => void list.refetch()} />
+            ) : list.data.items.length === 0 ? (
+                <EmptyState message={tr("Chưa có danh mục nào. Hãy tạo danh mục đầu tiên ở trên.")} />
+            ) : (
+                <div className="rounded-2xl border border-border bg-white overflow-hidden shadow-xs">
+                    <Table caption={tr("Danh mục chiến dịch")}>
+                        <thead className="bg-surface-muted/70 text-xs font-bold uppercase text-text-secondary">
+                            <tr>
+                                <th scope="col" className="p-4 w-1/2">{tr("Tên danh mục (Nhấp để đổi tên)")}</th>
+                                <th scope="col" className="p-4">{tr("Trạng thái")}</th>
+                                <th scope="col" className="p-4 text-right">{tr("Thao tác")}</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                            {list.data.items.map((c) => {
+                                const isEditing = editingId === c.id;
+                                return (
+                                    <tr key={c.id} className="hover:bg-primary-light/10 transition-colors group">
+                                        <td className="p-4">
+                                            {isEditing ? (
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        ref={inputRef}
+                                                        type="text"
+                                                        value={editingName}
+                                                        onChange={(e) => setEditingName(e.target.value)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                e.preventDefault();
+                                                                void saveInlineEdit(c);
+                                                            } else if (e.key === 'Escape') {
+                                                                cancelEditing();
+                                                            }
+                                                        }}
+                                                        onBlur={() => void saveInlineEdit(c)}
+                                                        className="w-full max-w-md rounded-lg border-2 border-primary bg-white px-3 py-1.5 text-sm font-semibold text-primary focus:outline-none shadow-xs"
+                                                        maxLength={120}
+                                                    />
+                                                    <span className="text-[11px] text-text-secondary whitespace-nowrap">
+                                                        {tr("↵ Enter để lưu · Esc để hủy")}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <div
+                                                    onClick={() => startEditing(c)}
+                                                    className="flex items-center gap-2 cursor-pointer rounded-lg py-1 px-2 -ml-2 hover:bg-surface-muted transition-colors"
+                                                    title={tr("Nhấp để chỉnh sửa tên")}
+                                                >
+                                                    <span className="font-semibold text-text-primary text-sm group-hover:text-primary transition-colors">
+                                                        {renderText(catalogLabel(c.name))}
+                                                    </span>
+                                                    <span className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-primary transition-opacity text-xs" title={tr("Sửa tên")}>
+                                                        ✏️
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td className="p-4">
+                                            <button
+                                                type="button"
+                                                onClick={() => void toggleStatus(c)}
+                                                className="cursor-pointer transition-transform active:scale-95 text-left"
+                                                title={tr("Nhấp để đổi trạng thái")}
+                                                disabled={mutation.isPending}
+                                            >
+                                                <Badge tone={c.active ? 'success' : 'neutral'}>
+                                                    {renderText(c.active ? tr("Đang hoạt động") : tr("Ngừng sử dụng"))}
+                                                </Badge>
+                                            </button>
+                                        </td>
+                                        <td className="p-4 text-right">
+                                            <Button
+                                                variant="secondary"
+                                                className="text-xs py-1 px-3 rounded-lg"
+                                                disabled={mutation.isPending}
+                                                onClick={() => void toggleStatus(c)}
+                                            >
+                                                {c.active ? tr("Ngừng dùng") : tr("Kích hoạt")}
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </Table>
+                    <div className="p-3 border-t border-border">
+                        <Pagination {...list.data} onPageChange={setPage} />
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 }

@@ -37,11 +37,28 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
     const f = useForm<{amount: string}>({defaultValues: {amount: '100000'}});
     const [confirm, setConfirm] = useState<string | null>(null);
     const [activeDonation, setActiveDonation] = useState<ActiveDonation | null>(null);
+    const [secondsLeft, setSecondsLeft] = useState(600); // 10 minutes limit
     const [checking, setChecking] = useState(false);
     const [checkMessage, setCheckMessage] = useState<string | null>(null);
     const [isPaid, setIsPaid] = useState(false);
 
     const mutation = useDonationMutation((amount: string) => api.create(campaign.id, amount));
+
+    // Reset 10-minute timer when activeDonation is set
+    useEffect(() => {
+        if (!activeDonation || isPaid) return;
+        setSecondsLeft(600);
+        const timer = setInterval(() => {
+            setSecondsLeft((prev) => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [activeDonation, isPaid]);
 
     // Realtime WebSocket listener for donation settlement (Zero polling)
     useEffect(() => {
@@ -167,6 +184,29 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                         {tr("Tiếp tục ủng hộ")}
                     </Button>
                 </div>
+            ) : activeDonation && secondsLeft <= 0 ? (
+                <div className="space-y-4 rounded-2xl border border-amber-300 bg-amber-50/80 p-5 text-center animate-in fade-in">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-xl font-bold">
+                        ⏱️
+                    </div>
+                    <div>
+                        <h4 className="text-sm font-bold text-amber-900">{tr("Mã QR đã hết hạn")}</h4>
+                        <p className="mt-1 text-xs text-amber-800 leading-relaxed">
+                            {tr("Thời gian thanh toán (10 phút) đã kết thúc. Vui lòng tạo mã QR mới để đảm bảo việc xử lý chính xác.")}
+                        </p>
+                    </div>
+                    <Button
+                        variant="primary"
+                        className="w-full text-xs font-bold shadow-xs"
+                        onClick={() => {
+                            setActiveDonation(null);
+                            setSecondsLeft(600);
+                            setCheckMessage(null);
+                        }}
+                    >
+                        {tr("Tạo mã QR mới")}
+                    </Button>
+                </div>
             ) : activeDonation ? (
                 <div className="space-y-4 rounded-2xl border-2 border-primary/30 bg-primary-light/20 p-4 text-center">
                     <div className="flex items-center justify-between">
@@ -190,6 +230,15 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                                 className="h-56 w-56 rounded-xl object-contain"
                             />
                         </div>
+                    </div>
+
+                    {/* 10-Minute Expiry Countdown Bar */}
+                    <div className="flex items-center justify-center gap-2 rounded-xl bg-white/90 border border-amber-200/80 px-3 py-1.5 text-xs text-amber-900 shadow-2xs">
+                        <span>⏱️</span>
+                        <span>{tr("Mã QR hết hạn sau:")}</span>
+                        <span className="font-mono font-extrabold text-amber-700 text-sm">
+                            {Math.floor(secondsLeft / 60).toString().padStart(2, '0')}:{(secondsLeft % 60).toString().padStart(2, '0')}
+                        </span>
                     </div>
 
                     <div className="rounded-xl bg-white p-3 text-left text-xs space-y-1.5 border border-border/80">

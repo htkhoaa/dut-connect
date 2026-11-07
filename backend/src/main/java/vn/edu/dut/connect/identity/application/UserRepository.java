@@ -19,4 +19,6 @@ public interface UserRepository {
     User saveUser(User user);
 
     PageResult<User> listUsers(Pagination page);
+
+    PageResult<User> listUsers(Pagination page, String name, String studentId);
 }

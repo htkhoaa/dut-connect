@@ -42,8 +42,21 @@ public class UserPersistence implements UserRepository {
     }
 
     public PageResult<User> listUsers(Pagination query) {
-        Page<User> page = users.findAll(PageRequest.of(query.page(), query.size(),
-                Sort.by("createdAt").descending().and(Sort.by("id"))));
+        return listUsers(query, null, null);
+    }
+
+    public PageResult<User> listUsers(Pagination query, String name, String studentId) {
+        String cleanName = (name != null && !name.isBlank()) ? name.trim() : null;
+        String cleanStudentId = (studentId != null && !studentId.isBlank()) ? studentId.trim() : null;
+
+        Page<User> page;
+        if (cleanName == null && cleanStudentId == null) {
+            page = users.findAll(PageRequest.of(query.page(), query.size(),
+                    Sort.by("createdAt").descending().and(Sort.by("id"))));
+        } else {
+            page = users.searchUsers(cleanName, cleanStudentId,
+                    PageRequest.of(query.page(), query.size()));
+        }
         return new PageResult<>(page.getContent(), page.getNumber(), page.getSize(), page.getTotalElements(),
                 page.getTotalPages(), page.hasNext(), page.hasPrevious());
     }

@@ -20,8 +20,20 @@ public class AdminUserController {
     }
 
     @GetMapping
-    public PageResponse<UserSummary> list(Authentication auth, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-        return PageResponse.from(service.list(UUID.fromString(auth.getName()), page, size));
+    public PageResponse<UserSummary> list(
+            Authentication auth,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String studentId,
+            @RequestParam(required = false) String q) {
+        String filterName = name;
+        String filterStudentId = studentId;
+        if ((filterName == null || filterName.isBlank()) && (filterStudentId == null || filterStudentId.isBlank()) && q != null && !q.isBlank()) {
+            filterName = q;
+            filterStudentId = q;
+        }
+        return PageResponse.from(service.list(UUID.fromString(auth.getName()), page, size, filterName, filterStudentId));
     }
 
     @PatchMapping("/{id}/status")

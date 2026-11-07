@@ -20,7 +20,7 @@ import static vn.edu.dut.connect.donation.application.PaymentGateway.*;
 @Service
 public class PaymentTransactions {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PaymentTransactions.class);
-    private static final Duration ORDER_LIFETIME = Duration.ofMinutes(15);
+    private static final Duration ORDER_LIFETIME = Duration.ofMinutes(10);
     private final PaymentRepository repository;
     private final CampaignAccessPort campaigns;
     private final IdentityDirectoryPort identities;

@@ -3,8 +3,15 @@ import type {PageResponse} from '../../../shared/api/errors';
 import type {UserSummary} from '../../auth/types';
 import type {ChangeStatusRequest} from './types';
 
-export async function getUsers(page: number) {
-    return (await apiClient.get<PageResponse<UserSummary>>('/admin/users', {params: {page, size: 20}})).data;
+export async function getUsers(page: number, name?: string, studentId?: string) {
+    return (await apiClient.get<PageResponse<UserSummary>>('/admin/users', {
+        params: {
+            page,
+            size: 20,
+            name: name || undefined,
+            studentId: studentId || undefined,
+        }
+    })).data;
 }
 
 export async function changeStatus(input: ChangeStatusRequest) {
