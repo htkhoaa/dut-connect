@@ -50,12 +50,17 @@ public class UserPersistence implements UserRepository {
         String cleanStudentId = (studentId != null && !studentId.isBlank()) ? studentId.trim() : null;
 
         Page<User> page;
-        if (cleanName == null && cleanStudentId == null) {
-            page = users.findAll(PageRequest.of(query.page(), query.size(),
-                    Sort.by("createdAt").descending().and(Sort.by("id"))));
+        var pageable = PageRequest.of(query.page(), query.size(),
+                Sort.by("createdAt").descending().and(Sort.by("id")));
+
+        if (cleanName != null && cleanStudentId != null) {
+            page = users.findByFullNameContainingIgnoreCaseAndStudentIdContainingIgnoreCase(cleanName, cleanStudentId, pageable);
+        } else if (cleanName != null) {
+            page = users.findByFullNameContainingIgnoreCase(cleanName, pageable);
+        } else if (cleanStudentId != null) {
+            page = users.findByStudentIdContainingIgnoreCase(cleanStudentId, pageable);
         } else {
-            page = users.searchUsers(cleanName, cleanStudentId,
-                    PageRequest.of(query.page(), query.size()));
+            page = users.findAll(pageable);
         }
         return new PageResult<>(page.getContent(), page.getNumber(), page.getSize(), page.getTotalElements(),
                 page.getTotalPages(), page.hasNext(), page.hasPrevious());

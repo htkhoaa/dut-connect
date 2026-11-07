@@ -2,11 +2,9 @@ import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
 import {useState, useEffect} from 'react';
 import {useFinancialSummary} from './hooks';
 import {vnd} from '../campaigns/presentation';
-import {Button} from '../../shared/components/Button';
 import {LoadingState} from '../../shared/components/LoadingState';
 import {ErrorState} from '../../shared/components/ErrorState';
 import {errorMessage} from '../../shared/api/errors';
-import {Icon} from '../../shared/components/Icon';
 
 export function FinancialSummaryCard({campaignId}: {campaignId: string}) {
     useLanguage();
@@ -40,17 +38,25 @@ export function FinancialSummaryCard({campaignId}: {campaignId: string}) {
     const hasFinancialData = BigInt(d.fundraisingGoal ?? 0) > 0n || BigInt(d.verifiedDonations ?? 0) > 0n || d.successfulDonationCount > 0;
     if (!hasFinancialData) return null;
 
-    const raisedBig = BigInt(d.verifiedDonations ?? 0);
-    const goalBig = BigInt(d.fundraisingGoal ?? 0);
-    const percent = goalBig > 0n ? Math.min(100, Number((raisedBig * 100n) / goalBig)) : 0;
+    const raisedNum = Number(d.verifiedDonations ?? 0);
+    const goalNum = Number(d.fundraisingGoal ?? 0);
+    const percentRaw = goalNum > 0 ? (raisedNum / goalNum) * 100 : 0;
+    const percentDisplay = percentRaw >= 100
+        ? '100%'
+        : percentRaw >= 1
+            ? `${Math.round(percentRaw)}%`
+            : percentRaw > 0
+                ? `${percentRaw.toFixed(1)}%`
+                : '0%';
+    const barWidthPercent = percentRaw > 0 ? Math.max(1.5, Math.min(100, percentRaw)) : 0;
 
     return (
         <div className="relative overflow-hidden rounded-3xl border border-primary-muted/60 bg-linear-to-br from-primary-light/40 via-white to-sky-50/50 p-6 sm:p-7 shadow-xs">
             {/* Top row */}
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                <div className="flex items-center gap-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-white shadow-2xs">
-                        <Icon name="heart" size={17} />
+                <div className="flex items-center gap-2.5">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white shadow-2xs font-bold text-sm">
+                        ₫
                     </span>
                     <div>
                         <h2 className="text-base font-bold text-text-primary tracking-tight">
@@ -61,32 +67,15 @@ export function FinancialSummaryCard({campaignId}: {campaignId: string}) {
                         </p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold px-2.5 py-1 shadow-2xs">
-                        <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                        </span>
-                        Live Realtime
-                    </span>
-                    <Button
-                        variant="secondary"
-                        className="text-xs py-1.5 px-3 rounded-xl"
-                        disabled={query.isFetching}
-                        onClick={() => void query.refetch()}
-                    >
-                        {query.isFetching ? tr("Đang tải…") : tr("Làm mới số liệu")}
-                    </Button>
-                </div>
             </div>
 
             {recentDonationNotice && (
                 <div className="mb-4 flex items-center justify-between gap-2 rounded-2xl border border-emerald-300 bg-emerald-100/80 px-4 py-2 text-xs font-bold text-emerald-900 shadow-sm animate-fade-in">
                     <div className="flex items-center gap-2">
-                        <span className="text-base">🎉</span>
+                        <span className="text-base">✓</span>
                         <span>{tr("Giao dịch mới vừa được ghi nhận:")} <span className="text-emerald-700 font-extrabold">{recentDonationNotice}</span></span>
                     </div>
-                    <span className="text-[10px] text-emerald-600 uppercase tracking-wider">{tr("Tức thì")}</span>
+                    <span className="text-[10px] text-emerald-600 uppercase tracking-wider">{tr("Realtime")}</span>
                 </div>
             )}
 
@@ -96,26 +85,26 @@ export function FinancialSummaryCard({campaignId}: {campaignId: string}) {
                     <span className="text-3xl sm:text-4xl font-extrabold text-primary tracking-tight">
                         {renderText(vnd(d.verifiedDonations))}
                     </span>
-                    {goalBig > 0n && (
+                    {goalNum > 0 && (
                         <span className="text-base sm:text-lg font-medium text-text-secondary">
                             / {renderText(vnd(d.fundraisingGoal))}
                         </span>
                     )}
                 </div>
-                {goalBig > 0n && (
+                {goalNum > 0 && (
                     <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-                        {percent}% {tr("mục tiêu")}
+                        {percentDisplay} {tr("mục tiêu")}
                     </span>
                 )}
             </div>
 
             {/* Progress Bar */}
-            {goalBig > 0n && (
+            {goalNum > 0 && (
                 <div className="mb-6">
                     <div className="h-3 w-full overflow-hidden rounded-full bg-border/60">
                         <div
-                            className="h-full rounded-full bg-linear-to-r from-primary to-sky-500 transition-all duration-500"
-                            style={{width: `${percent}%`}}
+                            className="h-full rounded-full bg-linear-to-r from-primary to-sky-500 transition-all duration-700 ease-out"
+                            style={{width: `${barWidthPercent}%`}}
                         />
                     </div>
                 </div>

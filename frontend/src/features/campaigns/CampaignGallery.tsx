@@ -1,4 +1,4 @@
-import {useState, useRef} from 'react';
+import {useState, useRef, useEffect} from 'react';
 import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
 import {useLanguage, tr, renderText} from '../../shared/lib/i18n';
 import {apiClient} from '../../shared/api/client';
@@ -56,6 +56,30 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
     });
 
     const items = query.data ?? [];
+    const currentIndex = selectedImage ? items.findIndex(x => x.id === selectedImage.id) : -1;
+
+    const showPrev = () => {
+        if (items.length <= 1) return;
+        const prevIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
+        setSelectedImage(items[prevIndex]);
+    };
+
+    const showNext = () => {
+        if (items.length <= 1) return;
+        const nextIndex = currentIndex >= items.length - 1 ? 0 : currentIndex + 1;
+        setSelectedImage(items[nextIndex]);
+    };
+
+    useEffect(() => {
+        if (!selectedImage) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowLeft') showPrev();
+            else if (e.key === 'ArrowRight') showNext();
+            else if (e.key === 'Escape') setSelectedImage(null);
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    });
 
     if (query.isPending) return null;
     if (items.length === 0 && !canManage) return null;
@@ -155,27 +179,61 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
                 </div>
             )}
 
-            {/* Fullscreen Lightbox Modal */}
+            {/* Fullscreen Lightbox Modal with Left/Right Navigation */}
             {selectedImage && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4 animate-in fade-in duration-200"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-xs p-4 animate-in fade-in duration-200"
                     onClick={() => setSelectedImage(null)}
                 >
                     <div
-                        className="relative max-h-[90vh] max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+                        className="relative max-h-[92vh] max-w-4xl w-full overflow-hidden rounded-2xl bg-white shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <img
-                            src={selectedImage.imageUrl}
-                            alt={selectedImage.caption || ''}
-                            className="max-h-[75vh] w-full object-contain"
-                        />
-                        <div className="flex items-center justify-between p-4 bg-white border-t border-border">
-                            <p className="text-sm font-semibold text-text-primary">
-                                {renderText(selectedImage.caption || tr("Hình ảnh chiến dịch DUT Connect"))}
-                            </p>
+                        {/* Image Viewer */}
+                        <div className="relative flex items-center justify-center bg-black/95 min-h-[300px]">
+                            <img
+                                src={selectedImage.imageUrl}
+                                alt={selectedImage.caption || ''}
+                                className="max-h-[75vh] w-auto max-w-full object-contain"
+                            />
+
+                            {/* Left & Right Navigation Buttons */}
+                            {items.length > 1 && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); showPrev(); }}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-black/50 hover:bg-black/80 text-white hover:scale-105 transition-all shadow-lg text-lg font-bold backdrop-blur-xs"
+                                        title={tr("Ảnh trước (Phím mũi tên trái ←)")}
+                                    >
+                                        ⟨
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); showNext(); }}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-black/50 hover:bg-black/80 text-white hover:scale-105 transition-all shadow-lg text-lg font-bold backdrop-blur-xs"
+                                        title={tr("Ảnh kế tiếp (Phím mũi tên phải →)")}
+                                    >
+                                        ⟩
+                                    </button>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Footer Bar */}
+                        <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-white border-t border-border">
+                            <div>
+                                <p className="text-sm font-semibold text-text-primary">
+                                    {renderText(selectedImage.caption || tr("Hình ảnh chiến dịch DUT Connect"))}
+                                </p>
+                                {items.length > 1 && (
+                                    <p className="text-xs text-text-secondary mt-0.5">
+                                        {tr("Ảnh")} {currentIndex + 1} / {items.length}
+                                    </p>
+                                )}
+                            </div>
                             <Button variant="secondary" onClick={() => setSelectedImage(null)} className="text-xs">
-                                {tr("Đóng")}
+                                {tr("Đóng (Esc)")}
                             </Button>
                         </div>
                     </div>

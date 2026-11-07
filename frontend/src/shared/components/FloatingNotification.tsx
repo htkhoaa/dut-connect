@@ -24,7 +24,7 @@ export function FloatingNotificationContainer() {
             const data = event.detail;
             if (!data) return;
 
-            const id = 'don-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6);
+            const id = 'don-' + (data.donationId || Date.now());
             const donor = data.donorName || tr("Một nhà hảo tâm");
             const formatted = data.amount ? Number(data.amount).toLocaleString('vi-VN') + ' đ' : '';
             const campaign = data.campaignTitle || tr("chiến dịch");
@@ -37,7 +37,10 @@ export function FloatingNotificationContainer() {
                 actionUrl: data.campaignId ? `/campaigns/${data.campaignId}` : undefined,
             };
 
-            setBanners((prev) => [newBanner, ...prev.slice(0, 3)]);
+            setBanners((prev) => {
+                if (prev.some((b) => b.id === id)) return prev;
+                return [newBanner, ...prev.slice(0, 3)];
+            });
 
             // Auto-dismiss after 8 seconds
             setTimeout(() => {
@@ -51,12 +54,13 @@ export function FloatingNotificationContainer() {
             const data = event.detail;
             if (!data) return;
 
+            const notif = data.notification || data;
             const id = 'notif-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6);
             const newBanner: BannerItem = {
                 id,
                 type: 'notification',
-                title: data.title || tr("Thông báo mới 🔔"),
-                message: data.content || data.message || '',
+                title: notif.title || tr("Thông báo mới 🔔"),
+                message: notif.body || notif.content || notif.message || '',
             };
 
             setBanners((prev) => [newBanner, ...prev.slice(0, 3)]);
@@ -111,13 +115,13 @@ export function FloatingNotificationContainer() {
 
                     <div className="flex items-start gap-3">
                         <div
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg ${
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
                                 item.type === 'donation'
-                                    ? 'bg-emerald-100 text-emerald-600'
-                                    : 'bg-primary-light text-primary'
+                                    ? 'bg-emerald-100 text-emerald-700 font-extrabold text-sm'
+                                    : 'bg-primary-light text-primary font-bold text-sm'
                             }`}
                         >
-                            {item.type === 'donation' ? '❤️' : '🔔'}
+                            {item.type === 'donation' ? '₫' : '🔔'}
                         </div>
 
                         <div className="flex-1 min-w-0 pr-4">

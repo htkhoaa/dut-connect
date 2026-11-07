@@ -1,5 +1,5 @@
 import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
-import {Link} from 'react-router-dom';
+import {Link, Navigate} from 'react-router-dom';
 import {dutPhotography} from '../../shared/lib/dutPhotography';
 import {useCampaigns} from '../../features/campaigns/hooks';
 import type {CampaignFilters} from '../../features/campaigns/types';
@@ -23,9 +23,12 @@ const ways: {icon: IconName; title: string; description: string}[] = [
 ];
 export function HomePage() {
     useLanguage();
+    const user = useAuth(s => s.user);
+    if (user?.role === 'ADMIN') {
+        return <Navigate to="/admin" replace />;
+    }
     const campaigns = useCampaigns('public', filters);
     const organizations = useOrganizations('public', 0, '', '');
-    const user = useAuth(s => s.user);
     const featured = campaigns.data?.items.slice(0, 6) || [];
     const progress = useFundraisingProgress(featured.filter(c => c.contributionMode !== 'VOLUNTEER_ONLY').map(c => c.id));
     return <div className="landing-page">

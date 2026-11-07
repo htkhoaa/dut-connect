@@ -131,8 +131,10 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
 
     return (
         <Card className="border border-primary-muted/40 shadow-sm">
-            <div className="flex items-center gap-2 mb-2">
-                <span className="text-xl">❤️</span>
+            <div className="flex items-center gap-2.5 mb-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xs">
+                    ₫
+                </span>
                 <h2 className="text-lg font-bold text-text-primary">{tr("Tiếp sức cho chiến dịch")}</h2>
             </div>
 

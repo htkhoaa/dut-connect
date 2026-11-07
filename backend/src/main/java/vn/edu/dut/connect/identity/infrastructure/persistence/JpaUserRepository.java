@@ -16,11 +16,9 @@ interface JpaUserRepository extends JpaRepository<User, UUID> {
     @Query("select u from User u where u.id = :id")
     Optional<User> lockById(UUID id);
 
-    @Query("""
-        select u from User u
-        where (:name is null or lower(u.fullName) like lower(concat('%', :name, '%')))
-          and (:studentId is null or lower(u.studentId) like lower(concat('%', :studentId, '%')))
-        order by u.createdAt desc, u.id asc
-    """)
-    org.springframework.data.domain.Page<User> searchUsers(String name, String studentId, org.springframework.data.domain.Pageable pageable);
+    org.springframework.data.domain.Page<User> findByFullNameContainingIgnoreCase(String name, org.springframework.data.domain.Pageable pageable);
+
+    org.springframework.data.domain.Page<User> findByStudentIdContainingIgnoreCase(String studentId, org.springframework.data.domain.Pageable pageable);
+
+    org.springframework.data.domain.Page<User> findByFullNameContainingIgnoreCaseAndStudentIdContainingIgnoreCase(String name, String studentId, org.springframework.data.domain.Pageable pageable);
 }

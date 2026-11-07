@@ -1,7 +1,7 @@
 import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
 import {useState} from 'react';
 import {useParams, Link} from 'react-router-dom';
-import {useCampaign} from './hooks';
+import {useCampaign, useTransitionCampaign} from './hooks';
 import {useApplications} from '../volunteers/hooks';
 import {useAuth} from '../auth/store';
 import {campaignStatuses, modes} from './presentation';
@@ -11,9 +11,12 @@ import {catalogLabel} from '../../shared/lib/catalogLabels';
 import {errorMessage} from '../../shared/api/errors';
 import {Card} from '../../shared/components/Card';
 import {Badge} from '../../shared/components/Badge';
+import {Button} from '../../shared/components/Button';
 import {Icon} from '../../shared/components/Icon';
 import {LoadingState} from '../../shared/components/LoadingState';
 import {ErrorState} from '../../shared/components/ErrorState';
+import {ConfirmDialog} from '../../shared/components/ConfirmDialog';
+import {Dialog} from '../../shared/components/Dialog';
 import {ApplyPanel} from '../volunteers/ApplyPanel';
 import {DonationPanel} from '../donations/DonationPanel';
 import {FinancialSummaryCard} from '../finance/FinancialSummaryCard';
@@ -21,6 +24,8 @@ import {displayName} from '../../shared/lib/demoPresentation';
 import {CampaignShare} from './components/CampaignShare';
 import {CampaignGallery} from './CampaignGallery';
 import {CampaignActivityFeed} from './CampaignActivityFeed';
+import {CampaignFinalResult} from '../dashboard/CampaignFinalResult';
+import {useCampaignDashboard} from '../dashboard/hooks';
 import {
     VolunteerTeamTab,
     MeetingsTab,
@@ -39,6 +44,10 @@ export function CampaignDetailPage() {
 
     // Query logged in user's own applications for this campaign
     const myApps = useApplications(id, {page: 0, status: '', track: ''}, true);
+    const [showEndModal, setShowEndModal] = useState(false);
+    const [showResultModal, setShowResultModal] = useState(false);
+    const transitionMutation = useTransitionCampaign(id);
+    const dashboardQuery = useCampaignDashboard(id);
 
     if (query.isPending) return <LoadingState />;
     if (query.isError) return <ErrorState message={errorMessage(query.error)} onRetry={() => void query.refetch()} />;
@@ -95,15 +104,33 @@ export function CampaignDetailPage() {
                     <span className="mx-1">·</span>
                     {tr("Liên hệ:")} {renderText(c.primaryContactName)}
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <CampaignShare title={displayName(c.content.title)} />
-                    {renderText(
-                        c.canManage && (
-                            <Link className="ui-button ui-button-secondary" to={'/manage/campaigns/' + c.id}>
-                                <Icon name="grid" size={17} />
+                    {isManager && (
+                        <>
+                            {c.status !== 'COMPLETED' && c.status !== 'CANCELLED' ? (
+                                <Button
+                                    variant="secondary"
+                                    className="border-danger/40 text-danger hover:bg-danger/10 text-xs font-semibold py-1.5 px-3"
+                                    onClick={() => setShowEndModal(true)}
+                                    disabled={transitionMutation.isPending}
+                                >
+                                    🏁 {tr("Kết thúc chiến dịch")}
+                                </Button>
+                            ) : (
+                                <Button
+                                    variant="primary"
+                                    className="text-xs font-semibold py-1.5 px-3 shadow-xs"
+                                    onClick={() => setShowResultModal(true)}
+                                >
+                                    🖼️ {tr("Tạo poster kết quả")}
+                                </Button>
+                            )}
+                            <Link className="ui-button ui-button-secondary text-xs py-1.5 px-3" to={'/manage/campaigns/' + c.id}>
+                                <Icon name="grid" size={15} />
                                 {tr("Quản lý chiến dịch")}
                             </Link>
-                        )
+                        </>
                     )}
                 </div>
             </div>
@@ -211,12 +238,33 @@ export function CampaignDetailPage() {
                 </div>
 
                 <aside className="min-w-0 space-y-5">
-                    {renderText(
-                        user?.role !== 'ADMIN' && c.content.contributionMode !== 'DONATION_ONLY' && (
-                            <ApplyPanel key={c.id} campaign={c} />
-                        )
+                    {c.status === 'COMPLETED' ? (
+                        <div className="rounded-2xl border border-emerald-300 bg-emerald-50/90 p-5 text-center shadow-xs">
+                            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 font-bold text-lg">
+                                ✓
+                            </span>
+                            <h3 className="text-base font-bold text-emerald-950 mt-2">{tr("Chiến dịch đã kết thúc")}</h3>
+                            <p className="mt-1 text-xs text-emerald-800 leading-relaxed">
+                                {tr("Chiến dịch hiện đã hoàn thành và ngừng tiếp nhận đóng góp. Chân thành cảm ơn sự chung tay tiếp sức của bạn!")}
+                            </p>
+                            {isManager && (
+                                <Button
+                                    variant="primary"
+                                    className="mt-4 w-full text-xs font-semibold"
+                                    onClick={() => setShowResultModal(true)}
+                                >
+                                    🖼️ {tr("Tạo poster kết quả")}
+                                </Button>
+                            )}
+                        </div>
+                    ) : (
+                        <>
+                            {user?.role !== 'ADMIN' && c.content.contributionMode !== 'DONATION_ONLY' && (
+                                <ApplyPanel key={c.id} campaign={c} />
+                            )}
+                            <DonationPanel key={'donation-' + c.id} campaign={c} />
+                        </>
                     )}
-                    <DonationPanel key={'donation-' + c.id} campaign={c} />
                     <div className="rounded-2xl border border-primary-muted bg-primary-light p-5">
                         <Icon name="shield" className="mb-3 text-primary" />
                         <h2 className="text-sm font-semibold">{tr("Đóng góp có trách nhiệm")}</h2>
@@ -229,6 +277,39 @@ export function CampaignDetailPage() {
                     <CampaignActivityFeed campaignId={c.id} />
                 </aside>
             </div>
+
+            {/* Confirm End Campaign Early Dialog */}
+            <ConfirmDialog
+                open={showEndModal}
+                title={tr("Kết thúc chiến dịch sớm?")}
+                message={tr("Sau khi kết thúc, chiến dịch sẽ chuyển sang chế độ Chỉ đọc (Read-only), ngừng nhận ủng hộ và nút này sẽ chuyển thành 'Tạo poster kết quả'. Bạn có chắc chắn muốn kết thúc chiến dịch?")}
+                confirmLabel={tr("Xác nhận kết thúc")}
+                busy={transitionMutation.isPending}
+                onClose={() => setShowEndModal(false)}
+                onConfirm={() => {
+                    transitionMutation.mutate({command: 'complete', version: c.version}, {
+                        onSettled: () => setShowEndModal(false),
+                    });
+                }}
+            />
+
+            {/* Final Result Poster Modal */}
+            {showResultModal && (
+                <Dialog open={true} title={tr("Poster kết quả chiến dịch")} onClose={() => setShowResultModal(false)}>
+                    {dashboardQuery.data ? (
+                        <div className="space-y-4">
+                            <CampaignFinalResult title={c.content.title} data={dashboardQuery.data} />
+                            <div className="flex justify-end pt-2">
+                                <Button variant="secondary" onClick={() => setShowResultModal(false)}>
+                                    {tr("Đóng")}
+                                </Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <LoadingState message={tr("Đang tải dữ liệu tổng kết…")} />
+                    )}
+                </Dialog>
+            )}
         </div>
     );
 }

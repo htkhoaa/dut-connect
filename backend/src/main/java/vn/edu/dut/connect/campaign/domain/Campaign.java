@@ -46,7 +46,7 @@ public class Campaign {
     public void transition(CampaignStatus next) {
         boolean allowed = switch (status) {
             case DRAFT -> next == CampaignStatus.OPEN || next == CampaignStatus.CANCELLED;
-            case OPEN -> next == CampaignStatus.ACTIVE || next == CampaignStatus.CANCELLED;
+            case OPEN -> next == CampaignStatus.ACTIVE || next == CampaignStatus.COMPLETED || next == CampaignStatus.CANCELLED;
             case ACTIVE -> next == CampaignStatus.COMPLETED;
             default -> false;
         };

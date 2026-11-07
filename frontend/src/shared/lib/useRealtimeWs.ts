@@ -9,6 +9,10 @@ export function getWsUrl(): string {
         const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
         return `${protocol}//${url.host}/ws/notifications`;
     }
+    // On Vercel or cloud domain, direct WebSocket connections directly to Render backend
+    if (typeof window !== 'undefined' && (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('dutconnect'))) {
+        return 'wss://dut-connect.onrender.com/ws/notifications';
+    }
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     return `${protocol}//${window.location.host}/ws/notifications`;
 }

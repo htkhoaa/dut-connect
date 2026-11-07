@@ -71,6 +71,7 @@ public class PayOSPaymentGateway implements PaymentGateway {
 
         try {
             int amount = command.amount().intValueExact();
+            long expiredAt = Instant.now().getEpochSecond() + (10 * 60); // 10 minutes expiry
             String frontendUrl = System.getenv().getOrDefault("APP_FRONTEND_URL", "https://dutconnect.vercel.app");
             if (frontendUrl.endsWith("/")) {
                 frontendUrl = frontendUrl.substring(0, frontendUrl.length() - 1);
@@ -78,14 +79,15 @@ public class PayOSPaymentGateway implements PaymentGateway {
             String returnUrl = frontendUrl + "/payment/result?donationId=" + command.donationId();
             String cancelUrl = frontendUrl + "/payment/result?donationId=" + command.donationId();
 
-            // PayOS signature: sorted key format
-            String dataToSign = "amount=" + amount + "&cancelUrl=" + cancelUrl + "&description=" + description + "&orderCode=" + orderCode + "&returnUrl=" + returnUrl;
+            // PayOS signature: sorted key format (amount, cancelUrl, description, expiredAt, orderCode, returnUrl)
+            String dataToSign = "amount=" + amount + "&cancelUrl=" + cancelUrl + "&description=" + description + "&expiredAt=" + expiredAt + "&orderCode=" + orderCode + "&returnUrl=" + returnUrl;
             String signature = PaymentMac.sign(dataToSign, checksumKey);
 
             Map<String, Object> reqBody = new LinkedHashMap<>();
             reqBody.put("orderCode", orderCode);
             reqBody.put("amount", amount);
             reqBody.put("description", description);
+            reqBody.put("expiredAt", expiredAt);
             reqBody.put("returnUrl", returnUrl);
             reqBody.put("cancelUrl", cancelUrl);
             reqBody.put("signature", signature);
