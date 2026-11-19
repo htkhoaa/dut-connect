@@ -34,6 +34,7 @@ public class CampaignAccess implements CampaignAccessPort {
     public Set<UUID> managedCampaigns(Set<UUID> ids,UUID user){return campaigns.managedCampaigns(ids,user);}
     public List<UUID> managers(UUID campaignId) { return campaigns.managers(campaignId); }
     public boolean isManager(UUID id, UUID user) {
-        return identities.findAccount(user).filter(IdentityDirectoryPort.Account::active).isPresent() && campaigns.role(id,user).isPresent();
+        return identities.findAccount(user).filter(IdentityDirectoryPort.Account::active).isPresent()
+                && campaigns.role(id,user).orElse(null) == ManagerRole.OWNER;
     }
 }

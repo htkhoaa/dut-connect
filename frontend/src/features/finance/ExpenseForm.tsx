@@ -1,6 +1,7 @@
 import {AttachmentLink} from '../../shared/components/AttachmentLink';
 import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
 import {useState, useRef} from 'react';
+import {useQueryClient} from '@tanstack/react-query';
 import {useForm} from 'react-hook-form';
 import {z} from 'zod';
 import {useSaveExpense} from './hooks';
@@ -22,6 +23,7 @@ export function ExpenseForm({campaignId,expense,onSaved,onCancel}:{campaignId:st
     const fileRef = useRef<HTMLInputElement>(null);
     const form=useForm<ExpenseWrite>({defaultValues:{title:expense?.title||'',category:expense?.category||'',amount:expense?.amount||'',expenseDate:expense?.expenseDate||'',description:expense?.description||'',proofReference:expense?.proofReference||''}});
     const save=useSaveExpense(campaignId);
+    const queryClient = useQueryClient();
 
     const onSubmit = async (values: ExpenseWrite) => {
         const parsed = schema.safeParse(values);
@@ -38,8 +40,7 @@ export function ExpenseForm({campaignId,expense,onSaved,onCancel}:{campaignId:st
             if (file) {
                 await uploadReceipt(saved.id, file);
                 // Uploading changes the expense version too; refresh it before another edit.
-                onSaved();
-                return;
+                await queryClient.invalidateQueries({queryKey: ['finance']});
             }
             onSaved();
         } catch (error) {

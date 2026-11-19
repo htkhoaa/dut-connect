@@ -48,6 +48,11 @@ function Attendance({c}: { c: string }) {
         try {
             setQrLoading(true);
             const res = await api.generateQr(s.id);
+            const refreshed = await q.refetch();
+            const updatedSession = refreshed.data?.items.find(item => item.id === s.id);
+            if (updatedSession) {
+                setSession(current => current?.id === s.id ? updatedSession : current);
+            }
             const fullCheckinUrl = window.location.origin + res.checkinUrl;
             setQrData({
                 title: s.title,

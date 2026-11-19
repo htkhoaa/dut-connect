@@ -32,7 +32,8 @@ public class VolunteerService {
     public ApplicationDto apply(UUID campaignId,UUID actor,ApplyRequest request) {
         var campaign=campaigns.lockCampaign(campaignId);activeLocked(actor);
         if(registrations.exists(campaignId,actor)) throw new ApplicationFailure(409,"DUPLICATE_APPLICATION","You already have an application for this campaign");
-        if(campaign.status()!=CampaignStatus.OPEN) throw new ApplicationFailure(409,"CAMPAIGN_NOT_OPEN","Campaign must be open for applications");
+        if(campaign.status()!=CampaignStatus.OPEN && campaign.status()!=CampaignStatus.ACTIVE)
+            throw new ApplicationFailure(409,"CAMPAIGN_NOT_OPEN","Campaign must be open or active for applications");
         if(campaign.contributionMode()==ContributionMode.DONATION_ONLY) throw new ApplicationFailure(409,"CAMPAIGN_NOT_ACCEPTING_VOLUNTEERS","This campaign does not accept volunteers");
         if(campaign.applicationDeadline()!=null && Instant.now().isAfter(campaign.applicationDeadline()))
             throw new ApplicationFailure(409,"CAMPAIGN_NOT_ACCEPTING_VOLUNTEERS","The application deadline has passed");

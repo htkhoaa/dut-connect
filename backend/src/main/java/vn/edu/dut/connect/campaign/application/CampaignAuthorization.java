@@ -5,18 +5,15 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.edu.dut.connect.campaign.domain.*;
 import vn.edu.dut.connect.shared.application.*;
 import vn.edu.dut.connect.identity.application.*;
-import vn.edu.dut.connect.organization.application.OrganizationAccessPort;
 import static vn.edu.dut.connect.campaign.application.CampaignContracts.*;
 @Service
 public class CampaignAuthorization {
     private final IdentityDirectoryPort identities;
     private final CampaignRepository campaigns;
-    private final OrganizationAccessPort organizations;
 
-    public CampaignAuthorization(IdentityDirectoryPort identities, CampaignRepository campaigns, OrganizationAccessPort organizations) {
+    public CampaignAuthorization(IdentityDirectoryPort identities, CampaignRepository campaigns) {
         this.identities = identities;
         this.campaigns = campaigns;
-        this.organizations = organizations;
     }
 
     public IdentityDirectoryPort.Account active(UUID id) {
@@ -32,13 +29,7 @@ public class CampaignAuthorization {
     public void manager(UUID campaign, UUID actor) {
         var account = active(actor);
         if (account.admin()) return;
-        if (campaigns.role(campaign, actor).isPresent()) return;
-        var c = campaigns.find(campaign).orElse(null);
-        if (c != null) {
-            if (c.contactId().equals(actor)) return;
-            UUID orgId = c.content().organizationId();
-            if (orgId != null && organizations.canRepresent(orgId, actor)) return;
-        }
+        if (campaigns.role(campaign, actor).orElse(null) == ManagerRole.OWNER) return;
         denied();
     }
 
