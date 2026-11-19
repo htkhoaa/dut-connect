@@ -110,7 +110,7 @@ public class InfrastructureSecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/v1/payments/payos/webhook").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/campaign-categories", "/api/v1/campaigns", "/api/v1/campaigns/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/campaigns/*/financial-summary", "/api/v1/campaigns/*/expenses").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/campaigns/*/expenses/*/receipt", "/api/v1/campaigns/*/payout/receipt").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/expenses/*/receipt").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/organizations", "/api/v1/organizations/*").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/microsoft/configuration", "/api/v1/auth/microsoft/authorize", "/api/v1/auth/microsoft/callback").permitAll()

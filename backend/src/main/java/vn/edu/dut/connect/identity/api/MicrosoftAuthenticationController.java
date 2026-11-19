@@ -49,7 +49,7 @@ public class MicrosoftAuthenticationController {
                     ? null : new LoginState(expectedState, verifier, nonce));
             refresh.set(response, session.refreshToken());
             cookie(response, STATE, "", Duration.ZERO); cookie(response, VERIFIER, "", Duration.ZERO); cookie(response, NONCE, "", Duration.ZERO);
-            response.sendRedirect(UriComponentsBuilder.fromUriString(service.frontendUrl()).path("/me/profile").build().toUriString());
+            response.sendRedirect(UriComponentsBuilder.fromUriString(service.frontendUrl()).path("/login").queryParam("oauth", "success").build().toUriString());
         } catch (ApplicationFailure failure) {
             log.warn("Microsoft OAuth callback rejected: code={}", failure.code());
             response.sendRedirect(UriComponentsBuilder.fromUriString(service.frontendUrl()).path("/login")
@@ -59,6 +59,6 @@ public class MicrosoftAuthenticationController {
 
     private void cookie(HttpServletResponse response, String name, String value, Duration age) {
         response.addHeader(HttpHeaders.SET_COOKIE, ResponseCookie.from(name, value).httpOnly(true).secure(service.secure())
-                .sameSite(service.secure() ? "None" : "Lax").path("/").maxAge(age).build().toString());
+                .sameSite("Lax").path("/").maxAge(age).build().toString());
     }
 }

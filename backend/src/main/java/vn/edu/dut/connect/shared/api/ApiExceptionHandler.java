@@ -28,11 +28,11 @@ import vn.edu.dut.connect.shared.application.ApplicationFailure;
 public class ApiExceptionHandler {
     @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
     ResponseEntity<ApiError> uploadSize(org.springframework.web.multipart.MaxUploadSizeExceededException e, HttpServletRequest r) {
-        return error(r, 400, "VALIDATION_ERROR", "Avatar must not exceed 1 MB", List.of());
+        return error(r, 400, "VALIDATION_ERROR", "Uploaded file exceeds the allowed size", List.of());
     }
     @ExceptionHandler(org.springframework.web.multipart.support.MissingServletRequestPartException.class)
     ResponseEntity<ApiError> uploadPart(org.springframework.web.multipart.support.MissingServletRequestPartException e, HttpServletRequest r) {
-        return error(r, 400, "VALIDATION_ERROR", "Avatar image is required", List.of());
+        return error(r, 400, "VALIDATION_ERROR", "Required file is missing", List.of());
     }
     @ExceptionHandler(vn.edu.dut.connect.finance.domain.ExpenseViolation.class)
     ResponseEntity<ApiError> expense(vn.edu.dut.connect.finance.domain.ExpenseViolation e,HttpServletRequest r){

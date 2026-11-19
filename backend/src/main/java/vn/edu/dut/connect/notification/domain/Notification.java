@@ -31,7 +31,7 @@ public class Notification {
         this.id = UUID.randomUUID();
         this.userId = userId;
         this.type = type;
-        this.title = title;
+        this.title = title.length() > 200 ? title.substring(0, 200) : title;
         this.body = body;
         this.entityType = entityType;
         this.entityId = entityId;

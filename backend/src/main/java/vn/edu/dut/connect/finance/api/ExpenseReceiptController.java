@@ -10,6 +10,9 @@ import vn.edu.dut.connect.shared.application.ApplicationFailure;
 
 import java.io.IOException;
 import java.util.UUID;
+import vn.edu.dut.connect.shared.api.UploadedFiles;
+import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -29,14 +32,8 @@ public class ExpenseReceiptController {
         if (auth == null) {
             throw new ApplicationFailure(401, "AUTHENTICATION_REQUIRED", "Login required");
         }
-        if (file.isEmpty() || file.getSize() > 5 * 1024 * 1024) {
-            throw new ApplicationFailure(400, "VALIDATION_ERROR", "Receipt must be non-empty and under 5 MB");
-        }
-        String ct = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
-        if (!ct.startsWith("image/") && !ct.equals("application/pdf")) {
-            throw new ApplicationFailure(400, "VALIDATION_ERROR", "Only image or PDF files are accepted");
-        }
-        receiptService.upload(id, UUID.fromString(auth.getName()), file.getBytes(), ct);
+        var uploaded = UploadedFiles.receipt(file);
+        receiptService.upload(id, UUID.fromString(auth.getName()), uploaded.bytes(), uploaded.contentType());
         return ResponseEntity.noContent().build();
     }
 
@@ -46,6 +43,9 @@ public class ExpenseReceiptController {
         var receipt = receiptService.download(id, actor);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(receipt.contentType()))
+                .cacheControl(CacheControl.noStore())
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=receipt-" + id
+                        + ("application/pdf".equals(receipt.contentType()) ? ".pdf" : ".img"))
                 .body(receipt.data());
     }
 

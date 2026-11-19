@@ -103,7 +103,9 @@ public class MicrosoftSignInService {
         LoginState encoded = decodeState(state);
         if (code == null || code.length() > 4096 || encoded == null)
             throw invalid("state or authorization code is missing or invalid");
-        if (expected != null && !constantTime(encoded.state(), expected.state()))
+        if (expected == null || !constantTime(encoded.state(), expected.state())
+                || !constantTime(encoded.verifier(), expected.verifier())
+                || !constantTime(encoded.nonce(), expected.nonce()))
             throw invalid("state mismatch");
         LoginState credentials = encoded;
         TokenResponse response;

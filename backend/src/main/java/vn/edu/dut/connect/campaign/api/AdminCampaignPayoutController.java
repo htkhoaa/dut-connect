@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
+import vn.edu.dut.connect.shared.api.UploadedFiles;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -74,9 +75,16 @@ public class AdminCampaignPayoutController {
         }
 
         // List all campaigns from repository
-        var query = new vn.edu.dut.connect.campaign.application.CampaignQuery(0, 100, "", null, null, null, null, "newest");
-        var page = campaigns.list(query, null, CampaignRepository.Visibility.ALL);
-        var donationCampaigns = page.items().stream()
+        List<Campaign> all = new ArrayList<>();
+        int pageNumber = 0;
+        boolean hasNext;
+        do {
+            var query = new vn.edu.dut.connect.campaign.application.CampaignQuery(pageNumber++, 100, "", null, null, null, null, "newest");
+            var page = campaigns.list(query, null, CampaignRepository.Visibility.ALL);
+            all.addAll(page.items());
+            hasNext = page.hasNext();
+        } while (hasNext);
+        var donationCampaigns = all.stream()
                 .filter(c -> c.content().contributionMode() != ContributionMode.VOLUNTEER_ONLY)
                 .toList();
 
@@ -88,15 +96,15 @@ public class AdminCampaignPayoutController {
         return donationCampaigns.stream().map(c -> {
             var funding = balances.getOrDefault(c.id(), new DonationFundingPort.Funding(BigDecimal.ZERO, 0));
             var contact = contactAccounts.get(c.contactId());
-            String orgName = c.content().organizationId() == null ? contact.fullName() : orgNames.get(c.content().organizationId());
+            String orgName = c.content().organizationId() == null ? (contact == null ? "" : contact.fullName()) : orgNames.get(c.content().organizationId());
             BigDecimal current = funding.amount();
             BigDecimal goal = c.content().fundraisingGoal() == null ? BigDecimal.ZERO : c.content().fundraisingGoal();
 
             String status = c.payoutStatus();
-            if (status == null || status.isBlank()) {
-                if ("PAID_OUT".equals(status)) {
-                    // already set
-                } else if (c.status() == CampaignStatus.COMPLETED) {
+            if (!"PAID_OUT".equals(status)) {
+                if (c.status() == CampaignStatus.COMPLETED || (c.status() != CampaignStatus.DRAFT
+                        && c.status() != CampaignStatus.CANCELLED && c.content().fundraisingDeadline() != null
+                        && !Instant.now().isBefore(c.content().fundraisingDeadline()))) {
                     status = "READY_FOR_PAYOUT";
                 } else if (goal.signum() > 0 && current.compareTo(goal) >= 0) {
                     status = "GOAL_REACHED";
@@ -144,6 +152,16 @@ public class AdminCampaignPayoutController {
 
         Campaign campaign = campaigns.lock(id).orElseThrow(() -> ApplicationFailure.missing("Campaign not found"));
         campaign.requireVersion(version);
+        if (campaign.content().contributionMode() == ContributionMode.VOLUNTEER_ONLY
+                || campaign.status() == CampaignStatus.DRAFT || campaign.status() == CampaignStatus.CANCELLED) {
+            throw ApplicationFailure.conflict("This campaign does not allow payout");
+        }
+        var collected = donations.paidFunding(Set.of(id)).getOrDefault(id,
+                new DonationFundingPort.Funding(BigDecimal.ZERO, 0)).amount();
+        if (amount == null || amount.signum() <= 0 || amount.stripTrailingZeros().scale() > 0
+                || amount.compareTo(collected) != 0) {
+            throw new ApplicationFailure(400, "VALIDATION_ERROR", "Payout must equal the verified donation total and use positive whole VND");
+        }
 
         boolean isEnded = campaign.status() == CampaignStatus.COMPLETED
                 || (campaign.content().fundraisingDeadline() != null && !Instant.now().isBefore(campaign.content().fundraisingDeadline()));
@@ -154,8 +172,9 @@ public class AdminCampaignPayoutController {
         byte[] receiptBytes = null;
         String contentType = null;
         if (file != null && !file.isEmpty()) {
-            receiptBytes = file.getBytes();
-            contentType = file.getContentType() != null ? file.getContentType() : "image/jpeg";
+            var uploaded = UploadedFiles.image(file);
+            receiptBytes = uploaded.bytes();
+            contentType = uploaded.contentType();
         }
 
         campaign.confirmPayout(amount, receiptBytes, contentType, note);
@@ -165,12 +184,15 @@ public class AdminCampaignPayoutController {
 
     @GetMapping("/campaigns/{id}/payout-receipt")
     @Transactional(readOnly = true)
-    public ResponseEntity<byte[]> downloadReceipt(@PathVariable UUID id) {
+    public ResponseEntity<byte[]> downloadReceipt(@PathVariable UUID id, Authentication auth) {
+        access.manager(id, UUID.fromString(auth.getName()));
         Campaign campaign = campaigns.find(id).orElseThrow(() -> ApplicationFailure.missing("Campaign not found"));
         if (campaign.payoutReceiptData() == null || campaign.payoutReceiptData().length == 0) {
             throw ApplicationFailure.missing("No payout receipt uploaded for this campaign");
         }
         return ResponseEntity.ok()
+                .cacheControl(org.springframework.http.CacheControl.noStore())
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=payout-receipt.img")
                 .contentType(MediaType.parseMediaType(campaign.payoutReceiptContentType() != null ? campaign.payoutReceiptContentType() : "image/jpeg"))
                 .body(campaign.payoutReceiptData());
     }

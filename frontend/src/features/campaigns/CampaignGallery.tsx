@@ -1,3 +1,4 @@
+import {ApiImage} from '../../shared/components/ApiImage';
 import {useState, useRef, useEffect} from 'react';
 import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
 import {useLanguage, tr, renderText} from '../../shared/lib/i18n';
@@ -108,7 +109,7 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
                             className="group relative aspect-4/3 overflow-hidden rounded-xl border border-border bg-surface-muted cursor-pointer transition-all hover:shadow-md"
                             onClick={() => setSelectedImage(item)}
                         >
-                            <img
+                            <ApiImage
                                 src={item.imageUrl}
                                 alt={item.caption || tr("Hình ảnh chiến dịch")}
                                 loading="lazy"
@@ -157,7 +158,7 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
                         <input
                             ref={fileInputRef}
                             type="file"
-                            accept="image/png,image/jpeg,image/webp"
+                            accept="image/png,image/jpeg"
                             className="hidden"
                             onChange={(e) => {
                                 const file = e.target.files?.[0];
@@ -191,7 +192,7 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
                     >
                         {/* Image Viewer */}
                         <div className="relative flex items-center justify-center bg-black/95 min-h-[300px]">
-                            <img
+                            <ApiImage
                                 src={selectedImage.imageUrl}
                                 alt={selectedImage.caption || ''}
                                 className="max-h-[75vh] w-auto max-w-full object-contain"

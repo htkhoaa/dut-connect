@@ -29,17 +29,20 @@ public class PaymentReconciliationScheduler {
         reconcilePendingPayments();
     }
 
-    @Scheduled(fixedDelay = 4000)
+    private int nextPage = 0;
+
+    @Scheduled(fixedDelay = 15000)
     public void reconcilePendingPayments() {
         try {
             List<String> pendingOrders = jdbc.sql("""
                 select provider_order_id from dut_connect.payment_transactions
                 where provider = 'payos' and status in ('CREATED', 'PROVIDER_PENDING')
                 and created_at > now() - interval '24 hours'
-                order by created_at desc limit 10
-            """).query(String.class).list();
+                order by created_at, id limit 10 offset :offset
+            """).param("offset", nextPage * 10L).query(String.class).list();
 
-            if (pendingOrders.isEmpty()) return;
+            if (pendingOrders.isEmpty()) { nextPage = 0; return; }
+            nextPage++;
 
             var payos = gateways.get("payos");
             for (String orderId : pendingOrders) {

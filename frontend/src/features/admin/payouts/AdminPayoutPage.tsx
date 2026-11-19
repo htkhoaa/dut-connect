@@ -1,3 +1,4 @@
+import {AttachmentLink} from '../../../shared/components/AttachmentLink';
 import {useLanguage, tr, renderText} from "../../../shared/lib/i18n";
 import {useState} from 'react';
 import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
@@ -176,14 +177,11 @@ export function AdminPayoutPage() {
                                                     <div className="inline-flex items-center gap-2">
                                                         <span className="text-xs text-success font-semibold">✓ {tr("Đã giải ngân")}</span>
                                                         {item.hasPayoutReceipt && (
-                                                            <a
-                                                                href={`/api/v1/campaigns/${item.id}/payout-receipt`}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
+                                                            <AttachmentLink
                                                                 className="rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary-light"
-                                                            >
+                                                             path={`/api/v1/campaigns/${item.id}/payout-receipt`}>
                                                                 {tr("Xem biên lai")}
-                                                            </a>
+                                                            </AttachmentLink>
                                                         )}
                                                     </div>
                                                 ) : (

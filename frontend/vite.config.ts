@@ -11,6 +11,11 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       strictPort: true,
       proxy: {
+        '/ws': {
+          target: env.VITE_BACKEND_PROXY_TARGET || 'http://localhost:8081',
+          ws: true,
+          changeOrigin: true,
+        },
         '/api': {
           target: env.VITE_BACKEND_PROXY_TARGET || 'http://localhost:8081',
           changeOrigin: true,

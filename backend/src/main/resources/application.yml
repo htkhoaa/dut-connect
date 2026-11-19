@@ -1,10 +1,15 @@
 spring:
   application:
     name: dut-connect
+  mail:
+    properties:
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
   servlet:
     multipart:
-      max-file-size: 1MB
-      max-request-size: 2MB
+      max-file-size: 5MB
+      max-request-size: 6MB
   profiles:
     default: dev
   datasource:

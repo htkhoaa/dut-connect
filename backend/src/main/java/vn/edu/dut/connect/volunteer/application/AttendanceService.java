@@ -93,11 +93,17 @@ public class AttendanceService {
         if (token == null || token.isBlank()) throw new ApplicationFailure(400, "VALIDATION_ERROR", "Token is required");
         var session = repository.sessionByQrToken(token)
                 .orElseThrow(() -> ApplicationFailure.missing("Attendance session not found for this QR code"));
+        access.requireOperationalWrite(session.campaignId(), actor);
+        Instant now = Instant.now();
+        if (now.isBefore(session.startsAt()) || !now.isBefore(session.endsAt()))
+            throw new ApplicationFailure(409, "ATTENDANCE_NOT_OPEN", "Check-in is only available during this session");
         if (session.qrExpiresAt() != null && Instant.now().isAfter(session.qrExpiresAt())) {
             throw new ApplicationFailure(400, "QR_EXPIRED", "This attendance QR code has expired");
         }
         access.accepted(session.campaignId(), List.of(actor));
         repository.upsert(session.id(), actor, List.of(new AttendanceInput(actor, AttendanceStatus.PRESENT)));
+        session.touch();
+        repository.saveSession(session);
         return new QrCheckinResponse(session.id(), session.title(), session.campaignId(), Instant.now());
     }
 

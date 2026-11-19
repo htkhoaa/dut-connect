@@ -18,6 +18,8 @@ public class EmailNotificationService {
     private final boolean enabled;
     private final String from;
 
+    public boolean available() { return enabled && sender.isPresent(); }
+
     public EmailNotificationService(ObjectProvider<JavaMailSender> sender,
                                     @Value("${app.mail.enabled:false}") boolean enabled,
                                     @Value("${app.mail.from}") String from) {
@@ -31,11 +33,13 @@ public class EmailNotificationService {
                 escape(link) + "\">Đăng nhập an toàn</a></p><p>Liên kết có hiệu lực trong 15 phút và chỉ dùng một lần.</p>", null);
     }
 
+    @org.springframework.scheduling.annotation.Async
     public void participationAccepted(String email, String name, String campaign) {
         send(email, "Bạn đã được chấp nhận tham gia chiến dịch", "<p>Chào " + escape(name) + ",</p><p>Bạn đã được chấp nhận tham gia chiến dịch <strong>" +
                 escape(campaign) + "</strong> trên DUT Connect.</p>", null);
     }
 
+    @org.springframework.scheduling.annotation.Async
     public void completionCertificate(String email, String name, String campaign, String hours) {
         String title = "Chứng nhận tham gia - " + campaign;
         String body = "<h1>Chứng nhận tham gia</h1><p>Xác nhận " + escape(name) + " đã hoàn thành chiến dịch <strong>" +

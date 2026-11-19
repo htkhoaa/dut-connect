@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(exclude = UserDetailsServiceAutoConfiguration.class)
 @EnableScheduling
+@org.springframework.scheduling.annotation.EnableAsync
 public class DutConnectApplication {
 
     public static void main(String[] args) {

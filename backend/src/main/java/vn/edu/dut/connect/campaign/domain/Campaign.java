@@ -71,6 +71,11 @@ public class Campaign {
     public Instant payoutTransferredAt() { return payoutTransferredAt; }
     public String payoutNote() { return payoutNote; }
     public void confirmPayout(java.math.BigDecimal amount, byte[] receiptData, String contentType, String note) {
+        if ("PAID_OUT".equals(payoutStatus))
+            throw new CampaignViolation("INVALID_STATE_TRANSITION", "Payout was already confirmed");
+        if (amount == null || amount.signum() <= 0 || amount.stripTrailingZeros().scale() > 0
+                || (long) amount.precision() - amount.scale() > 19)
+            throw new CampaignViolation("VALIDATION_ERROR", "Payout must be a positive whole VND amount up to 19 digits", "amount");
         this.payoutStatus = "PAID_OUT";
         this.payoutAmount = amount;
         this.payoutReceiptData = receiptData;

@@ -1,3 +1,4 @@
+import {AttachmentLink} from '../../shared/components/AttachmentLink';
 import {tr} from "../../shared/lib/i18n";
 import {useLanguage, renderText} from "../../shared/lib/i18n";
 import type {PublicExpense} from './types';
@@ -15,6 +16,6 @@ export function ExpenseDetails({expense:e}:{expense:Omit<PublicExpense,'approved
         <p className="font-semibold text-primary">{renderText(vnd(e.amount))}</p>
         {renderText(e.description&&<p className="whitespace-pre-wrap text-sm">{renderText(e.description)}</p>)}
         {renderText(e.proofReference&&<p className="text-sm"><span className="text-text-secondary">{tr("Chứng từ: ")}</span>{renderText(url?<a className="font-medium text-primary hover:underline" href={url} target="_blank" rel="noopener noreferrer">{renderText(e.proofReference)}</a>:e.proofReference)}</p>)}
-        {renderText(e.hasReceipt&&<div className="pt-1"><a className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary-light" href={receiptUrl(e.id)} target="_blank" rel="noopener noreferrer">📄 {tr("Xem hóa đơn đính kèm")}</a></div>)}
+        {renderText(e.hasReceipt&&<div className="pt-1"><AttachmentLink className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary-light" path={receiptUrl(e.id)}>📄 {tr("Xem hóa đơn đính kèm")}</AttachmentLink></div>)}
     </div>;
 }

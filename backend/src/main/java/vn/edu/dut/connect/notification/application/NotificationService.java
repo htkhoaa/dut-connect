@@ -13,6 +13,8 @@ import vn.edu.dut.connect.notification.infrastructure.websocket.NotificationWebS
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
+import vn.edu.dut.connect.identity.application.Pagination;
+import vn.edu.dut.connect.shared.application.AfterCommit;
 
 @Service
 public class NotificationService {
@@ -51,10 +53,10 @@ public class NotificationService {
         NotificationDto dto = NotificationDto.from(notification);
 
         // Send via WebSocket realtime
-        wsHandler.sendToUser(userId, Map.of(
+        AfterCommit.run(() -> wsHandler.sendToUser(userId, Map.of(
                 "action", "NEW_NOTIFICATION",
                 "notification", dto
-        ));
+        )));
 
         log.info("Notification sent user={} type={} title={}", userId, type, title);
         return dto;
@@ -75,6 +77,7 @@ public class NotificationService {
     }
 
     public Page<NotificationDto> getNotifications(UUID userId, int page, int size) {
+        new Pagination(page, size);
         return repository.findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(page, size))
                 .map(NotificationDto::from);
     }

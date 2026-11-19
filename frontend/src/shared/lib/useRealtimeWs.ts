@@ -52,27 +52,17 @@ export function useGlobalRealtime() {
 
                         if (data.action === 'DONATION_RECEIVED' || data.action === 'DONATION_SUCCESS') {
                             window.dispatchEvent(new CustomEvent('app:donation_received', { detail: data }));
-                            void qc.invalidateQueries({ queryKey: ['finance'] });
-                            void qc.refetchQueries({ queryKey: ['finance'] });
-                            void qc.invalidateQueries({ queryKey: ['campaigns'] });
-                            void qc.refetchQueries({ queryKey: ['campaigns'] });
-                            void qc.invalidateQueries({ queryKey: ['campaign'] });
-                            void qc.invalidateQueries({ queryKey: ['financial-summary'] });
-                            void qc.invalidateQueries({ queryKey: ['campaign-dashboard'] });
-                            void qc.invalidateQueries({ queryKey: ['dashboard'] });
-                            void qc.invalidateQueries({ queryKey: ['activities'] });
-                            void qc.invalidateQueries({ queryKey: ['notifications'] });
-                            void qc.invalidateQueries({ queryKey: ['donations'] });
-                            void qc.invalidateQueries({ queryKey: ['me', 'donations'] });
+                            for (const key of ['finance', 'campaigns', 'dashboard', 'activities', 'notifications', 'donations']) {
+                                void qc.invalidateQueries({queryKey: [key]});
+                            }
                         } else if (data.action === 'NEW_NOTIFICATION') {
                             window.dispatchEvent(new CustomEvent('app:new_notification', { detail: data }));
                             void qc.invalidateQueries({ queryKey: ['notifications'] });
                             if ('vibrate' in navigator) navigator.vibrate(100);
                         } else if (data.action === 'CAMPAIGN_UPDATED') {
-                            void qc.invalidateQueries({ queryKey: ['campaign'] });
                             void qc.invalidateQueries({ queryKey: ['campaigns'] });
-                            void qc.invalidateQueries({ queryKey: ['financial-summary'] });
-                            void qc.invalidateQueries({ queryKey: ['campaign-dashboard'] });
+                            void qc.invalidateQueries({ queryKey: ['finance'] });
+                            void qc.invalidateQueries({ queryKey: ['dashboard'] });
                         }
                     } catch (ignored) {}
                 };
@@ -103,5 +93,5 @@ export function useGlobalRealtime() {
                 wsRef.current = null;
             }
         };
-    }, [user, accessToken, qc]);
+    }, [user?.id, accessToken, qc]);
 }

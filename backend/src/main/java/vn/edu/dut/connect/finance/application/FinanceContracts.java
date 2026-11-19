@@ -14,8 +14,8 @@ public final class FinanceContracts {
         @Size(max=2000) String description,@Size(max=1000) String proofReference,@Size(max=2) Set<@NotBlank String> clearFields,@NotNull @PositiveOrZero Long version) {}
     public record VersionRequest(@NotNull @PositiveOrZero Long version) {}
     public record RejectRequest(@NotBlank @Size(max=1000) String reason,@NotNull @PositiveOrZero Long version) {}
-    public record PublicExpense(UUID id,UUID campaignId,String title,String category,String amount,LocalDate expenseDate,String description,String proofReference,Instant approvedAt) {
-        public static PublicExpense from(Expense e){return new PublicExpense(e.id(),e.campaignId(),e.title(),e.category(),e.amount().toPlainString(),e.expenseDate(),e.description(),e.proofReference(),e.reviewedAt());}
+    public record PublicExpense(UUID id,UUID campaignId,String title,String category,String amount,LocalDate expenseDate,String description,String proofReference,Instant approvedAt,boolean hasReceipt) {
+        public static PublicExpense from(Expense e){return new PublicExpense(e.id(),e.campaignId(),e.title(),e.category(),e.amount().toPlainString(),e.expenseDate(),e.description(),e.proofReference(),e.reviewedAt(),e.receiptData()!=null);}
     }
     public record ExpenseDto(UUID id,UUID campaignId,String campaignTitle,String title,String category,String amount,LocalDate expenseDate,String description,String proofReference,
         ExpenseStatus status,UUID submittedByUserId,String submittedByName,UUID reviewedByUserId,String reviewedByName,Instant reviewedAt,String rejectionReason,Instant createdAt,Instant updatedAt,long version,boolean canEdit,boolean hasReceipt) {}

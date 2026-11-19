@@ -17,13 +17,14 @@ public class PayOSCallbackController {
     }
 
     @PostMapping(value = "/api/v1/payments/payos/webhook", consumes = "application/json", produces = "application/json")
-    public java.util.Map<String, Object> receive(@RequestBody String body) {
+    public org.springframework.http.ResponseEntity<java.util.Map<String, Object>> receive(@RequestBody String body) {
         var ack = service.receivePayOS(body);
-        return java.util.Map.of(
-            "error", 0,
+        int status = ack.return_code() == 0 ? 200 : ack.return_code() == 1 ? 503 : 400;
+        return org.springframework.http.ResponseEntity.status(status).body(java.util.Map.of(
+            "error", ack.return_code(),
             "message", ack.return_message(),
-            "return_code", 0,
+            "return_code", ack.return_code(),
             "return_message", ack.return_message()
-        );
+        ));
     }
 }

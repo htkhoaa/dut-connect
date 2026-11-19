@@ -9,6 +9,7 @@ import type {CampaignDetail} from '../campaigns/types';
 import {vnd} from '../campaigns/presentation';
 import {useDonationSettings, useDonationMutation} from './hooks';
 import * as api from './api';
+import {checkoutLink} from './types';
 import {Card} from '../../shared/components/Card';
 import {Button} from '../../shared/components/Button';
 import {Input} from '../../shared/components/Input';
@@ -238,19 +239,19 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                             </span>
-                            {tr("WebSocket Realtime")}
+                            {tr("Đang chờ xác nhận")}
                         </span>
                     </div>
 
-                    <div className="flex justify-center py-1">
+                    {activeDonation.vietQrUrl && <div className="flex justify-center py-1">
                         <div className="rounded-2xl border border-border bg-white p-2.5 shadow-md">
                             <img
-                                src={activeDonation.vietQrUrl}
+                                src={activeDonation.vietQrUrl || undefined}
                                 alt="Mã VietQR ủng hộ"
                                 className="h-56 w-56 rounded-xl object-contain"
                             />
                         </div>
-                    </div>
+                    </div>}
 
                     {/* 10-Minute Expiry Countdown Bar */}
                     <div className="flex items-center justify-center gap-2 rounded-xl bg-white/90 border border-amber-200/80 px-3 py-1.5 text-xs text-amber-900 shadow-2xs">
@@ -261,14 +262,14 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                         </span>
                     </div>
 
-                    {activeDonation.isDirectPayos && activeDonation.checkoutUrl && (
+                    {activeDonation.checkoutUrl && (
                         <a
                             href={activeDonation.checkoutUrl}
                             target="_blank"
                             rel="noreferrer"
                             className="flex items-center justify-center gap-2 w-full rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-hover transition-colors shadow-xs"
                         >
-                            <span>💳</span> {tr("Mở trang thanh toán PayOS (VietQR / Thẻ)")} ↗
+                            <span>💳</span> {tr("Mở trang thanh toán")} ↗
                         </a>
                     )}
 
@@ -279,17 +280,17 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-text-secondary">{tr("Ngân hàng:")}</span>
-                            <span className="font-semibold text-text-primary">{activeDonation.bankName || "MB Bank"}</span>
+                            <span className="font-semibold text-text-primary">{activeDonation.bankName || "—"}</span>
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-text-secondary">{tr("Số tài khoản:")}</span>
                             <div className="flex items-center gap-1.5">
                                 <span className="font-mono font-semibold text-text-primary select-all">
-                                    {activeDonation.accountNumber || "4310072005"}
+                                    {activeDonation.accountNumber || ""}
                                 </span>
                                 <button
                                     type="button"
-                                    onClick={() => copyToClipboard(activeDonation.accountNumber || "4310072005", "accountNumber")}
+                                    onClick={() => copyToClipboard(activeDonation.accountNumber || "", "accountNumber")}
                                     className="rounded border border-border px-1.5 py-0.5 text-[10px] text-text-secondary hover:bg-surface-muted transition-colors"
                                     title={tr("Sao chép số tài khoản")}
                                 >
@@ -299,7 +300,7 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-text-secondary">{tr("Chủ tài khoản:")}</span>
-                            <span className="font-semibold text-text-primary">{activeDonation.accountName || "HUYNH TUAN KHOA"}</span>
+                            <span className="font-semibold text-text-primary">{activeDonation.accountName || "—"}</span>
                         </div>
                         <div className="flex justify-between items-center pt-1.5 border-t border-border">
                             <span className="text-text-secondary">{tr("Nội dung:")}</span>
@@ -376,7 +377,7 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                                     rel="noreferrer"
                                     className="font-semibold text-primary hover:underline"
                                 >
-                                    {tr("Mở trang thanh toán PayOS")} ↗
+                                    {tr("Mở trang thanh toán")} ↗
                                 </a>
                             )}
                         </div>
@@ -465,24 +466,16 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                                 mutation.mutate(confirm, {
                                     onSuccess: r => {
                                         setConfirm(null);
+                                        setIsPaid(r.status === 'PAID');
                                         const orderCode = r.orderCode || r.donationId.substring(0, 15);
-                                        let qrUrl = r.qrCodeUrl || `https://img.vietqr.io/image/MB-4310072005-compact2.png?amount=${confirm}&addInfo=${encodeURIComponent('DUT ' + orderCode)}&accountName=HUYNH+TUAN+KHOA`;
-                                        if (r.checkoutUrl && r.checkoutUrl.includes('vietqr=')) {
-                                            try {
-                                                const parsed = new URL(r.checkoutUrl, window.location.origin);
-                                                const vParam = parsed.searchParams.get('vietqr');
-                                                if (vParam) qrUrl = vParam;
-                                            } catch {
-                                                // ignore
-                                            }
-                                        }
+                                        const qrUrl = r.qrCodeUrl || "";
                                         const isDirectPayos = Boolean(r.checkoutUrl && r.checkoutUrl.startsWith('https://pay.payos.vn'));
                                         setActiveDonation({
                                             donationId: r.donationId,
                                             amount: confirm,
                                             vietQrUrl: qrUrl,
                                             orderCode: orderCode,
-                                            checkoutUrl: r.checkoutUrl || undefined,
+                                            checkoutUrl: checkoutLink(r.checkoutUrl) || undefined,
                                             paymentId: r.paymentTransactionId,
                                             accountNumber: r.accountNumber || undefined,
                                             accountName: r.accountName || undefined,

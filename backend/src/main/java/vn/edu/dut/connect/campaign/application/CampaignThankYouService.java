@@ -60,10 +60,13 @@ public class CampaignThankYouService {
         );
     }
 
-    @Transactional
     public CampaignThankYouResponse sendThankYou(UUID campaignId, UUID actorId, SendThankYouRequest request) {
         access.manager(campaignId, actorId);
         var campaign = campaigns.getCampaign(campaignId);
+        if (campaign.status() != vn.edu.dut.connect.campaign.domain.CampaignStatus.COMPLETED)
+            throw new vn.edu.dut.connect.shared.application.ApplicationFailure(409, "INVALID_STATE_TRANSITION", "Complete the campaign before sending certificates");
+        if (!emailService.available())
+            throw new vn.edu.dut.connect.shared.application.ApplicationFailure(503, "MAIL_UNAVAILABLE", "Email delivery is not configured");
         String campaignTitle = campaign.title();
         ContributionMode mode = campaign.contributionMode();
 
@@ -231,6 +234,8 @@ public class CampaignThankYouService {
     @Transactional(readOnly = true)
     public String previewCertificateSvg(UUID campaignId, String type) {
         var campaign = campaigns.getCampaign(campaignId);
+        if (campaign.status() == vn.edu.dut.connect.campaign.domain.CampaignStatus.DRAFT)
+            throw vn.edu.dut.connect.shared.application.ApplicationFailure.missing("Campaign not found");
         boolean isVolunteer = "VOLUNTEER".equalsIgnoreCase(type);
         String todayStr = LocalDate.now().format(DateTimeFormatter.ofPattern("'ngày' dd 'tháng' MM 'năm' yyyy"));
 
@@ -313,7 +318,7 @@ public class CampaignThankYouService {
             from dut_connect.volunteer_registrations v
             join dut_connect.users u on u.id = v.user_id
             left join dut_connect.volunteer_completions com on com.campaign_id = v.campaign_id and com.user_id = v.user_id
-            where v.campaign_id = :id and v.status = 'ACCEPTED'
+            where v.campaign_id = :id and v.status = 'ACCEPTED' and com.status = 'VERIFIED'
             order by u.full_name
             """)
                 .param("id", campaignId)
