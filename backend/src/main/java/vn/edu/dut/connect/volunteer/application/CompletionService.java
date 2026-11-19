@@ -53,8 +53,9 @@ public class CompletionService {
         repository.saveCompletion(v);
         if (v.status() == CompletionStatus.VERIFIED) {
             var account = identities.findAccount(user).orElseThrow();
-            email.completionCertificate(account.email(), account.fullName(), campaigns.getCampaign(c).title(),
-                    v.verifiedHours() == null ? "0" : v.verifiedHours().toPlainString());
+            String title = campaigns.getCampaign(c).title();
+            vn.edu.dut.connect.shared.application.AfterCommit.run(() -> email.completionCertificate(account.email(), account.fullName(), title,
+                    v.verifiedHours() == null ? "0" : v.verifiedHours().toPlainString()));
         }
         org.slf4j.LoggerFactory.getLogger(CompletionService.class).info("Completion recorded actor={} campaign={} volunteer={} status={}", actor, c, user, v.status());
         return completionDto(v, user, identities.findAccount(user).orElseThrow(), volunteers.accepted(c, Set.of(user)).get(user), attendance.presentCounts(c, Set.of(user)).getOrDefault(user, 0L), attendance.sessionCount(c));

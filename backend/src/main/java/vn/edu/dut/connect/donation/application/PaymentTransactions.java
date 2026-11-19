@@ -14,6 +14,7 @@ import vn.edu.dut.connect.donation.domain.*;
 import vn.edu.dut.connect.notification.application.NotificationService;
 import vn.edu.dut.connect.notification.infrastructure.websocket.NotificationWebSocketHandler;
 import vn.edu.dut.connect.shared.application.ApplicationFailure;
+import vn.edu.dut.connect.shared.application.AfterCommit;
 
 import static vn.edu.dut.connect.donation.application.PaymentGateway.*;
 
@@ -175,17 +176,13 @@ public class PaymentTransactions {
             java.util.Map<String, Object> event = new java.util.HashMap<>();
             event.put("action", "DONATION_RECEIVED");
             event.put("campaignId", d.campaignId().toString());
-            event.put("donationId", d.id().toString());
-            event.put("orderCode", p.providerOrderId());
-            event.put("paymentId", p.id().toString());
-            event.put("amount", d.amount().toPlainString());
-            event.put("donorName", donorName);
-            event.put("campaignTitle", c.title());
-            wsHandler.broadcast(event);
+            AfterCommit.run(() -> wsHandler.broadcast(event));
 
             java.util.Map<String, Object> donorEvent = new java.util.HashMap<>(event);
             donorEvent.put("action", "DONATION_SUCCESS");
-            wsHandler.sendToUser(d.donorUserId(), donorEvent);
+            donorEvent.put("donationId", d.id().toString());
+            donorEvent.put("orderCode", p.providerOrderId());
+            AfterCommit.run(() -> wsHandler.sendToUser(d.donorUserId(), donorEvent));
 
             log.info("Settled donation notification broadcast for donation={} campaign={} orderCode={}", d.id(), d.campaignId(), p.providerOrderId());
         } catch (Exception e) {

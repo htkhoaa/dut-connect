@@ -36,7 +36,7 @@ export async function sendThankYou(campaignId: string, customSubject?: string, c
     return (await apiClient.post<CampaignThankYouResponse>(`/campaigns/${campaignId}/thank-you`, {
         customSubject,
         customMessage
-    })).data;
+    }, {timeout: 120_000})).data;
 }
 
 export async function getCertificatePreviewSvg(campaignId: string, type: 'DONATION' | 'VOLUNTEER') {

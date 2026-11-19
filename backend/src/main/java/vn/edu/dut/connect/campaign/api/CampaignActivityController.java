@@ -11,9 +11,11 @@ import java.util.*;
 @RequestMapping("/api/v1/campaigns/{campaignId}/activities")
 public class CampaignActivityController {
     private final JdbcClient jdbc;
+    private final vn.edu.dut.connect.campaign.application.CampaignAccessPort campaigns;
 
-    public CampaignActivityController(JdbcClient jdbc) {
+    public CampaignActivityController(JdbcClient jdbc, vn.edu.dut.connect.campaign.application.CampaignAccessPort campaigns) {
         this.jdbc = jdbc;
+        this.campaigns = campaigns;
     }
 
     public record CampaignActivity(
@@ -27,6 +29,8 @@ public class CampaignActivityController {
 
     @GetMapping
     public List<CampaignActivity> getRecentActivities(@PathVariable UUID campaignId) {
+        if (campaigns.getCampaign(campaignId).status() == vn.edu.dut.connect.campaign.domain.CampaignStatus.DRAFT)
+            throw vn.edu.dut.connect.shared.application.ApplicationFailure.missing("Campaign not found");
         List<CampaignActivity> list = new ArrayList<>();
 
         // Recent paid donations
@@ -63,7 +67,7 @@ public class CampaignActivityController {
                 from dut_connect.volunteer_registrations v
                 left join dut_connect.users u on v.user_id = u.id
                 where v.campaign_id = :campaignId
-                order v.created_at desc
+                order by v.created_at desc, v.id
                 limit 10
             """).param("campaignId", campaignId)
             .query((rs, rowNum) -> {

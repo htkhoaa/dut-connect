@@ -41,11 +41,15 @@ public class PayOSPaymentGateway implements PaymentGateway {
 
     @Override
     public void requireAvailable() {
-        // Always available with real PayOS or VietQR dynamic fallback
+        if (settings.payos("client-id").isBlank() || settings.payos("api-key").isBlank()
+                || settings.payos("checksum-key").isBlank()) {
+            throw new ApplicationFailure(503, "PAYMENT_PROVIDER_ERROR", "PayOS is not configured");
+        }
     }
 
     @Override
     public CreationResult createPayment(CreationCommand command) {
+        requireAvailable();
         String clientId = settings.payos("client-id");
         String apiKey = settings.payos("api-key");
         String checksumKey = settings.payos("checksum-key");
@@ -59,15 +63,6 @@ public class PayOSPaymentGateway implements PaymentGateway {
         }
         // VietQR standard memo: max 25 alphanumeric chars
         String description = "DUT " + orderCode;
-
-        if (clientId.isBlank() || apiKey.isBlank() || checksumKey.isBlank()) {
-            log.warn("PayOS credentials not configured (PAYOS_CLIENT_ID, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY is blank). Using VietQR direct transfer fallback.");
-            String encodedDesc = URLEncoder.encode(description, StandardCharsets.UTF_8);
-            String vietQrUrl = "https://img.vietqr.io/image/MB-4310072005-compact2.png?amount="
-                    + command.amount().toPlainString() + "&addInfo=" + encodedDesc + "&accountName=HUYNH+TUAN+KHOA";
-            String checkoutUrl = "/payment/result?donationId=" + command.donationId() + "&vietqr=" + URLEncoder.encode(vietQrUrl, StandardCharsets.UTF_8);
-            return new CreationResult(Outcome.PENDING, checkoutUrl, "00", "VietQR fallback created", vietQrUrl, "4310072005", "HUYNH TUAN KHOA", "970422");
-        }
 
         try {
             int amount = command.amount().intValueExact();
@@ -89,6 +84,7 @@ public class PayOSPaymentGateway implements PaymentGateway {
             reqBody.put("returnUrl", returnUrl);
             reqBody.put("cancelUrl", cancelUrl);
             reqBody.put("signature", signature);
+            reqBody.put("expiredAt", command.expiresAt().getEpochSecond());
 
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(PAYOS_API))
@@ -100,7 +96,7 @@ public class PayOSPaymentGateway implements PaymentGateway {
                     .build();
 
             HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
-            log.info("PayOS createPayment response status={} body={}", resp.statusCode(), resp.body());
+            log.info("PayOS createPayment response status={}", resp.statusCode());
             JsonNode root = json.readTree(resp.body());
             if ("00".equals(root.path("code").asText())) {
                 JsonNode data = root.path("data");
@@ -117,7 +113,7 @@ public class PayOSPaymentGateway implements PaymentGateway {
             }
         } catch (Exception e) {
             log.error("PayOS creation error", e);
-            return new CreationResult(Outcome.FAILED, null, "500", "Lỗi kết nối cổng thanh toán PayOS: " + e.getMessage());
+            return new CreationResult(Outcome.UNKNOWN, null, "500", "Chưa xác định được trạng thái tạo thanh toán. Vui lòng kiểm tra lại.");
         }
     }
 
@@ -125,26 +121,28 @@ public class PayOSPaymentGateway implements PaymentGateway {
     public VerifiedResult verifyCallback(Callback callback) {
         try {
             JsonNode payload = json.readTree(callback.data());
-            JsonNode data = payload.has("data") ? payload.get("data") : payload;
+            JsonNode data = payload.path("data");
+            String key = settings.payos("checksum-key");
+            if (key.isBlank() || !data.isObject()
+                    || !PaymentMac.valid(signatureData(data), payload.path("signature").asText(), key)) {
+                throw new IllegalArgumentException("Invalid webhook signature");
+            }
+            if (!"00".equals(data.path("code").asText()) || !"VND".equals(data.path("currency").asText())
+                    || !data.path("amount").isIntegralNumber() || !data.path("orderCode").isIntegralNumber()) {
+                throw new IllegalArgumentException("Invalid payment result");
+            }
 
             long amountVal = data.has("amount") ? data.path("amount").asLong(0) : payload.path("amount").asLong(0);
             String desc = data.has("description") ? data.path("description").asText("") : payload.path("description").asText("");
             long orderCode = data.has("orderCode") ? data.path("orderCode").asLong(0) : payload.path("orderCode").asLong(0);
             String reference = data.has("reference") ? data.path("reference").asText("") : payload.path("reference").asText("");
             if (reference.isBlank()) {
-                reference = "PAYOS-" + (orderCode > 0 ? orderCode : System.currentTimeMillis());
+                throw new IllegalArgumentException("Payment reference is required");
             }
 
             String orderId = orderCode > 0 ? String.valueOf(orderCode) : "";
             if (orderId.isBlank()) {
-                java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\b(\\d{8,18})\\b").matcher(desc);
-                if (m.find()) {
-                    orderId = m.group(1);
-                } else if (desc.startsWith("DUT ")) {
-                    orderId = desc.substring(4).trim();
-                } else {
-                    orderId = desc.trim();
-                }
+                throw new IllegalArgumentException("Order code is required");
             }
 
             log.info("PayOS verifyCallback: orderCode={} desc={} resolvedOrderId={} amount={}", orderCode, desc, orderId, amountVal);
@@ -152,9 +150,22 @@ public class PayOSPaymentGateway implements PaymentGateway {
             return new VerifiedResult("payos", orderId, Outcome.PAID,
                     BigDecimal.valueOf(amountVal), reference, Instant.now(), "00");
         } catch (Exception e) {
-            log.error("PayOS callback verification failed", e);
+            log.warn("PayOS callback rejected: {}", e.getClass().getSimpleName());
             throw new ApplicationFailure(400, "PAYMENT_VERIFICATION_FAILED", "Invalid PayOS callback data");
         }
+    }
+
+    // payOS signs the fields inside data, sorted by field name (not the outer JSON).
+    static String signatureData(JsonNode data) {
+        var fields = new TreeMap<String, String>();
+        data.fields().forEachRemaining(field -> {
+            JsonNode value = field.getValue();
+            if (value.isContainerNode()) throw new IllegalArgumentException("Unexpected webhook field");
+            String text = value.isNull() ? "" : value.asText();
+            fields.put(field.getKey(), Set.of("null", "undefined").contains(text) ? "" : text);
+        });
+        return fields.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue())
+                .collect(java.util.stream.Collectors.joining("&"));
     }
 
     @Override
@@ -173,7 +184,7 @@ public class PayOSPaymentGateway implements PaymentGateway {
                     .timeout(Duration.ofSeconds(10))
                     .build();
             HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
-            log.info("PayOS query orderId={} status={} body={}", orderId, resp.statusCode(), resp.body());
+            log.debug("PayOS query orderId={} status={}", orderId, resp.statusCode());
             JsonNode root = json.readTree(resp.body());
             if ("00".equals(root.path("code").asText())) {
                 JsonNode data = root.path("data");

@@ -7,11 +7,11 @@ export async function settings() {
 }
 
 export async function create(campaignId: string, amount: string) {
-    return (await apiClient.post<Creation>('/campaigns/' + campaignId + '/donations', {amount})).data;
+    return (await apiClient.post<Creation>('/campaigns/' + campaignId + '/donations', {amount}, {timeout: 25_000})).data;
 }
 
 export async function detail(id: string) {
-    return (await apiClient.get<Donation>('/donations/' + id)).data;
+    return (await apiClient.get<Donation>('/donations/' + id, {timeout: 25_000})).data;
 }
 
 export async function mine(page: number) {
@@ -19,7 +19,7 @@ export async function mine(page: number) {
 }
 
 export async function refresh(paymentId: string) {
-    return (await apiClient.post<Donation>('/payments/' + paymentId + '/refresh')).data;
+    return (await apiClient.post<Donation>('/payments/' + paymentId + '/refresh', undefined, {timeout: 25_000})).data;
 }
 
 export async function adminSettle(donationId: string) {

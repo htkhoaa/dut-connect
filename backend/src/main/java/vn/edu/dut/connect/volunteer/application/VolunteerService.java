@@ -62,7 +62,7 @@ public class VolunteerService {
         v.accept(request.assignedTrack(),actor);registrations.save(v);logTransition(v,actor);
         var account = identities.findAccount(v.userId()).orElseThrow();
         var campaign = campaigns.getCampaign(v.campaignId());
-        email.participationAccepted(account.email(), account.fullName(), campaign.title());
+        vn.edu.dut.connect.shared.application.AfterCommit.run(() -> email.participationAccepted(account.email(), account.fullName(), campaign.title()));
         try {
             notifications.notifyUser(
                 v.userId(),

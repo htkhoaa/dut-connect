@@ -1,3 +1,4 @@
+import {ApiImage} from '../../shared/components/ApiImage';
 import {useLanguage, tr, renderText, locale} from "../../shared/lib/i18n";
 import {useState} from 'react';
 import {useForm} from 'react-hook-form';
@@ -43,7 +44,7 @@ function ProposalDetail({id}:{id:string}){
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {galleryQuery.data.map(img => (
                         <div key={img.id} className="aspect-4/3 rounded-xl overflow-hidden border border-border bg-surface-muted relative group">
-                            <img src={img.imageUrl} alt={img.caption || ''} className="w-full h-full object-cover" />
+                            <ApiImage src={img.imageUrl} alt={img.caption || ''} className="w-full h-full object-cover" />
                             {img.caption && <div className="absolute inset-x-0 bottom-0 bg-black/60 p-1.5 text-[10px] text-white truncate">{img.caption}</div>}
                         </div>
                     ))}

@@ -1,3 +1,4 @@
+import {ApiImage} from '../../shared/components/ApiImage';
 import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
 import {useState} from 'react';
 import {useParams, Link} from 'react-router-dom';
@@ -46,15 +47,17 @@ export function CampaignDetailPage() {
     const [activeTab, setActiveTab] = useState<TabKey>('description');
 
     // Query logged in user's own applications for this campaign
-    const myApps = useApplications(id, {page: 0, status: '', track: ''}, true);
+    const campaignId = query.data?.id;
+    const myApps = useApplications(campaignId, {page: 0, status: '', track: ''}, true, !!campaignId);
     const [showEndModal, setShowEndModal] = useState(false);
     const [showResultModal, setShowResultModal] = useState(false);
     const [showThankYouModal, setShowThankYouModal] = useState(false);
     const transitionMutation = useTransitionCampaign(id);
-    const dashboardQuery = useCampaignDashboard(id);
+    const dashboardQuery = useCampaignDashboard(campaignId || '', !!query.data?.canManage || user?.role === 'ADMIN');
     const galleryQuery = useQuery({
-        queryKey: ['campaign-gallery', id],
-        queryFn: async () => (await apiClient.get<Array<{id: string; imageUrl: string}>>(`/campaigns/${id}/gallery`)).data,
+        queryKey: ['campaign-gallery', campaignId],
+        queryFn: async () => (await apiClient.get<Array<{id: string; imageUrl: string}>>(`/campaigns/${campaignId}/gallery`)).data,
+        enabled: !!campaignId,
     });
 
     if (query.isPending) return <LoadingState />;
@@ -83,7 +86,7 @@ export function CampaignDetailPage() {
             </Link>
 
             <section className="detail-hero">
-                <img
+                <ApiImage
                     src={galleryQuery.data && galleryQuery.data.length > 0 ? galleryQuery.data[0].imageUrl : campaignVisual(c.categoryName, c.content.title).image}
                     alt={campaignVisual(c.categoryName, c.content.title).alt}
                 />

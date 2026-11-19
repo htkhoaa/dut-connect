@@ -1,3 +1,4 @@
+import {AttachmentLink} from '../../shared/components/AttachmentLink';
 import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
 import {useState, useRef} from 'react';
 import {useForm} from 'react-hook-form';
@@ -17,6 +18,7 @@ export function ExpenseForm({campaignId,expense,onSaved,onCancel}:{campaignId:st
     const [file, setFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
     const [receiptError, setReceiptError] = useState<string | null>(null);
+    const [savedExpense, setSavedExpense] = useState<Expense | undefined>(expense);
     const fileRef = useRef<HTMLInputElement>(null);
     const form=useForm<ExpenseWrite>({defaultValues:{title:expense?.title||'',category:expense?.category||'',amount:expense?.amount||'',expenseDate:expense?.expenseDate||'',description:expense?.description||'',proofReference:expense?.proofReference||''}});
     const save=useSaveExpense(campaignId);
@@ -30,9 +32,14 @@ export function ExpenseForm({campaignId,expense,onSaved,onCancel}:{campaignId:st
         try {
             setUploading(true);
             setReceiptError(null);
-            const saved = await save.mutateAsync({values: parsed.data, expense});
+            // Remember a successful save so retrying a failed upload does not create a second expense.
+            const saved = await save.mutateAsync({values: parsed.data, expense: savedExpense});
+            setSavedExpense(saved);
             if (file) {
                 await uploadReceipt(saved.id, file);
+                // Uploading changes the expense version too; refresh it before another edit.
+                onSaved();
+                return;
             }
             onSaved();
         } catch (error) {
@@ -58,16 +65,16 @@ export function ExpenseForm({campaignId,expense,onSaved,onCancel}:{campaignId:st
                 ref={fileRef}
                 id="expense-receipt-file"
                 type="file"
-                accept="image/*,application/pdf"
+                accept="image/png,image/jpeg,application/pdf"
                 onChange={e => setFile(e.target.files?.[0] || null)}
                 className="block w-full text-sm text-text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary-light file:text-primary hover:file:bg-primary-muted cursor-pointer"
             />
             {expense?.hasReceipt && (
                 <div className="flex items-center gap-2 pt-1 text-xs text-text-secondary">
                     <span>{tr("Đã có hóa đơn đính kèm:")}</span>
-                    <a className="font-medium text-primary hover:underline" href={receiptUrl(expense.id)} target="_blank" rel="noopener noreferrer">
+                    <AttachmentLink className="font-medium text-primary hover:underline" path={receiptUrl(expense.id)}>
                         {tr("Xem hóa đơn hiện tại")}
-                    </a>
+                    </AttachmentLink>
                 </div>
             )}
         </div>

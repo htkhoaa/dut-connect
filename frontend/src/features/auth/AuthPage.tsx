@@ -1,4 +1,6 @@
+import {returnPath} from './returnPath';
 import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
+import {useQuery} from '@tanstack/react-query';
 import {useForm, type FieldPath} from 'react-hook-form';
 import {useEffect, useState} from 'react';
 import {dutPhotography} from '../../shared/lib/dutPhotography';
@@ -18,13 +20,6 @@ import {apiClient} from '../../shared/api/client';
 
 const loginSchema = z.object({studentId: z.string().trim().min(1).max(32), password: z.string().min(1).max(72)});
 const adminLoginSchema = z.object({email: z.string().trim().email(), password: z.string().min(1).max(72)});
-function isPaymentReturn(path?: string): boolean {
-    if (!path?.startsWith('/payment/result?')) return false;
-    const url = new URL(path, window.location.origin);
-    return url.origin === window.location.origin && url.pathname === '/payment/result' &&
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(url.searchParams.get('donationId') || '');
-}
-const microsoftOAuthEnabled = import.meta.env.VITE_MICROSOFT_OAUTH_ENABLED === 'true';
 
 export function AuthPage({admin = false}: { admin?: boolean }) {
     useLanguage();
@@ -36,16 +31,31 @@ export function AuthPage({admin = false}: { admin?: boolean }) {
     const location = useLocation();
     const {initialized, user} = useAuth();
     const {show} = useToast();
+    const configuration = useQuery({queryKey: ['microsoft-configuration'],
+        queryFn: async () => (await apiClient.get<{enabled: boolean}>('/auth/microsoft/configuration')).data});
+    const previousPath = returnPath((location.state as {from?: string} | null)?.from);
+    const readReturnPath = () => {
+        try { return previousPath || returnPath(sessionStorage.getItem('dut-auth-return')); }
+        catch { return previousPath; }
+    };
+    const targetPath = readReturnPath();
+    useEffect(() => {
+        if (user) { try { sessionStorage.removeItem('dut-auth-return'); } catch { /* Optional browser storage. */ } }
+    }, [user?.id]);
     const startMicrosoftLogin = () => {
+        try {
+            if (previousPath) sessionStorage.setItem('dut-auth-return', previousPath);
+            else sessionStorage.removeItem('dut-auth-return');
+        } catch { /* Login still works if browser storage is disabled. */ }
         window.location.assign(`${apiClient.defaults.baseURL}/auth/microsoft/authorize`);
     };
     useEffect(() => {
         const token = new URLSearchParams(location.search).get('token');
-        if (token) void verifyLink.mutateAsync(token).then(() => navigate('/me/profile', {replace: true}));
+        if (token) void verifyLink.mutateAsync(token).then(() => navigate('/me/profile', {replace: true})).catch(() => undefined);
     }, []);
     const mutation = login;
     if (!initialized) return <LoadingState message={tr("Đang khôi phục phiên đăng nhập…")}/>;
-    if (initialized && user) return <Navigate to={user.role === 'ADMIN' ? '/admin' : '/me/profile'} replace/>;
+    if (initialized && user) return <Navigate to={targetPath || (user.role === 'ADMIN' ? '/admin' : '/me/profile')} replace/>;
     const submit = form.handleSubmit(async (values) => {
         const validation = (admin ? adminLoginSchema : loginSchema).safeParse(values);
         if (!validation.success) {
@@ -56,18 +66,7 @@ export function AuthPage({admin = false}: { admin?: boolean }) {
             {
                 const session = await login.mutateAsync(values);
                 show('Đăng nhập thành công.', 'success');
-                const state = location.state as { from?: string } | null;
-                const target = (state?.from === '/me/profile' && session.user.role === 'USER') ||
-                    ['/me/organizations', '/me/applications', '/me/tasks', '/me/history', '/me/donations', '/organizations/new', '/proposals', '/proposals/new', '/manage/campaigns'].includes(state?.from || '') ||
-                    isPaymentReturn(state?.from) ||
-                    /^\/(?:donations|dev\/mock-payments)\/[0-9a-f-]{36}$/i.test(state?.from || '') ||
-                    /^\/manage\/campaigns\/[0-9a-f-]{36}\/(?:applications|team|meetings|tasks|attendance|completions|finance|ai|reports)$/i.test(state?.from || '') ||
-                    /^\/campaigns\/[a-z0-9-]+$/i.test(state?.from || '') ||
-                    /^\/me\/campaigns\/[0-9a-f-]{36}\/meetings$/i.test(state?.from || '') ||
-                    /^\/tasks\/[0-9a-f-]{36}$/i.test(state?.from || '') ||
-                    /^\/(?:proposals|manage\/campaigns)\/[0-9a-f-]{36}$/i.test(state?.from || '') ||
-                    (['/admin', '/admin/users', '/admin/organizations', '/admin/proposals', '/admin/categories', '/admin/expenses'].includes(state?.from || '') && session.user.role === 'ADMIN') ? state?.from : undefined;
-                navigate(target || (session.user.role === 'ADMIN' ? '/admin' : '/me/profile'), {replace: true});
+                navigate(targetPath || (session.user.role === 'ADMIN' ? '/admin' : '/me/profile'), {replace: true});
             }
         } catch (error) {
             for (const field of apiError(error)?.fieldErrors || []) {
@@ -84,7 +83,9 @@ export function AuthPage({admin = false}: { admin?: boolean }) {
         <span className="icon-tile mb-5"><Icon name="users" size={25}/></span><h1 className="mb-2 text-3xl font-bold">{tr("Đăng nhập DUT Connect")}</h1>
         <p className="mb-6 text-sm text-text-secondary">{tr("Sử dụng tài khoản Microsoft do DUT cấp để tiếp tục.")}</p>
         {new URLSearchParams(location.search).get('oauth_error') && <p role="alert" className="mb-4 text-danger">{tr("Đăng nhập Microsoft thất bại. Vui lòng kiểm tra tài khoản DUT hoặc liên hệ quản trị viên.")}</p>}
-        {microsoftOAuthEnabled && <Button type="button" variant="secondary" onClick={startMicrosoftLogin} className="w-full"><span className="grid h-5 w-5 grid-cols-2 gap-0.5" aria-hidden="true"><i className="bg-[#f25022]"/><i className="bg-[#7fba00]"/><i className="bg-[#00a4ef]"/><i className="bg-[#ffb900]"/></span>{tr("Đăng nhập bằng Microsoft DUT")}</Button>}
+        {configuration.data?.enabled && <Button type="button" variant="secondary" onClick={startMicrosoftLogin} className="w-full"><span className="grid h-5 w-5 grid-cols-2 gap-0.5" aria-hidden="true"><i className="bg-[#f25022]"/><i className="bg-[#7fba00]"/><i className="bg-[#00a4ef]"/><i className="bg-[#ffb900]"/></span>{tr("Đăng nhập bằng Microsoft DUT")}</Button>}
+        {configuration.isPending && <LoadingState/>}
+        {(configuration.isError || configuration.data?.enabled === false) && <p role="alert" className="text-sm text-danger">{tr("Đăng nhập Microsoft chưa được cấu hình. Vui lòng liên hệ quản trị viên.")}</p>}
     </div></div>;
     return <div className="auth-layout"><div className="auth-art"><img src={dutPhotography.tower.src} alt=""/><div className="auth-art-copy"><span className="eyebrow mb-4"><Icon name="leaf" size={18}/>DUT CONNECT</span><h2>{tr("Một cộng đồng.")}<br/>{tr("Vạn điều tốt đẹp.")}</h2><p className="text-sm leading-relaxed text-white/85">{tr("Mang thời gian, kỹ năng và sự sẻ chia của bạn đến những chiến dịch ý nghĩa.")}</p></div></div><div className="auth-form">
         <span className="icon-tile mb-5"><Icon name="shield" size={25}/></span><h1 className="mb-2 text-3xl font-bold">{tr("Đăng nhập quản trị")}</h1>

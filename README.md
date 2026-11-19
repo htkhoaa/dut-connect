@@ -1,5 +1,7 @@
 # DUT Connect
 
+Đợt sửa lỗi PBL ngày 19/11/2026: [danh sách lỗi, cách sửa, kiểm thử và hướng dẫn demo](docs/pbl-fixes.md). Các quy tắc cập nhật trong tài liệu này được ưu tiên so với mô tả các phase cũ bên dưới.
+
 Student volunteer, donation, and campaign coordination for the University of Science and Technology — The University of Danang. `spec.md` is the authoritative implementation contract.
 
 GitHub/Vercel preparation: [source exclusions, frontend settings, and API/domain requirements](docs/github-vercel.md).

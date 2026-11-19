@@ -13,6 +13,9 @@ import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.time.Instant;
+import org.springframework.scheduling.annotation.Scheduled;
+import vn.edu.dut.connect.identity.application.IdentityDirectoryPort;
 
 @Component
 public class NotificationWebSocketHandler extends TextWebSocketHandler {
@@ -21,10 +24,12 @@ public class NotificationWebSocketHandler extends TextWebSocketHandler {
     private final Set<WebSocketSession> allSessions = new CopyOnWriteArraySet<>();
     private final ObjectMapper json;
     private final JwtDecoder jwtDecoder;
+    private final IdentityDirectoryPort identities;
 
-    public NotificationWebSocketHandler(ObjectMapper json, JwtDecoder jwtDecoder) {
+    public NotificationWebSocketHandler(ObjectMapper json, JwtDecoder jwtDecoder, IdentityDirectoryPort identities) {
         this.json = json;
         this.jwtDecoder = jwtDecoder;
+        this.identities = identities;
     }
 
     @Override
@@ -60,7 +65,7 @@ public class NotificationWebSocketHandler extends TextWebSocketHandler {
         // Can handle ping/pong or client subscriptions if needed
         try {
             if ("ping".equalsIgnoreCase(message.getPayload().trim())) {
-                session.sendMessage(new TextMessage("pong"));
+                synchronized (session) { session.sendMessage(new TextMessage("pong")); }
             }
         } catch (Exception ignored) {}
     }
@@ -73,9 +78,9 @@ public class NotificationWebSocketHandler extends TextWebSocketHandler {
             String text = json.writeValueAsString(message);
             TextMessage textMessage = new TextMessage(text);
             for (WebSocketSession session : sessions) {
-                if (session.isOpen()) {
+                if (session.isOpen() && active(session)) {
                     try {
-                        session.sendMessage(textMessage);
+                        synchronized (session) { session.sendMessage(textMessage); }
                     } catch (Exception e) {
                         log.warn("Failed sending WS to user={}: {}", userId, e.getMessage());
                     }
@@ -93,7 +98,7 @@ public class NotificationWebSocketHandler extends TextWebSocketHandler {
             for (WebSocketSession session : allSessions) {
                 if (session.isOpen()) {
                     try {
-                        session.sendMessage(textMessage);
+                        synchronized (session) { session.sendMessage(textMessage); }
                     } catch (Exception e) {
                         log.warn("Failed broadcasting WS: {}", e.getMessage());
                     }
@@ -114,12 +119,32 @@ public class NotificationWebSocketHandler extends TextWebSocketHandler {
                 String token = parts[1];
                 try {
                     Jwt jwt = jwtDecoder.decode(token);
-                    return UUID.fromString(jwt.getSubject());
+                    UUID id = UUID.fromString(jwt.getSubject());
+                    if (identities.findAccount(id).filter(IdentityDirectoryPort.Account::active).isEmpty()) return null;
+                    session.getAttributes().put("expiresAt", jwt.getExpiresAt());
+                    return id;
                 } catch (Exception e) {
                     log.debug("Invalid token in WS connection: {}", e.getMessage());
                 }
             }
         }
         return null;
+    }
+
+    private boolean active(WebSocketSession session) {
+        Instant expiry = (Instant) session.getAttributes().get("expiresAt");
+        UUID user = (UUID) session.getAttributes().get("userId");
+        return user != null && expiry != null && Instant.now().isBefore(expiry)
+                && identities.findAccount(user).filter(IdentityDirectoryPort.Account::active).isPresent();
+    }
+
+    @Scheduled(fixedDelay = 30000)
+    public void closeExpiredSessions() {
+        for (var session : allSessions) {
+            if (session.getAttributes().containsKey("userId") && !active(session)) {
+                try { session.close(CloseStatus.POLICY_VIOLATION); }
+                catch (java.io.IOException e) { log.debug("Unable to close expired WebSocket", e); }
+            }
+        }
     }
 }

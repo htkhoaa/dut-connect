@@ -69,7 +69,7 @@ export const validId = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-
 
 export function checkoutLink(url: string | null): string | null {
     if (!url) return null;
-    if (url.startsWith('/')) return url;
+    if (url.startsWith('/')) return url.startsWith('//') || url.includes('\\') ? null : url;
     try {
         const parsed = new URL(url);
         return (parsed.protocol === 'https:' || parsed.protocol === 'http:') && !parsed.username && !parsed.password ? parsed.href : null;

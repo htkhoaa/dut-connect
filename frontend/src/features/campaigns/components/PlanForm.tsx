@@ -1,3 +1,5 @@
+import {defaults, payload} from '../planValues';
+import {ApiImage} from '../../../shared/components/ApiImage';
 import {useLanguage, tr, renderText} from "../../../shared/lib/i18n";
 import {catalogLabel} from '../../../shared/lib/catalogLabels';
 import {useEffect, useState, useRef} from 'react';
@@ -5,6 +7,7 @@ import {useForm, type FieldPath} from 'react-hook-form';
 import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
 import {z} from 'zod';
 import {useNavigate} from 'react-router-dom';
+import {useAuth} from '../../auth/store';
 import type {Content, FormValues} from '../types';
 import {useCategoryCatalog, useOrganizationOptions, useEditCampaign} from '../hooks';
 import {useSaveProposal} from '../../proposals/hooks';
@@ -99,71 +102,6 @@ const schema = z.object({
     }
 });
 
-function localTime(value: string | null | undefined) {
-    if (!value) return '';
-    const date = new Date(value);
-    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 23);
-}
-
-function defaults(content?: Content): FormValues {
-    return {
-        organizerType: content?.organizerType || 'INDIVIDUAL',
-        organizationId: content?.organizationId || '',
-        categoryId: content?.categoryId || '',
-        title: content?.title || '',
-        summary: content?.summary || '',
-        description: content?.description || '',
-        expectedImpact: content?.expectedImpact || '',
-        contributionMode: content?.contributionMode || 'VOLUNTEER_ONLY',
-        startDate: content?.startDate || '',
-        endDate: content?.endDate || '',
-        applicationDeadline: localTime(content?.applicationDeadline),
-        fundraisingDeadline: localTime(content?.fundraisingDeadline),
-        targetVolunteerCount: content?.targetVolunteerCount?.toString() || '',
-        targetTechnicalCount: content?.targetTechnicalCount?.toString() || '',
-        targetLogisticsCount: content?.targetLogisticsCount?.toString() || '',
-        volunteerRequirements: content?.volunteerRequirements || '',
-        fundraisingGoal: content?.fundraisingGoal || '',
-        institutionalFunding: '0',
-        sponsorName: '',
-        sponsorFunding: '0',
-        estimatedBudget: '',
-        donationBankName: content?.donationBankName || '',
-        donationAccountNumber: content?.donationAccountNumber || '',
-        donationAccountHolder: content?.donationAccountHolder || ''
-    };
-}
-
-function instant(value: string, original?: string | null) {
-    const date = new Date(value);
-    return original && date.getTime() === new Date(original).getTime() ? original : date.toISOString();
-}
-
-function payload(v: FormValues, original?: Content): Content {
-    const donations = v.contributionMode !== 'VOLUNTEER_ONLY';
-    const volunteers = v.contributionMode !== 'DONATION_ONLY';
-    return {
-        ...v,
-        organizerType: v.organizerType as Content['organizerType'],
-        contributionMode: v.contributionMode as Content['contributionMode'],
-        organizationId: v.organizerType === 'ORGANIZATION' ? v.organizationId : null,
-        expectedImpact: v.expectedImpact.trim() || null,
-        targetVolunteerCount: volunteers && v.targetVolunteerCount ? Number(v.targetVolunteerCount) : null,
-        targetTechnicalCount: volunteers && v.targetTechnicalCount ? Number(v.targetTechnicalCount) : null,
-        targetLogisticsCount: volunteers && v.targetLogisticsCount ? Number(v.targetLogisticsCount) : null,
-        applicationDeadline: volunteers && v.applicationDeadline ? instant(v.applicationDeadline, original?.applicationDeadline) : null,
-        fundraisingDeadline: donations && v.fundraisingDeadline ? instant(v.fundraisingDeadline, original?.fundraisingDeadline) : null,
-        fundraisingGoal: donations ? v.fundraisingGoal || null : null,
-        volunteerRequirements: volunteers ? v.volunteerRequirements.trim() || null : null,
-        institutionalFunding: '0',
-        sponsorFunding: '0',
-        sponsorName: null,
-        estimatedBudget: null,
-        donationBankName: donations ? v.donationBankName.trim() || null : null,
-        donationAccountNumber: donations ? v.donationAccountNumber.trim() || null : null,
-        donationAccountHolder: donations ? v.donationAccountHolder.trim() || null : null
-    };
-}
 
 export function PlanForm({
     kind = 'proposal',
@@ -184,9 +122,12 @@ export function PlanForm({
 }) {
     useLanguage();
     const qc = useQueryClient();
+    const userId = useAuth(s => s.user?.id);
+    const draftStorageKey = DRAFT_STORAGE_KEY + ':' + userId;
+    const [savedId, setSavedId] = useState(id);
     const categories = useCategoryCatalog();
     const organizations = useOrganizationOptions('mine');
-    const proposal = useSaveProposal(kind === 'proposal' ? id : undefined);
+    const proposal = useSaveProposal(kind === 'proposal' ? savedId : undefined);
     const campaign = useEditCampaign(id || '');
     const form = useForm<FormValues>({defaultValues: defaults(content)});
     const [version, setVersion] = useState(initialVersion);
@@ -233,12 +174,14 @@ export function PlanForm({
                 await apiClient.post(endpoint, formData, {
                     headers: {'Content-Type': 'multipart/form-data'},
                 });
+                URL.revokeObjectURL(img.previewUrl);
+                setPendingImages(current => current.filter(item => item.id !== img.id));
             }
-            setPendingImages([]);
             void qc.invalidateQueries({queryKey: [kind === 'campaign' ? 'campaign-gallery' : 'proposal-gallery', targetId]});
             void qc.invalidateQueries({queryKey: ['campaign-gallery', targetId]});
         } catch (e) {
-            console.error("Failed uploading images:", e);
+            form.setError('root', {message: errorMessage(e)});
+            throw e;
         } finally {
             setUploadingImages(false);
         }
@@ -268,7 +211,7 @@ export function PlanForm({
     useEffect(() => {
         if (kind === 'proposal' && !id && !content) {
             try {
-                const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+                const saved = localStorage.getItem(draftStorageKey);
                 if (saved) {
                     const parsed = JSON.parse(saved);
                     if (parsed && typeof parsed === 'object') {
@@ -280,7 +223,7 @@ export function PlanForm({
                 // ignore corrupted data
             }
         }
-    }, [kind, id, content, form]);
+    }, [kind, id, content, form, draftStorageKey]);
 
     useEffect(() => {
         if (content && !form.formState.isDirty) {
@@ -292,7 +235,7 @@ export function PlanForm({
     const handleSaveDraft = async () => {
         const input = form.getValues();
         try {
-            localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(input));
+            localStorage.setItem(draftStorageKey, JSON.stringify(input));
         } catch {
             // ignore
         }
@@ -303,7 +246,9 @@ export function PlanForm({
             if (kind === 'proposal') {
                 const parsedContent = payload(input, content);
                 const result = await proposal.mutateAsync({content: parsedContent, version, asDraft: true});
-                const targetId = id || result.id;
+                const targetId = savedId || result.id;
+                setSavedId(targetId);
+                setVersion(result.version);
                 if (pendingImages.length > 0) {
                     await uploadPendingFiles(targetId);
                 }
@@ -324,7 +269,7 @@ export function PlanForm({
     };
 
     const handleDiscardDraft = () => {
-        localStorage.removeItem(DRAFT_STORAGE_KEY);
+        localStorage.removeItem(draftStorageKey);
         form.reset(defaults());
         setDraftRestored(false);
         setDraftMessage(null);
@@ -340,11 +285,13 @@ export function PlanForm({
         }
         try {
             const result = await mutation.mutateAsync({content: payload(parsed.data, content), version, asDraft: false});
-            const targetId = id || result.id;
+            const targetId = savedId || result.id;
+            setSavedId(targetId);
+            setVersion(result.version);
             if (pendingImages.length > 0) {
                 await uploadPendingFiles(targetId);
             }
-            localStorage.removeItem(DRAFT_STORAGE_KEY);
+            localStorage.removeItem(draftStorageKey);
             setDraftRestored(false);
             form.reset(defaults(result.content));
             setVersion(result.version);
@@ -557,7 +504,7 @@ export function PlanForm({
                                 ref={fileInputRef}
                                 type="file"
                                 multiple
-                                accept="image/png,image/jpeg,image/webp"
+                                accept="image/png,image/jpeg"
                                 className="hidden"
                                 onChange={handleFilesSelected}
                             />
@@ -578,7 +525,7 @@ export function PlanForm({
                             {/* Existing images */}
                             {galleryQuery.data?.map(img => (
                                 <div key={img.id} className="relative group aspect-4/3 rounded-xl overflow-hidden border border-border bg-surface-muted">
-                                    <img src={img.imageUrl} alt={img.caption || ''} className="w-full h-full object-cover" />
+                                    <ApiImage src={img.imageUrl} alt={img.caption || ''} className="w-full h-full object-cover" />
                                     {img.caption && (
                                         <div className="absolute inset-x-0 bottom-0 bg-black/60 p-1.5 text-[10px] text-white truncate">
                                             {img.caption}
@@ -602,7 +549,7 @@ export function PlanForm({
                             {/* Pending newly picked images */}
                             {pendingImages.map(item => (
                                 <div key={item.id} className="relative group aspect-4/3 rounded-xl overflow-hidden border-2 border-dashed border-primary/50 bg-primary-light/20 flex flex-col justify-between">
-                                    <img src={item.previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                                    <ApiImage src={item.previewUrl} alt="Preview" className="w-full h-full object-cover" />
                                     <span className="absolute top-1.5 left-1.5 rounded-md bg-primary text-white text-[9px] font-bold px-1.5 py-0.5 shadow-2xs">
                                         {tr("Mới")}
                                     </span>

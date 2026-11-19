@@ -42,7 +42,6 @@ public class PaymentService {
         var p = d.payments().stream().filter(v -> v.id().equals(command.paymentId())).findFirst().orElseThrow();
 
         String orderCode = command.orderId();
-        String description = "DUT " + orderCode;
 
         String qrCodeUrl;
         if (result.qrCode() != null && !result.qrCode().isBlank() && !result.qrCode().startsWith("http")) {
@@ -50,13 +49,9 @@ public class PaymentService {
                     + URLEncoder.encode(result.qrCode(), StandardCharsets.UTF_8);
         } else if (result.qrCode() != null && result.qrCode().startsWith("http")) {
             qrCodeUrl = result.qrCode();
-        } else {
-            qrCodeUrl = "https://img.vietqr.io/image/MB-4310072005-compact2.png?amount="
-                    + amount.toPlainString() + "&addInfo=" + URLEncoder.encode(description, StandardCharsets.UTF_8)
-                    + "&accountName=HUYNH+TUAN+KHOA";
-        }
+        } else qrCodeUrl = null;
 
-        String bankName = "MB Bank";
+        String bankName = null;
         if ("970422".equals(result.bin())) bankName = "MB Bank";
         else if ("970415".equals(result.bin())) bankName = "VietinBank";
         else if ("970436".equals(result.bin())) bankName = "Vietcombank";
@@ -73,9 +68,9 @@ public class PaymentService {
         else if (result.bin() != null && !result.bin().isBlank()) bankName = "Ngân hàng (BIN " + result.bin() + ")";
 
         String accountNumber = (result.accountNumber() != null && !result.accountNumber().isBlank())
-                ? result.accountNumber() : "4310072005";
+                ? result.accountNumber() : null;
         String accountName = (result.accountName() != null && !result.accountName().isBlank())
-                ? result.accountName() : "HUYNH TUAN KHOA";
+                ? result.accountName() : null;
 
         // A callback may settle the intent before the create-order response arrives.
         return new CreationDto(d.id(), p.id(), d.status(), p.checkoutUrl(), p.failureReason(), orderCode, qrCodeUrl, accountNumber, accountName, bankName);
@@ -138,7 +133,10 @@ public class PaymentService {
     }
 
     public void callback(String provider, Callback callback) {
-        transactions.settle(gateways.get(provider).verifyCallback(callback));
+        var verified = gateways.get(provider).verifyCallback(callback);
+        // payOS sends a signed sample order when checking the webhook URL.
+        if ("payos".equals(provider) && "123".equals(verified.orderId())) return;
+        transactions.settle(verified);
     }
 
     public SettingsDto settings() {
