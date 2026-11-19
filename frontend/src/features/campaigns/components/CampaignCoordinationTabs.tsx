@@ -215,7 +215,7 @@ export function TasksTab({campaignId, canManage}: {campaignId: string; canManage
         tasksApi.list(campaignId, page, status)
     );
 
-    const transitionMutation = useCoordinationMutation(async ({taskId, command, version}: {taskId: string; command: string; version: number}) => {
+    const transitionMutation = useCoordinationMutation(async ({taskId, command, version}: {taskId: string; command: 'start' | 'done'; version: number}) => {
         return tasksApi.transition(taskId, command, version);
     });
 
@@ -308,7 +308,7 @@ export function TasksTab({campaignId, canManage}: {campaignId: string; canManage
                                                 variant="secondary"
                                                 className="text-xs"
                                                 disabled={transitionMutation.isPending}
-                                                onClick={() => transitionMutation.mutate({taskId: t.id, command: 'IN_PROGRESS', version: t.version})}
+                                                onClick={() => transitionMutation.mutate({taskId: t.id, command: 'start', version: t.version})}
                                             >
                                                 ▶️ {tr("Bắt đầu làm")}
                                             </Button>
@@ -318,7 +318,7 @@ export function TasksTab({campaignId, canManage}: {campaignId: string; canManage
                                                 variant="primary"
                                                 className="text-xs"
                                                 disabled={transitionMutation.isPending}
-                                                onClick={() => transitionMutation.mutate({taskId: t.id, command: 'DONE', version: t.version})}
+                                                onClick={() => transitionMutation.mutate({taskId: t.id, command: 'done', version: t.version})}
                                             >
                                                 ✓ {tr("Báo cáo hoàn thành")}
                                             </Button>
@@ -373,6 +373,7 @@ export function AttendanceTab({campaignId, canManage}: {campaignId: string; canM
         try {
             setQrLoading(true);
             const res = await attendanceApi.generateQr(s.id);
+            await q.refetch();
             const fullCheckinUrl = window.location.origin + res.checkinUrl;
             setQrModal({
                 title: s.title,
