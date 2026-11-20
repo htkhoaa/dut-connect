@@ -194,8 +194,12 @@ export function PlanForm({
         if (!files.length) return;
         const newItems: PendingPlanImage[] = [];
         for (const f of files) {
+            if (!['image/png', 'image/jpeg'].includes(f.type)) {
+                form.setError('root', {message: tr('Chọn ảnh PNG hoặc JPEG không quá 5 MB.')});
+                continue;
+            }
             if (f.size > 5 * 1024 * 1024) {
-                alert(tr(`Ảnh "${f.name}" vượt quá 5MB. Vui lòng chọn ảnh nhỏ hơn 5MB.`));
+                form.setError('root', {message: tr('Chọn ảnh PNG hoặc JPEG không quá 5 MB.')});
                 continue;
             }
             newItems.push({
@@ -236,11 +240,12 @@ export function PlanForm({
 
     const handleSaveDraft = async () => {
         const input = form.getValues();
+        let storedLocally = false;
         try {
             localStorage.setItem(draftStorageKey, JSON.stringify(input));
-        } catch {
-            // ignore
-        }
+            storedLocally = true;
+        } catch { /* Report storage failures below if the server save fails too. */ }
+        form.clearErrors('root');
         setSavingDraft(true);
         setDraftMessage(null);
         try {
@@ -255,16 +260,16 @@ export function PlanForm({
                     await uploadPendingFiles(targetId);
                 }
                 setVersion(result.version);
-                setDraftMessage(tr("Đã lưu bản nháp vào hệ thống và trình duyệt."));
+                setDraftMessage(tr(storedLocally ? "Đã lưu bản nháp vào hệ thống và trình duyệt." : "Đã lưu bản nháp vào hệ thống."));
                 if (!id) {
                     navigate('/proposals/' + result.id);
                 }
             } else {
                 setDraftMessage(tr("Đã lưu bản nháp vào trình duyệt."));
             }
-        } catch {
-            // If backend rejects incomplete draft, local draft is safely stored
-            setDraftMessage(tr("Đã lưu bản nháp vào trình duyệt. Dữ liệu của bạn được bảo toàn."));
+        } catch (error) {
+            setDraftMessage(storedLocally ? tr("Đã lưu nội dung bản nháp trong trình duyệt. Ảnh chưa tải lên cần được chọn lại khi mở lại trang.") : null);
+            form.setError('root', {message: storedLocally ? tr("Chưa lưu được bản nháp lên hệ thống.") : errorMessage(error)});
         } finally {
             setSavingDraft(false);
         }
@@ -326,7 +331,7 @@ export function PlanForm({
                 <Input
                     id={'plan-' + name}
                     type={type}
-                    step={type === 'datetime-local' ? '0.001' : undefined}
+                    step={type === 'datetime-local' ? '60' : undefined}
                     maxLength={max}
                     {...form.register(name)}
                 />
@@ -524,7 +529,7 @@ export function PlanForm({
                                 <span>{tr("Hình ảnh chiến dịch (Ảnh bìa & Thư viện ảnh)")}</span>
                             </h3>
                             <p className="mt-1 text-xs text-text-secondary leading-relaxed">
-                                {tr("Tải lên hình ảnh truyền thông hoặc kế hoạch thực hiện chiến dịch (tối đa 5MB/ảnh, PNG, JPG, WEBP).")}
+                                {tr("Tải lên hình ảnh truyền thông hoặc kế hoạch thực hiện chiến dịch (tối đa 5MB/ảnh, PNG, JPG).")}
                             </p>
                         </div>
                         <div>

@@ -23,6 +23,7 @@ import {Dialog} from '../../shared/components/Dialog';
 import {ApplyPanel} from '../volunteers/ApplyPanel';
 import {DonationPanel} from '../donations/DonationPanel';
 import {FinancialSummaryCard} from '../finance/FinancialSummaryCard';
+import {PublicExpenses} from '../finance/PublicExpenses';
 import {displayName} from '../../shared/lib/demoPresentation';
 import {CampaignShare} from './components/CampaignShare';
 import {CampaignGallery} from './CampaignGallery';
@@ -119,7 +120,7 @@ export function CampaignDetailPage() {
                     <CampaignShare title={displayName(c.content.title)} />
                     {isManager && (
                         <>
-                            {c.status !== 'COMPLETED' && c.status !== 'CANCELLED' ? (
+                            {['OPEN', 'ACTIVE'].includes(c.status) ? (
                                 <Button
                                     variant="secondary"
                                     className="border-danger/40 text-danger hover:bg-danger/10 text-xs font-semibold py-1.5 px-3"
@@ -206,6 +207,7 @@ export function CampaignDetailPage() {
                             </Card>
 
                             <CampaignGallery campaignId={c.id} canManage={c.canManage} />
+                            <PublicExpenses campaignId={c.id}/>
 
                             <Card>
                                 <h2 className="mb-4 text-xl font-semibold">{tr("Kỹ năng cần có")}</h2>
@@ -245,15 +247,15 @@ export function CampaignDetailPage() {
                     )}
 
                     {activeTab === 'meetings' && canAccessCoordination && (
-                        <MeetingsTab campaignId={c.id} canManage={c.canManage} />
+                        <MeetingsTab campaignId={c.id} canManage={c.canManage && ['OPEN', 'ACTIVE'].includes(c.status)} />
                     )}
 
                     {activeTab === 'tasks' && canAccessCoordination && (
-                        <TasksTab campaignId={c.id} canManage={c.canManage} />
+                        <TasksTab campaignId={c.id} canManage={c.canManage && ['OPEN', 'ACTIVE'].includes(c.status)} />
                     )}
 
                     {activeTab === 'attendance' && canAccessCoordination && (
-                        <AttendanceTab campaignId={c.id} canManage={c.canManage} />
+                        <AttendanceTab campaignId={c.id} canManage={c.canManage} canOperate={['OPEN', 'ACTIVE'].includes(c.status)} />
                     )}
                 </div>
 
@@ -308,6 +310,7 @@ export function CampaignDetailPage() {
             </div>
 
             {/* Confirm End Campaign Early Dialog */}
+            {transitionMutation.isError && <ErrorState message={errorMessage(transitionMutation.error)}/>}
             <ConfirmDialog
                 open={showEndModal}
                 title={tr("Kết thúc chiến dịch sớm?")}
@@ -346,6 +349,8 @@ export function CampaignDetailPage() {
                                 </Button>
                             </div>
                         </div>
+                    ) : dashboardQuery.isError ? (
+                        <ErrorState message={errorMessage(dashboardQuery.error)} onRetry={() => void dashboardQuery.refetch()}/>
                     ) : (
                         <LoadingState message={tr("Đang tải dữ liệu tổng kết…")} />
                     )}

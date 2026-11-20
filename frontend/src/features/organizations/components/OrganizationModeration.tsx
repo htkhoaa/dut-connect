@@ -18,7 +18,7 @@ export function OrganizationModeration({detail}: {detail: OrganizationDetail}) {
         <Button disabled={mutation.isPending} onClick={() => setConfirmation({command, version: detail.organization.version})}>{renderText(labels[command])} {tr("tổ chức")}</Button>
         {renderText(mutation.isError && <ErrorState message={errorMessage(mutation.error)}/>)}
         {renderText(mutation.isSuccess && <p role="status" className="text-success">{tr("Đã cập nhật trạng thái tổ chức.")}</p>)}
-        <ConfirmDialog open={confirmation !== null} title={confirmation ? labels[confirmation.command] + ' organization?' : ''}
+        <ConfirmDialog open={confirmation !== null} title={confirmation ? labels[confirmation.command] + ' ' + tr('tổ chức') + '?'  : ''}
                        message={confirmation?.command === 'suspend' ? tr("Người đại diện sẽ không còn quyền hành động thay mặt tổ chức này.") : tr("Xác nhận tổ chức đủ điều kiện được đại diện.")}
                        confirmLabel={tr("Xác nhận")} busy={mutation.isPending} onClose={() => setConfirmation(null)} onConfirm={() => {
                            if (confirmation) mutation.mutate(confirmation, {onSettled: () => setConfirmation(null)});

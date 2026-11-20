@@ -24,13 +24,11 @@ const ways: {icon: IconName; title: string; description: string}[] = [
 export function HomePage() {
     useLanguage();
     const user = useAuth(s => s.user);
-    if (user?.role === 'ADMIN') {
-        return <Navigate to="/admin" replace />;
-    }
     const campaigns = useCampaigns('public', filters);
     const organizations = useOrganizations('public', 0, '', '');
     const featured = campaigns.data?.items.slice(0, 6) || [];
     const progress = useFundraisingProgress(featured.filter(c => c.contributionMode !== 'VOLUNTEER_ONLY').map(c => c.id));
+    if (user?.role === 'ADMIN') return <Navigate to="/admin" replace />;
     return <div className="landing-page">
         <section className="landing-hero">
             <div className="landing-hero-copy"><span className="hero-kicker"><span className="h-2 w-2 rounded-full bg-primary"/>{tr("Cộng đồng sinh viên Bách khoa Đà Nẵng")}</span>

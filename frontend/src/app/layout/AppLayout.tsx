@@ -16,6 +16,7 @@ type AdminItem = {to: string; label: string; icon: IconName};
 const adminItems: AdminItem[] = [
     {to: '/admin', label: 'Tổng quan', icon: 'grid'},
     {to: '/admin/proposals', label: 'Duyệt đề xuất', icon: 'file'},
+    {to: '/admin/expenses', label: 'Duyệt chi phí', icon: 'file'},
     {to: '/admin/organizations', label: 'Xác minh tổ chức', icon: 'shield'},
     {to: '/admin/payouts', label: 'Giải ngân quyên góp', icon: 'heart'},
     {to: '/admin/users', label: 'Người dùng', icon: 'users'},
@@ -222,6 +223,10 @@ export function AppLayout() {
                                                             <Icon name="shield" size={16} className="text-primary"/>
                                                             <span>{tr("Xác minh tổ chức")}</span>
                                                         </Link>
+                                                        <Link to="/admin/expenses" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
+                                                            <Icon name="file" size={16} className="text-primary"/>
+                                                            <span>{tr("Duyệt chi phí")}</span>
+                                                        </Link>
                                                         <Link to="/admin/payouts" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors">
                                                             <Icon name="heart" size={16} className="text-primary"/>
                                                             <span>{tr("Giải ngân quyên góp")}</span>
@@ -393,7 +398,7 @@ export function AppLayout() {
                         <div className="grid gap-2 text-xs">
                             <Link to="/campaigns" className="hover:text-primary transition-colors">{tr("Khám phá chiến dịch")}</Link>
                             <Link to="/organizations" className="hover:text-primary transition-colors">{tr("Cộng đồng tổ chức")}</Link>
-                            <Link to={user ? '/proposals/new' : '/login'} className="hover:text-primary transition-colors">{tr("Đăng nhập để bắt đầu")}</Link>
+                            <Link to={user ? '/proposals/new' : '/login'} className="hover:text-primary transition-colors">{tr(user ? 'Tạo đề xuất' : 'Đăng nhập để bắt đầu')}</Link>
                         </div>
                     </div>
                     <div>

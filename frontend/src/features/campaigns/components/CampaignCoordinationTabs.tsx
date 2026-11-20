@@ -272,6 +272,7 @@ export function TasksTab({campaignId, canManage}: {campaignId: string; canManage
                 ))}
             </div>
 
+            {transitionMutation.isError && <ErrorState message={errorMessage(transitionMutation.error)}/> }
             {items.length === 0 ? (
                 <EmptyState message={tr("Chưa có nhiệm vụ nào trong danh mục này.")} />
             ) : (
@@ -303,7 +304,7 @@ export function TasksTab({campaignId, canManage}: {campaignId: string; canManage
 
                                     {/* Action buttons */}
                                     <div className="flex items-center gap-2">
-                                        {isAssigned && t.status === 'TODO' && (
+                                        {isAssigned && t.canProgress && t.status === 'TODO' && (
                                             <Button
                                                 variant="secondary"
                                                 className="text-xs"
@@ -313,7 +314,7 @@ export function TasksTab({campaignId, canManage}: {campaignId: string; canManage
                                                 ▶️ {tr("Bắt đầu làm")}
                                             </Button>
                                         )}
-                                        {isAssigned && t.status === 'IN_PROGRESS' && (
+                                        {isAssigned && t.canProgress && t.status === 'IN_PROGRESS' && (
                                             <Button
                                                 variant="primary"
                                                 className="text-xs"
@@ -361,17 +362,19 @@ export function TasksTab({campaignId, canManage}: {campaignId: string; canManage
 // ----------------------------------------------------
 // 4. Attendance Tab
 // ----------------------------------------------------
-export function AttendanceTab({campaignId, canManage}: {campaignId: string; canManage: boolean}) {
+export function AttendanceTab({campaignId, canManage, canOperate = true}: {campaignId: string; canManage: boolean; canOperate?: boolean}) {
     useLanguage();
     const [page, setPage] = useState(0);
     const [qrModal, setQrModal] = useState<{title: string; qrImageUrl: string; checkinUrl: string} | null>(null);
     const [qrLoading, setQrLoading] = useState(false);
+    const [qrError, setQrError] = useState('');
 
     const q = useCoordinationQuery(['sessions', campaignId, page], () => attendanceApi.list(campaignId, page));
 
     const handleGenerateQr = async (s: Session) => {
         try {
             setQrLoading(true);
+            setQrError('');
             const res = await attendanceApi.generateQr(s.id);
             await q.refetch();
             const fullCheckinUrl = window.location.origin + res.checkinUrl;
@@ -380,8 +383,8 @@ export function AttendanceTab({campaignId, canManage}: {campaignId: string; canM
                 qrImageUrl: `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(fullCheckinUrl)}`,
                 checkinUrl: fullCheckinUrl,
             });
-        } catch {
-            // ignore
+        } catch (error) {
+            setQrError(errorMessage(error));
         } finally {
             setQrLoading(false);
         }
@@ -403,7 +406,7 @@ export function AttendanceTab({campaignId, canManage}: {campaignId: string; canM
                             : tr("Quét mã QR do ban tổ chức cung cấp trong buổi hoạt động để xác nhận tham gia.")}
                     </p>
                 </div>
-                <div className="flex items-center gap-2">
+                {canOperate && <div className="flex items-center gap-2">
                     <Link to="/attendance/checkin" className="ui-button ui-button-secondary text-xs">
                         📱 {tr("Nhập mã / Điểm danh")}
                     </Link>
@@ -412,9 +415,11 @@ export function AttendanceTab({campaignId, canManage}: {campaignId: string; canM
                             + {tr("Tạo buổi điểm danh")}
                         </Link>
                     )}
-                </div>
+                </div>}
             </div>
 
+            {qrError && <ErrorState message={qrError}/>}
+            {!canOperate && <p className="text-sm text-text-secondary">{tr("Chiến dịch hiện chỉ cho phép xem.")}</p>}
             {items.length === 0 ? (
                 <EmptyState message={tr("Chưa có buổi điểm danh nào được thiết lập.")} />
             ) : (
@@ -428,7 +433,7 @@ export function AttendanceTab({campaignId, canManage}: {campaignId: string; canM
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            {canOperate && <div className="flex items-center gap-2">
                                 {canManage ? (
                                     <Button
                                         variant="secondary"
@@ -443,7 +448,7 @@ export function AttendanceTab({campaignId, canManage}: {campaignId: string; canM
                                         ✓ {tr("Điểm danh ngay")}
                                     </Link>
                                 )}
-                            </div>
+                            </div>}
                         </Card>
                     ))}
                 </div>

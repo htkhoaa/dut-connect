@@ -1,5 +1,5 @@
 import {useQuery} from '@tanstack/react-query';
-import {useLanguage, tr, renderText} from '../../shared/lib/i18n';
+import {useLanguage, tr, renderText, locale} from '../../shared/lib/i18n';
 import {apiClient} from '../../shared/api/client';
 import {Icon} from '../../shared/components/Icon';
 
@@ -17,7 +17,7 @@ function timeAgo(dateStr: string) {
     if (diff < 60) return tr("Vừa xong");
     if (diff < 3600) return `${Math.floor(diff / 60)} ${tr("phút trước")}`;
     if (diff < 86400) return `${Math.floor(diff / 3600)} ${tr("giờ trước")}`;
-    return new Date(dateStr).toLocaleDateString('vi-VN');
+    return new Date(dateStr).toLocaleDateString(locale());
 }
 
 export function CampaignActivityFeed({campaignId}: {campaignId: string}) {

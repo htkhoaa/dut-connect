@@ -60,26 +60,6 @@ export function OrganizationDetailPage() {
             <Button variant="secondary" onClick={() => setReload(true)}>{tr("Tải lại tổ chức")}</Button>
         </div>
 
-        {/* Dynamic Activity Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="rounded-2xl border border-border bg-white p-4 shadow-2xs">
-                <p className="text-2xl font-bold text-primary">350+</p>
-                <p className="text-xs text-text-secondary mt-1">{tr("Tình nguyện viên năng động")}</p>
-            </div>
-            <div className="rounded-2xl border border-border bg-white p-4 shadow-2xs">
-                <p className="text-2xl font-bold text-primary">15+</p>
-                <p className="text-xs text-text-secondary mt-1">{tr("Chiến dịch đã hoàn thành")}</p>
-            </div>
-            <div className="rounded-2xl border border-border bg-white p-4 shadow-2xs">
-                <p className="text-2xl font-bold text-primary">2.100+</p>
-                <p className="text-xs text-text-secondary mt-1">{tr("Giờ công hiến cộng đồng")}</p>
-            </div>
-            <div className="rounded-2xl border border-border bg-white p-4 shadow-2xs">
-                <p className="text-2xl font-bold text-emerald-600">99.2%</p>
-                <p className="text-xs text-text-secondary mt-1">{tr("Đánh giá tích cực")}</p>
-            </div>
-        </div>
-
         <Card>
             <h2 className="mb-4 text-xl font-semibold">{tr("Giới thiệu tổ chức")}</h2>
             <div className="space-y-4">
@@ -91,28 +71,6 @@ export function OrganizationDetailPage() {
                 {renderText(detail.ownRole && <p role="status" className={detail.canRepresent ? 'text-success' : 'text-text-secondary'}>
                     {renderText(detail.canRepresent ? tr("Bạn được quyền đại diện tổ chức đã xác minh này.") : tr("Bạn chưa được quyền đại diện. Tổ chức cần được xác minh và bạn cần là chủ sở hữu hoặc người quản lý."))}
                 </p>)}
-            </div>
-        </Card>
-
-        {/* Activity Photo Highlights */}
-        <Card>
-            <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-semibold">{tr("Khoảnh khắc sinh hoạt & hoạt động")}</h2>
-                <span className="text-xs text-text-secondary">{tr("Hình ảnh hoạt động thực tế sinh viên DUT")}</span>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="aspect-4/3 overflow-hidden rounded-xl border border-border bg-surface-muted group">
-                    <img src="/images/dut-volunteer-summer.jpg" alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
-                </div>
-                <div className="aspect-4/3 overflow-hidden rounded-xl border border-border bg-surface-muted group">
-                    <img src="/images/dut-volunteer-spring.jpg" alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
-                </div>
-                <div className="aspect-4/3 overflow-hidden rounded-xl border border-border bg-surface-muted group">
-                    <img src="/images/dut-volunteer-beach.jpg" alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
-                </div>
-                <div className="aspect-4/3 overflow-hidden rounded-xl border border-border bg-surface-muted group">
-                    <img src="/images/dut-volunteer-blood.jpg" alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
-                </div>
             </div>
         </Card>
 

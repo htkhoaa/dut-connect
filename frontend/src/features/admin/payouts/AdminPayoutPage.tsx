@@ -86,6 +86,15 @@ export function AdminPayoutPage() {
 
     const handleConfirmPayout = () => {
         if (!selected) return;
+        setActionError(null);
+        if (!/^[0-9]{1,19}$/.test(amount) || BigInt(amount) <= 0n || BigInt(amount) > BigInt(selected.currentBalance)) {
+            setActionError(tr('Nhập số tiền VND nguyên lớn hơn 0 và không vượt quá số dư.'));
+            return;
+        }
+        if (receiptFile && (!['image/png', 'image/jpeg'].includes(receiptFile.type) || receiptFile.size > 5 * 1024 * 1024)) {
+            setActionError(tr('Chọn ảnh PNG hoặc JPEG không quá 5 MB.'));
+            return;
+        }
         payoutMutation.mutate({
             id: selected.id,
             amount,
@@ -213,7 +222,7 @@ export function AdminPayoutPage() {
 
             {/* MODAL XÁC NHẬN GIẢI NGÂN */}
             {selected && (
-                <Dialog open={true} title={tr("Xác nhận giải ngân cho chiến dịch")} onClose={() => setSelected(null)}>
+                <Dialog open={true} title={tr("Xác nhận giải ngân cho chiến dịch")} busy={payoutMutation.isPending} onClose={() => setSelected(null)}>
                     <div className="space-y-4">
                         <div className="rounded-xl border border-primary-muted bg-primary-light p-4 text-sm space-y-2">
                             <p className="font-semibold text-primary">{selected.title}</p>
@@ -258,7 +267,7 @@ export function AdminPayoutPage() {
                             <input
                                 id="payout-receipt"
                                 type="file"
-                                accept="image/*"
+                                accept="image/png,image/jpeg"
                                 onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
                                 className="block w-full text-xs text-text-secondary file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary-light file:text-primary hover:file:bg-primary-muted cursor-pointer"
                             />

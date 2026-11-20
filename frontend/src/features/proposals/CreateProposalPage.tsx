@@ -6,6 +6,6 @@ import {Icon} from '../../shared/components/Icon';
 export function CreateProposalPage() {
     useLanguage();
     return <div className="mx-auto max-w-5xl space-y-5"><PageHeader eyebrow={tr("TỪ Ý TƯỞNG ĐẾN HÀNH ĐỘNG")} title={tr("Một ý tưởng. Một khởi đầu mới.")} description={tr("Gửi đề xuất cá nhân hoặc đại diện tổ chức đã xác minh. Trình bày rõ hoạt động, nguồn lực và giá trị bạn muốn mang lại.")}/>
-        <div className="flex items-start gap-3 rounded-xl border border-primary-muted bg-primary-light p-4"><Icon name="shield" className="shrink-0 text-primary"/><p className="text-sm text-text-secondary">{tr("Sau khi quản trị viên duyệt, đề xuất trở thành chiến dịch nháp để bạn hoàn thiện kế hoạch trước khi mở tuyển.")}</p></div><Card><PlanForm/></Card>
+        <div className="flex items-start gap-3 rounded-xl border border-primary-muted bg-primary-light p-4"><Icon name="shield" className="shrink-0 text-primary"/><p className="text-sm text-text-secondary">{tr("Hoàn thiện kế hoạch trước khi gửi. Sau khi được duyệt, chiến dịch bắt đầu hoạt động và nội dung kế hoạch không thể chỉnh sửa.")}</p></div><Card><PlanForm/></Card>
     </div>;
 }

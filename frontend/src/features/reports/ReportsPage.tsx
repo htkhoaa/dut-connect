@@ -2,6 +2,7 @@ import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
 import {Link,useParams} from 'react-router-dom';
 import {useDownloadReport} from './hooks';
 import {useCampaignDashboard} from '../dashboard/hooks';
+import {useCampaign} from '../campaigns/hooks';
 import {Card} from '../../shared/components/Card';
 import {Button} from '../../shared/components/Button';
 import {LoadingState} from '../../shared/components/LoadingState';
@@ -14,13 +15,15 @@ export function ReportsPage(){
 function Reports({campaignId}:{campaignId:string}){
     useLanguage();
     const access=useCampaignDashboard(campaignId);const download=useDownloadReport(campaignId);
-    if(access.isPending)return <LoadingState/>;
+    const campaign = useCampaign(campaignId);
+    if(access.isPending || campaign.isPending)return <LoadingState/>;
+    if(campaign.isError)return <ErrorState message={errorMessage(campaign.error)} onRetry={()=>void campaign.refetch()}/>;
     if(access.isError)return <ErrorState message={errorMessage(access.error)} onRetry={()=>void access.refetch()}/>;
     return <div className="space-y-6"><h1 className="text-3xl font-semibold">{tr("Báo cáo chiến dịch")}</h1><Link className="ui-button ui-button-secondary" to={'/manage/campaigns/'+campaignId}>{tr("Không gian chiến dịch")}</Link>
         <Card>
             <h2 className="mb-3 text-xl font-semibold">📄 {tr("Xuất Báo cáo tổng kết PDF")}</h2>
             <p className="mb-4 text-text-secondary">{tr("Xuất báo cáo tổng kết chính thức dạng văn bản A4 bao gồm số liệu nhân lực tình nguyện và cân đối thu chi tài chính để lưu trữ hoặc trình ký.")}</p>
-            <Button variant="primary" onClick={() => exportCampaignPdfReport(tr("Chiến dịch tình nguyện"), access.data)}>
+            <Button variant="primary" onClick={() => exportCampaignPdfReport(campaign.data.content.title, access.data)}>
                 {tr("Xuất / In báo cáo PDF")}
             </Button>
         </Card>

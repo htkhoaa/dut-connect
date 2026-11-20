@@ -12,6 +12,7 @@ import {EmptyState} from '../../../shared/components/EmptyState';
 import {LoadingState} from '../../../shared/components/LoadingState';
 import {ErrorState} from '../../../shared/components/ErrorState';
 import {ConfirmDialog} from '../../../shared/components/ConfirmDialog';
+import {useDebouncedValue} from '../../../shared/hooks/useDebouncedValue';
 
 export function UsersPage() {
     useLanguage();
@@ -19,20 +20,21 @@ export function UsersPage() {
     const [nameFilter, setNameFilter] = useState('');
     const [studentIdFilter, setStudentIdFilter] = useState('');
     const [selected, setSelected] = useState<UserSummary | null>(null);
-    const users = useUsers(page, nameFilter, studentIdFilter);
+    const nameQuery = useDebouncedValue(nameFilter.trim());
+    const studentIdQuery = useDebouncedValue(studentIdFilter.trim());
+    const users = useUsers(page, nameQuery, studentIdQuery);
     const change = useChangeStatus();
-    if (users.isPending) return <LoadingState message={tr("Đang tải người dùng…")}/>;
-    if (users.isError) return <ErrorState message={errorMessage(users.error)} onRetry={() => void users.refetch()}/>;
     return <><h1 className="mb-3 text-3xl font-semibold">{tr("Quản lý người dùng")}</h1>
-        <p className="mb-4 text-text-secondary">{renderText(users.data.totalElements)} {tr("tài khoản")}</p>
+        <p className="mb-4 text-text-secondary">{renderText(users.data?.totalElements ?? 0)} {tr("tài khoản")}</p>
 
         {/* Filter by name and student ID */}
         <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1">
+                <label htmlFor="users-name" className="block text-xs font-semibold text-text-secondary mb-1">
                     {tr("Tìm theo họ tên")}
                 </label>
                 <input
+                    id="users-name"
                     type="text"
                     value={nameFilter}
                     onChange={(e) => { setNameFilter(e.target.value); setPage(0); }}
@@ -41,10 +43,11 @@ export function UsersPage() {
                 />
             </div>
             <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1">
+                <label htmlFor="users-student-id" className="block text-xs font-semibold text-text-secondary mb-1">
                     {tr("Tìm theo mã sinh viên")}
                 </label>
                 <input
+                    id="users-student-id"
                     type="text"
                     value={studentIdFilter}
                     onChange={(e) => { setStudentIdFilter(e.target.value); setPage(0); }}
@@ -67,7 +70,9 @@ export function UsersPage() {
 
         {change.isError && <ErrorState message={errorMessage(change.error)}/>}
         {change.isSuccess && <p role="status" className="mb-4 text-success">{tr("Đã cập nhật trạng thái tài khoản.")}</p>}
-        <Table caption={tr("Người dùng đã đăng ký và trạng thái tài khoản")}>
+        {users.isPending && <LoadingState message={tr("Đang tải người dùng…")}/>}
+        {users.isError && <ErrorState message={errorMessage(users.error)} onRetry={() => void users.refetch()}/>}
+        {users.data && <><Table caption={tr("Người dùng đã đăng ký và trạng thái tài khoản")}>
             <thead className="bg-surface-muted"><tr>
                 {renderText([tr("Họ tên / Mã sinh viên"), 'Email', tr("Vai trò"), tr("Trạng thái"), tr("Ngày tham gia"), tr("Thao tác")].map((label) =>
                     <th key={label} scope="col" className="p-4">{renderText(label)}</th>))}
@@ -85,7 +90,7 @@ export function UsersPage() {
         </Table>
         {users.data.items.length === 0 && <EmptyState message={tr("Không tìm thấy người dùng.")}/>}
         <Pagination page={users.data.page} totalPages={users.data.totalPages} hasPrevious={users.data.hasPrevious}
-                    hasNext={users.data.hasNext} onPageChange={setPage}/>
+                    hasNext={!users.isPlaceholderData && users.data.hasNext} onPageChange={setPage}/></>}
         <ConfirmDialog open={selected !== null} title={selected?.status === 'ACTIVE' ? tr("Tạm ngừng tài khoản?") : tr("Khôi phục tài khoản?")}
                        message={selected ? `${selected.fullName}: ${selected.status === 'ACTIVE' ? tr("Thao tác sẽ khóa quyền truy cập và thu hồi các phiên đăng nhập.") : tr("Tài khoản sẽ có thể đăng nhập trở lại.")}` : ''}
                        confirmLabel={selected?.status === 'ACTIVE' ? tr("Tạm ngừng") : tr("Khôi phục")} busy={change.isPending}

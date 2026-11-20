@@ -6,6 +6,9 @@ import {apiClient} from '../../shared/api/client';
 import {Card} from '../../shared/components/Card';
 import {Icon} from '../../shared/components/Icon';
 import {Button} from '../../shared/components/Button';
+import {LoadingState} from '../../shared/components/LoadingState';
+import {ErrorState} from '../../shared/components/ErrorState';
+import {errorMessage} from '../../shared/api/errors';
 
 export interface GalleryItem {
     id: string;
@@ -21,6 +24,7 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
     const qc = useQueryClient();
     const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
     const [captionInput, setCaptionInput] = useState('');
+    const [fileError, setFileError] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const query = useQuery({
@@ -82,11 +86,14 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
         return () => window.removeEventListener('keydown', handleKeyDown);
     });
 
-    if (query.isPending) return null;
+    if (query.isPending) return <LoadingState/>;
+    if (query.isError) return <ErrorState message={errorMessage(query.error)} onRetry={() => void query.refetch()}/>;
     if (items.length === 0 && !canManage) return null;
 
     return (
         <Card className="overflow-hidden">
+            {fileError && <ErrorState message={fileError}/>}
+            {(uploadMutation.isError || deleteMutation.isError) && <ErrorState message={errorMessage(uploadMutation.error || deleteMutation.error)}/>}
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xl font-semibold text-text-primary">{tr("Thư viện ảnh")}</h2>
                 {items.length > 0 && (
@@ -162,6 +169,13 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
                             className="hidden"
                             onChange={(e) => {
                                 const file = e.target.files?.[0];
+                                setFileError('');
+                                uploadMutation.reset();
+                                if (file && (!['image/png', 'image/jpeg'].includes(file.type) || file.size > 5 * 1024 * 1024)) {
+                                    setFileError(tr('Chọn ảnh PNG hoặc JPEG không quá 5 MB.'));
+                                    e.target.value = '';
+                                    return;
+                                }
                                 if (file) {
                                     uploadMutation.mutate({file, caption: captionInput});
                                 }
