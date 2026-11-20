@@ -14,7 +14,7 @@ export function useOrganizationTypes() {return useQuery({queryKey: ['organizatio
 export function useOrganizationMembers(id: string, page: number) {return useQuery({queryKey: ['organizations', id, 'members', page], queryFn: () => api.getMembers(id, page)});}
 function useRefreshOrganizations() {
     const client = useQueryClient();
-    return () => Promise.all(['organizations', 'dashboard'].map(key => client.invalidateQueries({queryKey: [key]})));
+    return () => Promise.all(['organizations', 'organization-options', 'dashboard'].map(key => client.invalidateQueries({queryKey: [key]})));
 }
 export function useCreateOrganization() {return useMutation({mutationFn: api.createOrganization, onSuccess: useRefreshOrganizations()});}
 export function useEditOrganization(id: string) {return useMutation({mutationFn: (values: OrganizationPatch) => api.editOrganization(id, values), onSuccess: useRefreshOrganizations()});}

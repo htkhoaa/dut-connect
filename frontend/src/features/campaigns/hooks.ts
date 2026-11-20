@@ -6,7 +6,14 @@ export function useCampaigns(scope:'public'|'mine'|'admin',filters:CampaignFilte
 export function useCampaign(id:string){const {user,initialized}=useAuth();return useQuery({queryKey:['campaigns',id,user?.id||'public'],queryFn:()=>api.campaignDetail(id),enabled:initialized&&!!id});}
 export function useCategories(page:number,admin=false){return useQuery({queryKey:['categories',admin,page],queryFn:()=>api.categories(page,admin)});}
 export function useCategoryCatalog(){return useQuery({queryKey:['categories','catalog'],queryFn:api.categoryCatalog});}
-export function useOrganizationOptions(scope:'public'|'mine'){return useQuery({queryKey:['organization-options',scope],queryFn:()=>api.organizationOptions(scope)});}
+export function useOrganizationOptions(scope:'public'|'mine'|'proposal') {
+    const {user, initialized} = useAuth();
+    return useQuery({
+        queryKey: ['organization-options', scope, scope === 'public' ? 'public' : user?.id],
+        queryFn: () => scope === 'proposal' ? api.proposalOrganizationOptions() : api.organizationOptions(scope),
+        enabled: initialized && (scope === 'public' || !!user),
+    });
+}
 export function useSkillCatalog(){return useQuery({queryKey:['skill-catalog'],queryFn:api.skillCatalog});}
 export function useRefreshCampaigns(){const client=useQueryClient();return async()=>{await Promise.all(['campaigns','proposals','categories','applications','coordination','finance','dashboard'].map(key=>client.invalidateQueries({queryKey:[key]})));};}
 export function useEditCampaign(id:string){return useMutation({mutationFn:(values:PlanWrite)=>api.editCampaign(id,values),onSuccess:useRefreshCampaigns()});}

@@ -39,7 +39,7 @@ export interface ProposalSummary {id:string;title:string;organizerType:Organizer
 export interface ProposalDetail {id:string;proposerUserId:string;proposerName:string;content:Content;categoryName:string;organizationName:string|null;status:ProposalStatus;rejectionReason:string|null;reviewedByUserId:string|null;reviewedAt:string|null;createdAt:string;updatedAt:string;version:number;campaignId:string|null;canEdit:boolean}
 export interface SkillRequirement {skillId:string;name:string;track:SkillTrack;importance:number}
 export interface SkillInput {skillId:string;track:SkillTrack;importance:number}
-export interface OrganizationOption {id:string;name:string;status:string}
+export interface OrganizationOption {id:string;name:string;status:string;canRepresent?:boolean}
 export interface SkillOption {id:string;name:string}
 export interface CampaignFilters {page:number;q:string;status:CampaignStatus|'';categoryId:string;organizationId:string;contributionMode:ContributionMode|'';sort:'newest'|'startDate'}
 export interface PlanWrite {content:Content;version?:number;asDraft?:boolean}

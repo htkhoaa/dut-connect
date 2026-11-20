@@ -1,4 +1,5 @@
 import {apiClient} from '../../shared/api/client';
+import {getOrganization} from '../organizations/api';
 import type {PageResponse} from '../../shared/api/errors';
 import type {CampaignSummary,CampaignDetail,CampaignFilters,Category,CategoryWrite,PlanWrite,CampaignAction,SkillInput,SkillOption,OrganizationOption} from './types';
 export async function campaignList(scope:'public'|'mine'|'admin',filters:CampaignFilters) {
@@ -19,6 +20,14 @@ export async function saveCategory(id:string|undefined,values:CategoryWrite) {
 export async function organizationOptions(scope:'public'|'mine') {
     const items:OrganizationOption[]=[];let page=0;
     while(true){const result=(await apiClient.get<PageResponse<OrganizationOption>>(scope==='mine'?'/me/organizations':'/organizations',{params:{page:page++,size:100}})).data;items.push(...result.items.filter(o=>o.status==='VERIFIED'));if(!result.hasNext)return items;}
+}
+export async function proposalOrganizationOptions() {
+    const [verified, mine] = await Promise.all([organizationOptions('public'), organizationOptions('mine')]);
+    // Membership alone is insufficient: only owners and managers can represent an organization.
+    const details = await Promise.all(mine.map(o => getOrganization(o.id)));
+    const allowed = new Set(details.filter(o => o.canRepresent).map(o => o.organization.id));
+    return verified.map(o => ({...o, canRepresent: allowed.has(o.id)}))
+        .sort((a, b) => Number(b.canRepresent) - Number(a.canRepresent) || a.name.localeCompare(b.name, 'vi'));
 }
 export async function skillCatalog() {
     const items:SkillOption[]=[];let page=0;
