@@ -127,7 +127,7 @@ export function PlanForm({
     const draftStorageKey = DRAFT_STORAGE_KEY + ':' + userId;
     const [savedId, setSavedId] = useState(id);
     const categories = useCategoryCatalog();
-    const organizations = useOrganizationOptions('mine');
+    const organizations = useOrganizationOptions('proposal');
     const proposal = useSaveProposal(kind === 'proposal' ? savedId : undefined);
     const campaign = useEditCampaign(id || '');
     const form = useForm<FormValues>({defaultValues: defaults(content)});
@@ -407,6 +407,7 @@ export function PlanForm({
 
                 {renderText(
                     organizer === 'ORGANIZATION' && (
+                        <div className="space-y-2">
                         <FormField
                             id="plan-organizationId"
                             label={tr("Tổ chức đã xác minh (cần quyền sở hữu hoặc quản lý) *")}
@@ -416,8 +417,8 @@ export function PlanForm({
                                 <option value="">{tr("Chọn tổ chức")}</option>
                                 {renderText(
                                     organizations.data.map(o => (
-                                        <option key={o.id} value={o.id}>
-                                            {renderText(o.name)}
+                                        <option key={o.id} value={o.id} disabled={!o.canRepresent}>
+                                            {o.name}{!o.canRepresent ? ` — ${tr("Chưa có quyền đại diện")}` : ''}
                                         </option>
                                     ))
                                 )}
@@ -430,6 +431,14 @@ export function PlanForm({
                                 )}
                             </Select>
                         </FormField>
+                        {kind !== 'campaign' && <p role="status" className="text-sm text-text-secondary">
+                            {organizations.data.length === 0
+                                ? tr("Chưa có tổ chức nào được xác minh trong hệ thống.")
+                                : organizations.data.some(o => o.canRepresent)
+                                    ? tr("Chỉ chọn được tổ chức mà bạn là chủ sở hữu hoặc người quản lý.")
+                                    : tr("Bạn chưa có quyền đại diện tổ chức nào đã xác minh. Hãy nhờ chủ sở hữu thêm bạn làm người quản lý hoặc chọn đơn vị tổ chức là Cá nhân.")}
+                        </p>}
+                        </div>
                     )
                 )}
 

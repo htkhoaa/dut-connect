@@ -1,5 +1,9 @@
 /** Vietnamese remains the source language; translations are bundled, with no runtime service. */
 export const english: Record<string, string> = Object.fromEntries(`
+Chưa có quyền đại diện|No permission to represent
+Chưa có tổ chức nào được xác minh trong hệ thống.|No organizations have been verified yet.
+Chỉ chọn được tổ chức mà bạn là chủ sở hữu hoặc người quản lý.|You can only select organizations you own or manage.
+Bạn chưa có quyền đại diện tổ chức nào đã xác minh. Hãy nhờ chủ sở hữu thêm bạn làm người quản lý hoặc chọn đơn vị tổ chức là Cá nhân.|You cannot represent any verified organization yet. Ask an owner to add you as a manager, or choose Individual as the organizer.
 Xác định mục tiêu, thời hạn và tài khoản nhận giải ngân.|Set the goal, deadline and payout account.
 Nhập số tiền nguyên, không có dấu chấm hoặc dấu phẩy. Ví dụ: 5000000 = 5.000.000 VND.|Enter a whole amount without separators. Example: 5000000 = 5,000,000 VND.
 Hạn gây quỹ *|Fundraising deadline *
