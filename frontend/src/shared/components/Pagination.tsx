@@ -7,7 +7,7 @@ export function Pagination({page, totalPages, hasPrevious, hasNext, onPageChange
     useLanguage();
     return <nav aria-label={tr("Phân trang")} className="mt-7 flex flex-wrap items-center justify-center gap-4">
         <Button variant="secondary" disabled={!hasPrevious} onClick={() => onPageChange(page - 1)}>{tr("Trang trước")}</Button>
-        <span className="text-sm text-text-secondary" aria-live="polite">Trang {renderText(page + 1)} / {renderText(Math.max(1, totalPages))}</span>
-        <Button variant="secondary" disabled={!hasNext} onClick={() => onPageChange(page + 1)}>Trang sau</Button>
+        <span className="text-sm text-text-secondary" aria-live="polite">{tr("Trang")} {renderText(page + 1)} / {renderText(Math.max(1, totalPages))}</span>
+        <Button variant="secondary" disabled={!hasNext} onClick={() => onPageChange(page + 1)}>{tr("Trang sau")}</Button>
     </nav>;
 }

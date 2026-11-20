@@ -1,3 +1,4 @@
+import {locale, tr} from '../../shared/lib/i18n';
 import type {BadgeTone} from '../../shared/components/Badge';
 import type {CampaignStatus,ProposalStatus,ContributionMode,OrganizerType} from './types';
 export const campaignStatuses:Record<CampaignStatus,{label:string;tone:BadgeTone}>={
@@ -12,5 +13,5 @@ export const proposalStatuses:Record<ProposalStatus,{label:string;tone:BadgeTone
 };
 export const modes:Record<ContributionMode,string>={VOLUNTEER_ONLY:'Tình nguyện',DONATION_ONLY:'Ủng hộ tài chính',HYBRID:'Tình nguyện & ủng hộ'};
 export const organizers:Record<OrganizerType,string>={INDIVIDUAL:'Cá nhân',ORGANIZATION:'Tổ chức'};
-export function vnd(value:string|null|undefined) {return value==null?'Chưa xác định':new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND',maximumFractionDigits:0}).format(BigInt(value));}
-export function dateTime(value:string|null) {return value?new Date(value).toLocaleString('vi-VN'):'Không có thời hạn';}
+export function vnd(value:string|null|undefined) {return value==null?tr('Chưa xác định'):new Intl.NumberFormat(locale(),{style:'currency',currency:'VND',maximumFractionDigits:0}).format(BigInt(value));}
+export function dateTime(value:string|null) {return value?new Date(value).toLocaleString(locale()):tr('Không có thời hạn');}

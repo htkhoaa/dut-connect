@@ -173,7 +173,7 @@ function TaskForm({c, value, onClose, onSaved}: { c: string; value?: Task; onClo
                                                                                                                  value={v}>{renderText(l)}</option>))}</Select></Field><Field
         label={tr("Hạn hoàn thành")}><Input type="datetime-local" {...f.register('dueAt')}/></Field>
         <fieldset className="space-y-3">
-            <legend className="font-medium">{tr("Tình nguyện viên được phân công (")}{renderText(selected.length)} selected)</legend>
+            <legend className="font-medium">{tr("Tình nguyện viên được phân công (")}{renderText(selected.length)} {tr("đã chọn")})</legend>
             <p className="text-text-secondary">{tr("Có thể phân công khác nhóm đóng góp. Kiểm tra nhóm của từng tình nguyện viên trước khi xác nhận.")}</p><Roster campaignId={c} render={u => <label className="flex gap-3"><input type="checkbox"
                                                                                                         checked={selected.includes(u.userId)}
                                                                                                         onChange={e => {

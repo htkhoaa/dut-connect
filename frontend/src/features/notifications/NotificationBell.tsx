@@ -1,8 +1,11 @@
 import {useState, useRef, useEffect} from 'react';
-import {useLanguage, tr, renderText} from '../../shared/lib/i18n';
+import {useLanguage, tr, renderText, locale} from '../../shared/lib/i18n';
 import {Icon} from '../../shared/components/Icon';
 import {useNotifications} from './useNotifications';
 import {NotificationModal} from './NotificationModal';
+import {LoadingState} from '../../shared/components/LoadingState';
+import {ErrorState} from '../../shared/components/ErrorState';
+import {errorMessage} from '../../shared/api/errors';
 
 function notificationIcon(type: string) {
     if (type.includes('DONATION')) return 'heart';
@@ -16,12 +19,12 @@ function timeAgo(dateStr: string) {
     if (diff < 60) return tr("Vừa xong");
     if (diff < 3600) return `${Math.floor(diff / 60)} ${tr("phút trước")}`;
     if (diff < 86400) return `${Math.floor(diff / 3600)} ${tr("giờ trước")}`;
-    return new Date(dateStr).toLocaleDateString('vi-VN');
+    return new Date(dateStr).toLocaleDateString(locale());
 }
 
 export function NotificationBell() {
     useLanguage();
-    const {unreadCount, recentNotifications, markAsRead, markAllAsRead, isMarkingAll} = useNotifications();
+    const {unreadCount, recentNotifications, markAsRead, markAllAsRead, isMarkingAll, isLoading, error, retry} = useNotifications();
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
@@ -76,7 +79,7 @@ export function NotificationBell() {
                     </div>
 
                     <div className="max-h-72 overflow-y-auto divide-y divide-border/40 py-1">
-                        {recentNotifications.length === 0 ? (
+                        {isLoading ? <LoadingState/> : error ? <ErrorState message={errorMessage(error)} onRetry={retry}/> : recentNotifications.length === 0 ? (
                             <div className="py-6 text-center text-xs text-text-secondary">
                                 {tr("Bạn chưa có thông báo nào.")}
                             </div>

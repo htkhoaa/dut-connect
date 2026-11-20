@@ -1,12 +1,35 @@
-import {useState, useRef} from 'react';
+import {useState} from 'react';
 import {useQuery} from '@tanstack/react-query';
-import {useLanguage, tr} from "../../shared/lib/i18n";
+import {useLanguage, tr, locale} from "../../shared/lib/i18n";
 import type {CampaignDashboard} from './types';
 import {Button} from '../../shared/components/Button';
 import {Card} from '../../shared/components/Card';
 import {Icon} from '../../shared/components/Icon';
 import {apiClient} from '../../shared/api/client';
 import {vnd} from '../campaigns/presentation';
+import {fundraisingPercent, formatPercent} from '../../shared/lib/fundraising';
+import {catalogLabel} from '../../shared/lib/catalogLabels';
+import {ApiImage} from '../../shared/components/ApiImage';
+import {LoadingState} from '../../shared/components/LoadingState';
+import {ErrorState} from '../../shared/components/ErrorState';
+import {errorMessage} from '../../shared/api/errors';
+
+async function embeddedPhoto(src: string): Promise<string> {
+    let blob: Blob;
+    if (src.startsWith('/api/v1/')) {
+        blob = (await apiClient.get<Blob>(src.slice('/api/v1'.length), {responseType: 'blob'})).data;
+    } else {
+        const response = await fetch(src);
+        if (!response.ok) throw new Error('Image unavailable');
+        blob = await response.blob();
+    }
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+    });
+}
 
 interface GalleryItem {
     id: string;
@@ -27,12 +50,25 @@ function escapeXml(value: string) {
     return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function titleLines(title: string): string[] {
+    const lines: string[] = [];
+    let remaining = title.trim();
+    while (remaining.length > 80) {
+        const space = remaining.lastIndexOf(' ', 80);
+        const end = space >= 40 ? space : 80;
+        lines.push(remaining.slice(0, end));
+        remaining = remaining.slice(end).trim();
+    }
+    if (remaining) lines.push(remaining);
+    return lines;
+}
+
 export function CampaignFinalResult({title, data, campaignId, categoryName, organizerName}: Props) {
     useLanguage();
     const [activeTab, setActiveTab] = useState<'poster' | 'social'>('poster');
     const [selectedPhoto, setSelectedPhoto] = useState<string>('/images/dut-campus-main.jpg');
     const [copied, setCopied] = useState(false);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [exportError, setExportError] = useState('');
 
     const galleryQuery = useQuery({
         queryKey: ['campaign-gallery', campaignId],
@@ -47,6 +83,8 @@ export function CampaignFinalResult({title, data, campaignId, categoryName, orga
     const activePhoto = galleryImages.length > 0 && selectedPhoto === '/images/dut-campus-main.jpg'
         ? galleryImages[0].imageUrl
         : selectedPhoto;
+    const photoQuery = useQuery({queryKey: ['poster-photo', activePhoto], queryFn: () => embeddedPhoto(activePhoto)});
+    const campaignUrl = new URL(campaignId ? '/campaigns/' + campaignId : '/campaigns', window.location.origin).href;
 
     const volunteers = data.operations.applications.ACCEPTED;
     const verifiedVolunteers = data.operations.verifiedCompletionCount;
@@ -54,9 +92,8 @@ export function CampaignFinalResult({title, data, campaignId, categoryName, orga
     const donations = data.financialSummary.verifiedDonations;
     const donationCount = data.financialSummary.successfulDonationCount;
     const goal = data.financialSummary.fundraisingGoal;
-    const goalNum = goal ? Number(goal) : 0;
-    const donationNum = Number(donations);
-    const progressPercent = goalNum > 0 ? Math.min(Math.round((donationNum / goalNum) * 100), 200) : 100;
+    const progressPercent = fundraisingPercent(donations, goal);
+    const progressLabel = progressPercent === null ? tr('Chưa đặt mục tiêu') : formatPercent(progressPercent);
     const tasksDone = data.operations.tasks.DONE + data.operations.tasks.VERIFIED;
     const totalTasks = data.operations.tasks.TODO + data.operations.tasks.IN_PROGRESS + tasksDone;
 
@@ -64,8 +101,9 @@ export function CampaignFinalResult({title, data, campaignId, categoryName, orga
     const formattedGoal = goal ? vnd(goal) : tr("Chưa đặt mục tiêu");
 
     const generatePosterSvg = () => {
-        const escapedTitle = escapeXml(title);
-        const escapedCategory = escapeXml(categoryName || "Cộng đồng DUT");
+        const lines = titleLines(title);
+        const posterTitle = lines.map((line, index) => `<tspan x="0" y="${lines.length === 1 ? 42 : 20 + index * (lines.length > 3 ? 20 : 28)}" ${line.length > 70 ? 'textLength="1420" lengthAdjust="spacingAndGlyphs"' : ''}>${escapeXml(line)}</tspan>`).join('');
+        const escapedCategory = escapeXml(categoryName ? tr(catalogLabel(categoryName)) : tr("Cộng đồng DUT"));
         const escapedOrganizer = escapeXml(organizerName || "Trường Đại học Bách khoa - ĐHĐN");
 
         return `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
@@ -104,31 +142,31 @@ export function CampaignFinalResult({title, data, campaignId, categoryName, orga
         <text x="28" y="36" font-family="Arial, sans-serif" font-size="22" font-weight="900" fill="#0b2447" text-anchor="middle">DUT</text>
 
         <!-- University Title -->
-        <text x="75" y="25" fill="#f8fafc" font-family="Arial, sans-serif" font-size="22" font-weight="800" letter-spacing="0.5">TRƯỜNG ĐẠI HỌC BÁCH KHOA - ĐẠI HỌC ĐÀ NẴNG</text>
-        <text x="75" y="50" fill="#93c5fd" font-family="Arial, sans-serif" font-size="15" font-weight="600" letter-spacing="1.5">DUT CONNECT · BÁO CÁO TỔNG KẾT KẾT QUẢ CHIẾN DỊCH</text>
+        <text x="75" y="25" fill="#f8fafc" font-family="Arial, sans-serif" font-size="22" font-weight="800" letter-spacing="0.5" textLength="930" lengthAdjust="spacingAndGlyphs">${escapeXml(tr('TRƯỜNG ĐẠI HỌC BÁCH KHOA - ĐẠI HỌC ĐÀ NẴNG'))}</text>
+        <text x="75" y="50" fill="#93c5fd" font-family="Arial, sans-serif" font-size="15" font-weight="600" letter-spacing="1.5">${escapeXml(tr('DUT CONNECT · BÁO CÁO TỔNG KẾT KẾT QUẢ CHIẾN DỊCH'))}</text>
       </g>
 
       <!-- Completion Badge Top Right -->
       <g transform="translate(1250, 75)">
         <rect width="260" height="46" rx="23" fill="url(#gold-grad)" />
-        <text x="130" y="29" fill="#0f172a" font-family="Arial, sans-serif" font-size="16" font-weight="800" text-anchor="middle">★ HOÀN THÀNH 100%</text>
+        <text x="130" y="29" fill="#0f172a" font-family="Arial, sans-serif" font-size="16" font-weight="800" text-anchor="middle">${escapeXml(tr('★ HOÀN THÀNH 100%'))}</text>
       </g>
 
       <!-- Campaign Title Header -->
       <g transform="translate(90, 185)">
         <rect x="0" y="-22" width="140" height="28" rx="8" fill="#38bdf8" fill-opacity="0.2" />
         <text x="10" y="-3" fill="#7dd3fc" font-family="Arial, sans-serif" font-size="14" font-weight="700">${escapedCategory}</text>
-        <text x="160" y="-3" fill="#cbd5e1" font-family="Arial, sans-serif" font-size="14">Đơn vị tổ chức: <tspan fill="#ffffff" font-weight="700">${escapedOrganizer}</tspan></text>
+        <text x="160" y="-3" fill="#cbd5e1" font-family="Arial, sans-serif" font-size="14">${escapeXml(tr('Đơn vị tổ chức: '))}<tspan fill="#ffffff" font-weight="700">${escapedOrganizer}</tspan></text>
 
-        <text x="0" y="42" fill="#ffffff" font-family="Arial, sans-serif" font-size="44" font-weight="900">${escapedTitle}</text>
+        <text fill="#ffffff" font-family="Arial, sans-serif" font-size="${lines.length === 1 && title.length <= 58 ? 44 : lines.length > 3 ? 22 : 30}" font-weight="900">${posterTitle}</text>
       </g>
 
       <!-- Left Column: Hero Campaign Photo Frame -->
       <g>
         <rect x="85" y="265" width="470" height="350" rx="28" fill="#ffffff" fill-opacity="0.1" stroke="#ffffff" stroke-opacity="0.25" stroke-width="2" />
-        <image href="${activePhoto}" x="90" y="270" width="460" height="340" preserveAspectRatio="xMidYMid slice" clip-path="url(#hero-photo-clip)" />
+        <image href="${photoQuery.data || ''}" x="90" y="270" width="460" height="340" preserveAspectRatio="xMidYMid slice" clip-path="url(#hero-photo-clip)" />
         <rect x="90" y="550" width="460" height="60" rx="0" fill="#0f172a" fill-opacity="0.65" clip-path="url(#hero-photo-clip)" />
-        <text x="110" y="585" fill="#ffffff" font-family="Arial, sans-serif" font-size="15" font-weight="700">Hình ảnh hoạt động chiến dịch DUT Connect</text>
+        <text x="110" y="585" fill="#ffffff" font-family="Arial, sans-serif" font-size="15" font-weight="700">${escapeXml(tr('Hình ảnh hoạt động chiến dịch DUT Connect'))}</text>
       </g>
 
       <!-- Right Column: 4 Key Metric Cards -->
@@ -138,9 +176,9 @@ export function CampaignFinalResult({title, data, campaignId, categoryName, orga
           <rect width="440" height="160" rx="22" fill="url(#card-grad)" />
           <circle cx="50" cy="50" r="26" fill="#ecfdf5" />
           <text x="50" y="58" font-size="24" text-anchor="middle">💰</text>
-          <text x="90" y="44" fill="#047857" font-size="16" font-weight="700">TỔNG KINH PHÍ ĐÃ GÂY QUỸ</text>
+          <text x="90" y="44" fill="#047857" font-size="16" font-weight="700">${escapeXml(tr('TỔNG KINH PHÍ ĐÃ GÂY QUỸ'))}</text>
           <text x="90" y="90" fill="#065f46" font-size="34" font-weight="900">${formattedDonations}</text>
-          <text x="90" y="125" fill="#475569" font-size="15">Mục tiêu: ${formattedGoal} · <tspan fill="#059669" font-weight="700">${progressPercent}% đạt được</tspan></text>
+          <text x="90" y="125" fill="#475569" font-size="15">Mục tiêu: ${formattedGoal} · <tspan fill="#059669" font-weight="700">${progressLabel}</tspan></text>
         </g>
 
         <!-- Card 2: Số lượt ủng hộ -->
@@ -148,9 +186,9 @@ export function CampaignFinalResult({title, data, campaignId, categoryName, orga
           <rect width="455" height="160" rx="22" fill="url(#card-grad)" />
           <circle cx="50" cy="50" r="26" fill="#eff6ff" />
           <text x="50" y="58" font-size="24" text-anchor="middle">❤️</text>
-          <text x="90" y="44" fill="#1d4ed8" font-size="16" font-weight="700">SỐ LƯỢT ĐÓNG GÓP ỦNG HỘ</text>
-          <text x="90" y="90" fill="#1e3a8a" font-size="34" font-weight="900">${donationCount} <tspan font-size="20" font-weight="600">lượt</tspan></text>
-          <text x="90" y="125" fill="#475569" font-size="15">Minh bạch 100% qua tài khoản dự án DUT</text>
+          <text x="90" y="44" fill="#1d4ed8" font-size="16" font-weight="700">${escapeXml(tr('SỐ LƯỢT ĐÓNG GÓP ỦNG HỘ'))}</text>
+          <text x="90" y="90" fill="#1e3a8a" font-size="34" font-weight="900">${donationCount} <tspan font-size="20" font-weight="600">${escapeXml(tr('lượt'))}</tspan></text>
+          <text x="90" y="125" fill="#475569" font-size="15">${escapeXml(tr('Minh bạch 100% qua tài khoản dự án DUT'))}</text>
         </g>
 
         <!-- Card 3: Tình nguyện viên -->
@@ -158,9 +196,9 @@ export function CampaignFinalResult({title, data, campaignId, categoryName, orga
           <rect width="440" height="160" rx="22" fill="url(#card-grad)" />
           <circle cx="50" cy="50" r="26" fill="#fef3c7" />
           <text x="50" y="58" font-size="24" text-anchor="middle">👥</text>
-          <text x="90" y="44" fill="#b45309" font-size="16" font-weight="700">TÌNH NGUYỆN VIÊN THAM GIA</text>
-          <text x="90" y="90" fill="#92400e" font-size="34" font-weight="900">${volunteers} <tspan font-size="20" font-weight="600">bạn</tspan></text>
-          <text x="90" y="125" fill="#475569" font-size="15">Đã hoàn thành xác minh: <tspan fill="#b45309" font-weight="700">${verifiedVolunteers} sinh viên</tspan></text>
+          <text x="90" y="44" fill="#b45309" font-size="16" font-weight="700">${escapeXml(tr('TÌNH NGUYỆN VIÊN THAM GIA'))}</text>
+          <text x="90" y="90" fill="#92400e" font-size="34" font-weight="900">${volunteers} <tspan font-size="20" font-weight="600">${escapeXml(tr('bạn'))}</tspan></text>
+          <text x="90" y="125" fill="#475569" font-size="15">${escapeXml(tr('Đã hoàn thành xác minh: '))}<tspan fill="#b45309" font-weight="700">${verifiedVolunteers} sinh viên</tspan></text>
         </g>
 
         <!-- Card 4: Giờ đóng góp & Nhiệm vụ -->
@@ -168,9 +206,9 @@ export function CampaignFinalResult({title, data, campaignId, categoryName, orga
           <rect width="455" height="160" rx="22" fill="url(#card-grad)" />
           <circle cx="50" cy="50" r="26" fill="#f3e8ff" />
           <text x="50" y="58" font-size="24" text-anchor="middle">⏱️</text>
-          <text x="90" y="44" fill="#7e22ce" font-size="16" font-weight="700">TỔNG SỐ GIỜ CỐNG HIẾN</text>
-          <text x="90" y="90" fill="#581c87" font-size="34" font-weight="900">${hours} <tspan font-size="20" font-weight="600">giờ</tspan></text>
-          <text x="90" y="125" fill="#475569" font-size="15">Nhiệm vụ hoàn thành: <tspan fill="#7e22ce" font-weight="700">${tasksDone}/${totalTasks || tasksDone}</tspan></text>
+          <text x="90" y="44" fill="#7e22ce" font-size="16" font-weight="700">${escapeXml(tr('TỔNG SỐ GIỜ CỐNG HIẾN'))}</text>
+          <text x="90" y="90" fill="#581c87" font-size="34" font-weight="900">${hours} <tspan font-size="20" font-weight="600">${escapeXml(tr('giờ'))}</tspan></text>
+          <text x="90" y="125" fill="#475569" font-size="15">${escapeXml(tr('Nhiệm vụ hoàn thành: '))}<tspan fill="#7e22ce" font-weight="700">${tasksDone}/${totalTasks || tasksDone}</tspan></text>
         </g>
       </g>
 
@@ -178,22 +216,22 @@ export function CampaignFinalResult({title, data, campaignId, categoryName, orga
       <g transform="translate(90, 660)">
         <rect width="1420" height="200" rx="26" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.18" stroke-width="1.5" />
         
-        <text x="50" y="60" fill="#fbbf24" font-family="Arial, sans-serif" font-size="24" font-weight="800">LAN TỎA GIÁ TRỊ TÍCH CỰC ĐẾN CỘNG ĐỒNG</text>
-        <text x="50" y="105" fill="#ffffff" font-family="Arial, sans-serif" font-size="20" font-weight="400">Chân thành cảm ơn sự đồng hành, ủng hộ và cống hiến nhiệt tình của Quý Thầy Cô,</text>
-        <text x="50" y="140" fill="#ffffff" font-family="Arial, sans-serif" font-size="20" font-weight="400">Quý Nhà hảo tâm, Cựu sinh viên và các bạn Sinh viên Trường Đại học Bách khoa - ĐHĐN!</text>
+        <text x="50" y="60" fill="#fbbf24" font-family="Arial, sans-serif" font-size="24" font-weight="800">${escapeXml(tr('LAN TỎA GIÁ TRỊ TÍCH CỰC ĐẾN CỘNG ĐỒNG'))}</text>
+        <text x="50" y="105" fill="#ffffff" font-family="Arial, sans-serif" font-size="20" font-weight="400">${escapeXml(tr('Chân thành cảm ơn sự đồng hành, ủng hộ và cống hiến nhiệt tình của Quý Thầy Cô,'))}</text>
+        <text x="50" y="140" fill="#ffffff" font-family="Arial, sans-serif" font-size="20" font-weight="400">${escapeXml(tr('Quý Nhà hảo tâm, Cựu sinh viên và các bạn Sinh viên Trường Đại học Bách khoa - ĐHĐN!'))}</text>
 
         <!-- Right Side Verification Badge -->
         <g transform="translate(1120, 45)">
           <rect width="250" height="110" rx="18" fill="#ffffff" fill-opacity="0.12" />
-          <text x="125" y="45" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="13" font-weight="700" text-anchor="middle">XÁC NHẬN MINH BẠCH</text>
+          <text x="125" y="45" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="13" font-weight="700" text-anchor="middle">${escapeXml(tr('XÁC NHẬN MINH BẠCH'))}</text>
           <text x="125" y="75" fill="#38bdf8" font-family="Arial, sans-serif" font-size="17" font-weight="800" text-anchor="middle">DUT CONNECT 2026</text>
-          <text x="125" y="95" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12" text-anchor="middle">dutconnect.udn.vn</text>
+          <text x="125" y="95" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12" text-anchor="middle">${escapeXml(window.location.host)}</text>
         </g>
       </g>
 
       <!-- Footer Info -->
-      <text x="90" y="930" fill="#94a3b8" font-family="Arial, sans-serif" font-size="16">Mỗi hành động nhỏ đều tạo nên một giá trị lớn cho cộng đồng Bách khoa.</text>
-      <text x="1510" y="930" fill="#38bdf8" font-family="Arial, sans-serif" font-size="16" font-weight="700" text-anchor="end">dut-connect.udn.vn</text>
+      <text x="90" y="930" fill="#94a3b8" font-family="Arial, sans-serif" font-size="16">${escapeXml(tr('Mỗi hành động nhỏ đều tạo nên một giá trị lớn cho cộng đồng Bách khoa.'))}</text>
+      <text x="1510" y="930" fill="#38bdf8" font-family="Arial, sans-serif" font-size="16" font-weight="700" text-anchor="end">${escapeXml(window.location.host)}</text>
     </svg>`;
     };
 
@@ -209,11 +247,13 @@ export function CampaignFinalResult({title, data, campaignId, categoryName, orga
     };
 
     const downloadPng = () => {
+        setExportError('');
         const svgContent = generatePosterSvg();
         const svgBlob = new Blob([svgContent], {type: 'image/svg+xml;charset=utf-8'});
         const url = URL.createObjectURL(svgBlob);
         const img = new Image();
         img.onload = () => {
+            try {
             const canvas = document.createElement('canvas');
             canvas.width = 1600;
             canvas.height = 1000;
@@ -226,12 +266,27 @@ export function CampaignFinalResult({title, data, campaignId, categoryName, orga
                 downloadLink.download = `DUT-Connect-Poster-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.png`;
                 downloadLink.click();
             }
-            URL.revokeObjectURL(url);
+            } catch {
+                setExportError(tr('Chưa xuất được poster. Vui lòng thử lại.'));
+            } finally {URL.revokeObjectURL(url);}
         };
+        img.onerror = () => {URL.revokeObjectURL(url); setExportError(tr('Chưa xuất được poster. Vui lòng thử lại.'));};
         img.src = url;
     };
 
-    const socialPostContent = `📢 [TỔNG KẾT CHIẾN DỊCH] ${title}
+    const socialPostContent = locale().startsWith('en') ? `📢 [CAMPAIGN RESULTS] ${title}
+DUT Connect · University of Science and Technology, University of Danang
+
+Organizer: ${organizerName || 'DUT community'}
+Funds raised: ${formattedDonations} (${progressLabel})
+Successful donations: ${donationCount}
+Accepted volunteers: ${volunteers}; verified completions: ${verifiedVolunteers}
+Verified volunteer hours: ${hours}
+Completed tasks: ${tasksDone} / ${totalTasks}
+
+Thank you to everyone who contributed to this campaign.
+Campaign details: ${campaignUrl}
+#DUTConnect` : `📢 [TỔNG KẾT CHIẾN DỊCH] ${title}
 Trường Đại học Bách khoa - Đại học Đà Nẵng | Hệ thống DUT Connect
 
 Kính gửi Quý Thầy Cô, Quý Nhà hảo tâm, các anh chị Cựu sinh viên và các bạn Sinh viên Bách khoa thân mến!
@@ -239,15 +294,15 @@ Kính gửi Quý Thầy Cô, Quý Nhà hảo tâm, các anh chị Cựu sinh vi�
 Chiến dịch "${title}" do ${organizerName || "Trường Đại học Bách khoa"} khởi xướng trên nền tảng DUT Connect đã chính thức khép lại với những kết quả và dấu ấn vô cùng ý nghĩa:
 
 🌟 NHỮNG CON SỐ ẤN TƯỢNG ĐÃ ĐẠT ĐƯỢC:
-💰 Kinh phí gây quỹ: ${formattedDonations} (${progressPercent}% mục tiêu)
+💰 Kinh phí gây quỹ: ${formattedDonations} (${progressLabel})
 ❤️ Lượt ủng hộ thiện nguyện: ${donationCount} lượt
 👥 Lực lượng tình nguyện viên: ${volunteers} bạn sinh viên tham gia (${verifiedVolunteers} bạn đã hoàn thành xuất sắc)
 ⏱️ Tổng số giờ cống hiến: ${hours} giờ tình nguyện vì cộng đồng
 ✓ Nhiệm vụ đã triển khai: ${tasksDone} nhiệm vụ hoàn tất
 
-Xin chân thành cảm ơn sự chung tay đồng hành, tinh thần trách nhiệm và nghĩa cử cao đẹp của toàn thể cộng đồng. Ban Tổ chức đã gửi Thư cảm ơn chính thức kèm Giấy chứng nhận có chữ ký và con dấu của Trường Đại học Bách khoa - ĐHĐN tới từng sinh viên và nhà hảo tâm.
+Xin chân thành cảm ơn sự chung tay đồng hành, tinh thần trách nhiệm và sự đóng góp của toàn thể cộng đồng.
 
-👉 Theo dõi chi tiết báo cáo và hình ảnh chiến dịch tại: dut-connect.udn.vn
+👉 Theo dõi chi tiết chiến dịch tại: ${campaignUrl}
 
 #DUTConnect #BachKhoaDaNang #TuHaoDUT #TinhNguyenDUT #KetQuaChienDich`;
 
@@ -300,11 +355,11 @@ Xin chân thành cảm ơn sự chung tay đồng hành, tinh thần trách nhi�
 
                     {activeTab === 'poster' && (
                         <div className="flex gap-2">
-                            <Button variant="secondary" onClick={downloadSvg} className="text-xs py-1.5">
+                            <Button variant="secondary" disabled={!photoQuery.data} onClick={downloadSvg} className="text-xs py-1.5">
                                 <Icon name="file" size={15} />
                                 {tr("Tải vector SVG")}
                             </Button>
-                            <Button variant="primary" onClick={downloadPng} className="text-xs py-1.5 font-semibold shadow-xs">
+                            <Button variant="primary" disabled={!photoQuery.data} onClick={downloadPng} className="text-xs py-1.5 font-semibold shadow-xs">
                                 <Icon name="check" size={15} />
                                 {tr("Tải poster PNG (HD)")}
                             </Button>
@@ -332,7 +387,7 @@ Xin chân thành cảm ơn sự chung tay đồng hành, tinh thần trách nhi�
                                         : 'border-transparent opacity-75 hover:opacity-100'
                                 }`}
                             >
-                                <img src={img.imageUrl} alt="gallery" className="h-full w-full object-cover" />
+                                <ApiImage src={img.imageUrl} alt={img.caption || tr('Hình ảnh chiến dịch')} className="h-full w-full object-cover" />
                                 {activePhoto === img.imageUrl && (
                                     <span className="absolute top-1 right-1 rounded-full bg-primary p-0.5 text-white">
                                         <Icon name="check" size={10} />
@@ -347,16 +402,19 @@ Xin chân thành cảm ơn sự chung tay đồng hành, tinh thần trách nhi�
             {/* Tab 1: Poster View */}
             {activeTab === 'poster' && (
                 <div className="space-y-3">
+                    {galleryQuery.isError && <ErrorState message={errorMessage(galleryQuery.error)} onRetry={() => void galleryQuery.refetch()}/>}
+                    {photoQuery.isPending ? <LoadingState/> : photoQuery.isError ?
+                        <ErrorState message={tr('Chưa tải được ảnh poster.')} onRetry={() => void photoQuery.refetch()}/> :
                     <div className="relative overflow-hidden rounded-2xl shadow-xl border border-border">
                         <img
                             src={svgSource}
                             alt={tr("Poster kết quả chiến dịch")}
                             className="w-full h-auto block"
                         />
-                    </div>
-                    <canvas ref={canvasRef} className="hidden" />
+                    </div>}
+                    {exportError && <ErrorState message={exportError}/>}
                     <p className="text-center text-xs text-text-secondary">
-                        {tr("Poster được thiết kế theo kích thước chuẩn 16:9 chất lượng cao, tích hợp số liệu tài chính, tình nguyện và hình ảnh thực tế của chiến dịch.")}
+                        {tr("Poster 1600 × 1000 px, tích hợp số liệu và hình ảnh của chiến dịch.")}
                     </p>
                 </div>
             )}

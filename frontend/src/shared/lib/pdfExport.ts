@@ -1,3 +1,8 @@
+function escapeHtml(value: string) {
+    return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 export interface CertificateData {
     fullName: string;
     studentId: string;
@@ -10,6 +15,11 @@ export interface CertificateData {
 }
 
 export function exportVolunteerCertificate(data: CertificateData) {
+    data = {...data, fullName: escapeHtml(data.fullName), studentId: escapeHtml(data.studentId),
+        campaignTitle: escapeHtml(data.campaignTitle), verifiedHours: escapeHtml(data.verifiedHours),
+        className: data.className ? escapeHtml(data.className) : undefined,
+        faculty: data.faculty ? escapeHtml(data.faculty) : undefined,
+        organizerName: data.organizerName ? escapeHtml(data.organizerName) : undefined};
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
@@ -256,7 +266,7 @@ export function exportCampaignPdfReport(campaignTitle: string, dashboardData: an
     <div class="header">
         <div class="school">ĐẠI HỌC ĐÀ NẴNG · TRƯỜNG ĐẠI HỌC BÁCH KHOA · DUT CONNECT</div>
         <h1>BÁO CÁO TỔNG KẾT CHIẾN DỊCH</h1>
-        <div class="date">Chiến dịch: <strong>${campaignTitle}</strong> · Xuất ngày: ${new Date().toLocaleDateString('vi-VN')}</div>
+        <div class="date">Chiến dịch: <strong>${escapeHtml(campaignTitle)}</strong> · Xuất ngày: ${new Date().toLocaleDateString('vi-VN')}</div>
     </div>
 
     <div class="section-title">1. TỔNG KẾT NHÂN LỰC & ĐIỀU PHỐI TÌNH NGUYỆN</div>
@@ -266,7 +276,7 @@ export function exportCampaignPdfReport(campaignTitle: string, dashboardData: an
         <tr><td>Số tình nguyện viên được chấp nhận chính thức</td><td class="highlight">${op.applications?.ACCEPTED ?? 0}</td></tr>
         <tr><td>Phân công nhóm Kỹ thuật (Technical)</td><td>${op.assignedTracks?.TECHNICAL ?? 0}</td></tr>
         <tr><td>Phân công nhóm Hậu cần (Logistics)</td><td>${op.assignedTracks?.LOGISTICS ?? 0}</td></tr>
-        <tr><td>Tổng số nhiệm vụ đã hoàn thành & xác minh</td><td>${op.tasks?.VERIFIED ?? 0} / ${op.tasks?.DONE ?? 0}</td></tr>
+        <tr><td>Nhiệm vụ đã làm xong (gồm đã xác minh) / tổng nhiệm vụ</td><td>${(op.tasks?.DONE ?? 0) + (op.tasks?.VERIFIED ?? 0)} / ${(op.tasks?.TODO ?? 0) + (op.tasks?.IN_PROGRESS ?? 0) + (op.tasks?.DONE ?? 0) + (op.tasks?.VERIFIED ?? 0)}</td></tr>
         <tr><td>Số buổi điểm danh đã tổ chức</td><td>${op.attendanceSessionCount ?? 0}</td></tr>
         <tr><td>Số tình nguyện viên hoàn thành được cấp chứng nhận</td><td class="highlight">${op.verifiedCompletionCount ?? 0}</td></tr>
         <tr><td>Tổng số giờ tình nguyện được xác minh chính thức</td><td class="highlight">${op.verifiedVolunteerHours ?? '0.00'} GIỜ</td></tr>

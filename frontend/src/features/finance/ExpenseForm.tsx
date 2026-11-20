@@ -26,6 +26,10 @@ export function ExpenseForm({campaignId,expense,onSaved,onCancel}:{campaignId:st
     const queryClient = useQueryClient();
 
     const onSubmit = async (values: ExpenseWrite) => {
+        if (file && (!['image/png', 'image/jpeg', 'application/pdf'].includes(file.type) || file.size > 5 * 1024 * 1024)) {
+            setReceiptError(tr('Chọn tệp PNG, JPEG hoặc PDF không quá 5 MB.'));
+            return;
+        }
         const parsed = schema.safeParse(values);
         if (!parsed.success) {
             for (const issue of parsed.error.issues) form.setError(issue.path[0] as keyof ExpenseWrite, {message: issue.message});

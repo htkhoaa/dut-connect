@@ -3,6 +3,7 @@ import {AppLayout} from '../layout/AppLayout';
 import {HomePage} from '../pages/HomePage';
 import {ActivityDetailPage} from '../../features/campaigns/ActivityGallery';
 import {NotFoundPage} from '../pages/NotFoundPage';
+import {RouteErrorPage} from '../pages/RouteErrorPage';
 import {lazy} from 'react';
 import {RouteGuard} from '../../features/auth/RouteGuard';
 
@@ -39,6 +40,7 @@ const ReportsPage=lazy(()=>import('../../features/reports/ReportsPage').then(m=>
 export const router = createBrowserRouter([
     {
         element: <AppLayout/>,
+        errorElement: <RouteErrorPage/>,
         children: [
             {path: '/', element: <HomePage/>},
             {path: '/login', element: <AuthPage/>},

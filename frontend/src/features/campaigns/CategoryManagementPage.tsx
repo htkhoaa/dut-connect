@@ -52,10 +52,10 @@ export function CategoryManagementPage() {
                 }
             });
             setEditingId(null);
-            setFeedback(tr(`Đã đổi tên danh mục thành "${trimmed}".`));
+            setFeedback(tr("Đã đổi tên danh mục.") + " " + trimmed);
             setTimeout(() => setFeedback(null), 4000);
         } catch (err) {
-            setFeedback(errorMessage(err));
+            setFeedback(null);
         }
     };
 
@@ -73,7 +73,7 @@ export function CategoryManagementPage() {
             setFeedback(tr(`Đã cập nhật trạng thái danh mục.`));
             setTimeout(() => setFeedback(null), 4000);
         } catch (err) {
-            setFeedback(errorMessage(err));
+            setFeedback(null);
         }
     };
 
@@ -90,10 +90,10 @@ export function CategoryManagementPage() {
                 }
             });
             setNewCategoryName('');
-            setFeedback(tr(`Đã tạo danh mục mới "${trimmed}".`));
+            setFeedback(tr("Đã tạo danh mục.") + " " + trimmed);
             setTimeout(() => setFeedback(null), 4000);
         } catch (err) {
-            setFeedback(errorMessage(err));
+            setFeedback(null);
         }
     };
 

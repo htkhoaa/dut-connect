@@ -37,6 +37,7 @@ function Attendance({c}: { c: string }) {
     const [qrData, setQrData] = useState<{title: string; qrImageUrl: string; token: string; checkinUrl: string} | null>(null);
     const [qrLoading, setQrLoading] = useState(false);
     const [feedback, setFeedback] = useState('');
+    const [qrError, setQrError] = useState('');
     const q = useCoordinationQuery(['sessions', c, page], () => api.list(c, page));
     const campaign = useCampaign(c);
     const user = useAuth(s => s.user);
@@ -47,6 +48,7 @@ function Attendance({c}: { c: string }) {
     const handleShowQr = async (s: Session) => {
         try {
             setQrLoading(true);
+            setQrError('');
             const res = await api.generateQr(s.id);
             const refreshed = await q.refetch();
             const updatedSession = refreshed.data?.items.find(item => item.id === s.id);
@@ -61,12 +63,12 @@ function Attendance({c}: { c: string }) {
                 checkinUrl: fullCheckinUrl,
             });
         } catch (err) {
-            setFeedback(errorMessage(err));
+            setQrError(errorMessage(err));
         } finally {
             setQrLoading(false);
         }
     };
-    return <div className="space-y-6"><h1 className="text-3xl font-semibold">{tr("Buổi điểm danh")}</h1>{renderText(manager && <WorkspaceLinks
+    return <div className="space-y-6">{qrError && <ErrorState message={qrError}/>}<h1 className="text-3xl font-semibold">{tr("Buổi điểm danh")}</h1>{renderText(manager && <WorkspaceLinks
         id={c}/>)} {renderText(mutable && <Button onClick={() => setEdit(true)}>{tr("Tạo buổi điểm danh")}</Button>)}{renderText(feedback &&
         <p role="status" className="text-success">{renderText(feedback)}</p>)}{renderText(m.isError &&
         <ErrorState message={errorMessage(m.error)}/>)} {renderText(q.isPending ? <LoadingState/> : q.isError ?
@@ -75,7 +77,7 @@ function Attendance({c}: { c: string }) {
             className="break-words text-xl font-semibold">{renderText(s.title)}</h2><p>{renderText(date(s.startsAt))} – {renderText(date(s.endsAt))}</p>
             <div className="mt-4 flex flex-wrap gap-3">
                 <Button onClick={() => setSession(s)}>{tr("Xem điểm danh")}</Button>
-                <Button variant="secondary" disabled={qrLoading} onClick={() => handleShowQr(s)}>📱 {tr("Mã QR điểm danh")}</Button>
+                <Button variant="secondary" disabled={qrLoading || !mutable} onClick={() => handleShowQr(s)}>📱 {tr("Mã QR điểm danh")}</Button>
                 {renderText(mutable && <><Button onClick={() => setEdit(s)}>{tr("Chỉnh sửa buổi điểm danh")}</Button><Button onClick={() => setRemove(s)}>{tr("Xóa buổi điểm danh")}</Button></>)}
             </div>
         </Card>)}<Pagination {...q.data} onPageChange={setPage}/></>)}{renderText(edit &&
@@ -204,7 +206,7 @@ function Records({c, session, mutable, onSaved, onClose}: {
             <LoadingState/> : q.isError ? <ErrorState message={errorMessage(q.error)}/> : <>{q.data.items.map(r => <p
                 className="break-words"
                 key={r.id}>{renderText(r.fullName)} · {renderText(r.studentId)}: {renderText(attendanceStatuses[r.status])} ·
-                Recorded {renderText(date(r.recordedAt))}</p>)}{!q.data.items.length &&
+                {tr("Ghi nhận lúc")} {renderText(date(r.recordedAt))}</p>)}{!q.data.items.length &&
                 <EmptyState message={tr("Chưa có kết quả điểm danh.")}/>}<Pagination {...q.data}
                                                                             onPageChange={setPage}/></>)}{renderText(mutable && <>
             <h3 className="font-semibold">{tr("Điểm danh tình nguyện viên đã chấp nhận")}</h3><p>{tr("Lựa chọn không đổi giữ nguyên kết quả hiện có. Tối đa 100 thay đổi mỗi lần lưu.")}</p><Roster campaignId={c} render={u => <Field

@@ -51,6 +51,8 @@ export function useNotifications() {
         unreadCount: unreadQuery.data?.count ?? 0,
         recentNotifications: recentQuery.data?.content ?? [],
         isLoading: recentQuery.isPending,
+        error: recentQuery.error || unreadQuery.error || markReadMutation.error || markAllReadMutation.error,
+        retry: () => {markReadMutation.reset(); markAllReadMutation.reset(); void recentQuery.refetch(); void unreadQuery.refetch();},
         markAsRead: markReadMutation.mutate,
         markAllAsRead: markAllReadMutation.mutate,
         isMarkingAll: markAllReadMutation.isPending,

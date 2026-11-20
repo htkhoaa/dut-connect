@@ -5,6 +5,7 @@ import {vnd} from '../campaigns/presentation';
 import {LoadingState} from '../../shared/components/LoadingState';
 import {ErrorState} from '../../shared/components/ErrorState';
 import {errorMessage} from '../../shared/api/errors';
+import {fundraisingPercent, formatPercent} from '../../shared/lib/fundraising';
 
 export function FinancialSummaryCard({campaignId}: {campaignId: string}) {
     useLanguage();
@@ -38,16 +39,9 @@ export function FinancialSummaryCard({campaignId}: {campaignId: string}) {
     const hasFinancialData = BigInt(d.fundraisingGoal ?? 0) > 0n || BigInt(d.verifiedDonations ?? 0) > 0n || d.successfulDonationCount > 0;
     if (!hasFinancialData) return null;
 
-    const raisedNum = Number(d.verifiedDonations ?? 0);
     const goalNum = Number(d.fundraisingGoal ?? 0);
-    const percentRaw = goalNum > 0 ? (raisedNum / goalNum) * 100 : 0;
-    const percentDisplay = percentRaw >= 100
-        ? '100%'
-        : percentRaw >= 1
-            ? `${Math.round(percentRaw)}%`
-            : percentRaw > 0
-                ? `${percentRaw.toFixed(1)}%`
-                : '0%';
+    const percentRaw = fundraisingPercent(d.verifiedDonations ?? '0', d.fundraisingGoal) ?? 0;
+    const percentDisplay = formatPercent(percentRaw);
     const barWidthPercent = percentRaw > 0 ? Math.max(1.5, Math.min(100, percentRaw)) : 0;
 
     return (
