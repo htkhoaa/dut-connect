@@ -1,3 +1,5 @@
+import {SectionNavigation} from '../../shared/components/SectionNavigation';
+import {ImageViewer} from '../../shared/components/ImageViewer';
 import {ApiImage} from '../../shared/components/ApiImage';
 import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
 import {useState} from 'react';
@@ -52,6 +54,7 @@ export function CampaignDetailPage() {
     const myApps = useApplications(campaignId, {page: 0, status: '', track: ''}, true, !!campaignId);
     const [showEndModal, setShowEndModal] = useState(false);
     const [showResultModal, setShowResultModal] = useState(false);
+    const [showCover, setShowCover] = useState(false);
     const [showThankYouModal, setShowThankYouModal] = useState(false);
     const transitionMutation = useTransitionCampaign(id);
     const dashboardQuery = useCampaignDashboard(campaignId || '', !!query.data?.canManage || user?.role === 'ADMIN');
@@ -156,11 +159,19 @@ export function CampaignDetailPage() {
                 </div>
             </div>
 
+            <div className="flex justify-end"><Button variant="secondary" onClick={() => setShowCover(true)}>{tr('Xem ảnh bìa')}</Button></div>
+            {showCover && <ImageViewer src={galleryQuery.data?.[0]?.imageUrl || campaignVisual(c.categoryName, c.content.title).image} caption={c.content.title} onClose={() => setShowCover(false)}/>}
+            {activeTab === 'description' && <SectionNavigation sections={[
+                ...(c.content.contributionMode !== 'VOLUNTEER_ONLY' ? [{id: 'campaign-funding', label: 'Gây quỹ'}] : []),
+                {id: 'campaign-about', label: 'Về chiến dịch'},
+                ...(c.canManage || (galleryQuery.data?.length ?? 0) > 0 ? [{id: 'campaign-gallery', label: 'Thư viện ảnh'}] : []),
+                {id: 'campaign-expenses', label: 'Chi phí công khai'}, {id: 'campaign-skills', label: 'Kỹ năng cần có'},
+            ]}/>}
             <div className="detail-grid">
                 <div className="min-w-0 space-y-6">
                     {/* Financial summary at the very top for campaigns with donations */}
                     {c.content.contributionMode !== 'VOLUNTEER_ONLY' && (
-                        <FinancialSummaryCard campaignId={c.id} />
+                        <section id="campaign-funding" className="scroll-mt-44"><FinancialSummaryCard campaignId={c.id} /></section>
                     )}
 
                     {/* Tab Navigation for Accepted Volunteers and Managers */}
@@ -197,7 +208,7 @@ export function CampaignDetailPage() {
                     {/* Tab Content Display */}
                     {activeTab === 'description' && (
                         <>
-                            <Card>
+                            <section id="campaign-about" className="scroll-mt-44"><Card>
                                 <h2 className="mb-5 text-xl font-semibold">{tr("Về chiến dịch")}</h2>
                                 <PlanContent
                                     content={c.content}
@@ -206,10 +217,11 @@ export function CampaignDetailPage() {
                                 />
                             </Card>
 
-                            <CampaignGallery campaignId={c.id} canManage={c.canManage} />
-                            <PublicExpenses campaignId={c.id}/>
+                            </section>
+                            <section id="campaign-gallery" className="scroll-mt-44"><CampaignGallery campaignId={c.id} canManage={c.canManage} /></section>
+                            <section id="campaign-expenses" className="scroll-mt-44"><PublicExpenses campaignId={c.id}/></section>
 
-                            <Card>
+                            <section id="campaign-skills" className="scroll-mt-44"><Card>
                                 <h2 className="mb-4 text-xl font-semibold">{tr("Kỹ năng cần có")}</h2>
                                 {renderText(
                                     c.skills.length ? (
@@ -238,7 +250,7 @@ export function CampaignDetailPage() {
                                         </p>
                                     )
                                 )}
-                            </Card>
+                            </Card></section>
                         </>
                     )}
 
