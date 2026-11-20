@@ -6,6 +6,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.MailAuthenticationException;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
@@ -49,8 +50,7 @@ public class EmailNotificationService {
 
     public void sendWithImageAttachment(String recipient, String subject, String html, String attachmentName, byte[] imageBytes, String contentType) {
         if (!enabled) {
-            log.info("Email notification skipped because APP_MAIL_ENABLED=false recipient={} subject={}", recipient, subject);
-            return;
+            throw new ApplicationFailure(503, "MAIL_UNAVAILABLE", "Email delivery is disabled");
         }
         JavaMailSender mail = sender.orElseThrow(() -> new IllegalStateException("Email is enabled but SMTP is not configured"));
         try {
@@ -69,8 +69,14 @@ public class EmailNotificationService {
             }
             mail.send(message);
         } catch (Exception ex) {
-            log.error("Email notification failed recipient={} subject={} error={}", recipient, subject, ex.getClass().getSimpleName());
-            throw new IllegalStateException("Email notification could not be sent", ex);
+            Throwable root = ex;
+            while (root.getCause() != null && root.getCause() != root) root = root.getCause();
+            String code = ex instanceof MailAuthenticationException ? "MAIL_AUTHENTICATION_FAILED"
+                    : root instanceof java.net.SocketTimeoutException || root instanceof java.net.ConnectException
+                        || root instanceof java.net.UnknownHostException ? "MAIL_CONNECTION_FAILED" : "MAIL_DELIVERY_FAILED";
+            log.error("Email notification failed error={} root={}", ex.getClass().getSimpleName(), root.getClass().getSimpleName());
+            throw new ApplicationFailure(502, code,
+                    "Email provider rejected the message or could not be reached");
         }
     }
 

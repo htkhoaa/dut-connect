@@ -7,7 +7,7 @@ COPY src/ src/
 RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -ntp clean package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine AS runtime
-RUN apk add --no-cache curl \
+RUN apk add --no-cache curl fontconfig ttf-dejavu \
     && addgroup -S app && adduser -S -G app app
 WORKDIR /app
 COPY --from=build --chown=app:app /workspace/target/dut-connect.jar app.jar

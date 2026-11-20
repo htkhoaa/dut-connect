@@ -8,6 +8,7 @@ export interface ThankYouRecipient {
     contributionType: 'DONATION' | 'VOLUNTEER';
     detail: string;
     emailSent: boolean;
+    errorCode?: string | null;
 }
 
 export interface CampaignRecipientsSummary {
@@ -32,10 +33,11 @@ export async function getThankYouRecipients(campaignId: string) {
     return (await apiClient.get<CampaignRecipientsSummary>(`/campaigns/${campaignId}/thank-you/recipients`)).data;
 }
 
-export async function sendThankYou(campaignId: string, customSubject?: string, customMessage?: string) {
+export async function sendThankYou(campaignId: string, customSubject?: string, customMessage?: string, recipientKeys?: string[]) {
     return (await apiClient.post<CampaignThankYouResponse>(`/campaigns/${campaignId}/thank-you`, {
         customSubject,
-        customMessage
+        customMessage,
+        recipientKeys
     }, {timeout: 120_000})).data;
 }
 

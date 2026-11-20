@@ -75,7 +75,7 @@ management:
 app:
   mail:
     enabled: ${APP_MAIL_ENABLED:false}
-    from: ${APP_MAIL_FROM:noreply@dut-connect.local}
+    from: ${APP_MAIL_FROM:${SPRING_MAIL_USERNAME:noreply@dut-connect.local}}
     frontend-url: ${APP_FRONTEND_URL:http://localhost}
   google:
     client-id: ${APP_GOOGLE_CLIENT_ID:}

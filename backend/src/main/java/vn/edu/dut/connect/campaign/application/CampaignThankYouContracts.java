@@ -5,8 +5,9 @@ import java.util.UUID;
 
 public class CampaignThankYouContracts {
     public record SendThankYouRequest(
-            String customSubject,
-            String customMessage
+            @jakarta.validation.constraints.Size(max = 200) String customSubject,
+            @jakarta.validation.constraints.Size(max = 5000) String customMessage,
+            @jakarta.validation.constraints.Size(max = 500) List<String> recipientKeys
     ) {}
 
     public record ThankYouRecipientDto(
@@ -16,8 +17,14 @@ public class CampaignThankYouContracts {
             String email,
             String contributionType, // "DONATION" or "VOLUNTEER"
             String detail, // e.g. "500.000 đ" or "30 giờ"
-            boolean emailSent
-    ) {}
+            boolean emailSent,
+            String errorCode
+    ) {
+        public ThankYouRecipientDto(UUID userId, String fullName, String studentId, String email,
+                                   String contributionType, String detail, boolean emailSent) {
+            this(userId, fullName, studentId, email, contributionType, detail, emailSent, null);
+        }
+    }
 
     public record CampaignRecipientsSummary(
             UUID campaignId,

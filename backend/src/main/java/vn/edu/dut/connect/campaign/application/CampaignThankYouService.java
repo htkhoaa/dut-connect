@@ -76,151 +76,84 @@ public class CampaignThankYouService {
         int donorsCount = 0;
         int volunteersCount = 0;
 
-        // 1. Process Financial Donors (if campaign mode allows donation)
-        if (mode != ContributionMode.VOLUNTEER_ONLY) {
-            List<DonorRecord> donorList = queryDonors(campaignId);
-            for (DonorRecord d : donorList) {
-                String certCode = generateCode("DON", campaignId, d.userId());
-                String formattedAmount = String.format("%,d", d.totalAmount().longValue()).replace(',', '.');
-
-                var certData = new DutCertificateGenerator.CertificateData(
-                        certCode,
-                        d.fullName(),
-                        d.studentId(),
-                        campaignTitle,
-                        DutCertificateGenerator.CertificateData.ContributionType.DONATION,
-                        formattedAmount,
-                        todayStr
-                );
-
-                byte[] pngBytes = certificateGenerator.generatePng(certData);
-
-                String subject = (request != null && request.customSubject() != null && !request.customSubject().isBlank())
-                        ? request.customSubject()
-                        : "[DUT Connect] Thư cảm ơn & Chứng nhận đóng góp chiến dịch: " + campaignTitle;
-
-                String emailBody = buildDonationEmailHtml(d.fullName(), d.studentId(), campaignTitle, formattedAmount, request != null ? request.customMessage() : null);
-
-                try {
-                    emailService.sendWithImageAttachment(
-                            d.email(),
-                            subject,
-                            emailBody,
-                            "Giay_Chung_Nhan_DUT_" + d.studentId() + ".png",
-                            pngBytes,
-                            "image/png"
-                    );
-
-                    notificationService.notifyUser(
-                            d.userId(),
-                            "CAMPAIGN_THANK_YOU",
-                            "Thư cảm ơn & Chứng nhận đóng góp: " + campaignTitle,
-                            "Ban Tổ chức chiến dịch trân trọng gửi lời cảm ơn và Giấy chứng nhận đóng góp ủng hộ tài chính đến bạn. Vui lòng kiểm tra email để nhận chứng chỉ chính thức!",
-                            "CAMPAIGN",
-                            campaignId
-                    );
-
-                    sentRecipients.add(new ThankYouRecipientDto(
-                            d.userId(),
-                            d.fullName(),
-                            d.studentId(),
-                            d.email(),
-                            "DONATION",
-                            formattedAmount + " đ",
-                            true
-                    ));
-                    donorsCount++;
-                } catch (Exception ex) {
-                    log.error("Failed to send thank you to donor userId={} email={}: {}", d.userId(), d.email(), ex.getMessage());
-                    sentRecipients.add(new ThankYouRecipientDto(
-                            d.userId(),
-                            d.fullName(),
-                            d.studentId(),
-                            d.email(),
-                            "DONATION",
-                            formattedAmount + " đ",
-                            false
-                    ));
-                }
+        // Recipient emails always come from paid donations or verified volunteer records.
+        // A retry supplies keys, never arbitrary recipient addresses.
+        List<ThankYouRecipientDto> recipients = new ArrayList<>();
+        if (mode != ContributionMode.VOLUNTEER_ONLY) recipients.addAll(getDonors(campaignId));
+        if (mode != ContributionMode.DONATION_ONLY) recipients.addAll(getVolunteers(campaignId));
+        for (var recipient : recipients) {
+            String key = recipient.contributionType() + ":" + recipient.userId();
+            if (request != null && request.recipientKeys() != null && !request.recipientKeys().contains(key)) continue;
+            boolean donor = "DONATION".equals(recipient.contributionType());
+            String detail = recipient.detail();
+            // Claim each recipient once, including concurrent clicks and repeated requests.
+            if (!claimDelivery(campaignId, recipient)) {
+                String state = jdbc.sql("select status from dut_connect.campaign_thank_you_deliveries where campaign_id=:campaign and user_id=:user and contribution_type=:type")
+                        .param("campaign", campaignId).param("user", recipient.userId()).param("type", recipient.contributionType()).query(String.class).single();
+                boolean sent = "SENT".equals(state);
+                sentRecipients.add(new ThankYouRecipientDto(recipient.userId(), recipient.fullName(), recipient.studentId(),
+                        recipient.email(), recipient.contributionType(), detail, sent, sent ? null : "MAIL_IN_PROGRESS"));
+                if (sent) {if (donor) donorsCount++; else volunteersCount++;}
+                continue;
             }
-        }
-
-        // 2. Process Volunteers (if campaign mode allows volunteer)
-        if (mode != ContributionMode.DONATION_ONLY) {
-            List<VolunteerRecord> volunteerList = queryVolunteers(campaignId);
-            for (VolunteerRecord v : volunteerList) {
-                String certCode = generateCode("VOL", campaignId, v.userId());
-                String hoursDetail = v.verifiedHours().compareTo(BigDecimal.ZERO) > 0
-                        ? v.verifiedHours().stripTrailingZeros().toPlainString() + " GIỜ TÌNH NGUYỆN"
-                        : "THAM GIA TÍCH CỰC";
-
-                var certData = new DutCertificateGenerator.CertificateData(
-                        certCode,
-                        v.fullName(),
-                        v.studentId(),
-                        campaignTitle,
-                        DutCertificateGenerator.CertificateData.ContributionType.VOLUNTEER,
-                        hoursDetail,
-                        todayStr
-                );
-
+            var certData = new DutCertificateGenerator.CertificateData(
+                    generateCode(donor ? "DON" : "VOL", campaignId, recipient.userId()),
+                    recipient.fullName(), recipient.studentId(), campaignTitle,
+                    donor ? DutCertificateGenerator.CertificateData.ContributionType.DONATION
+                          : DutCertificateGenerator.CertificateData.ContributionType.VOLUNTEER,
+                    detail, todayStr);
+            boolean imageCreated = false;
+            try {
                 byte[] pngBytes = certificateGenerator.generatePng(certData);
-
-                String subject = (request != null && request.customSubject() != null && !request.customSubject().isBlank())
-                        ? request.customSubject()
-                        : "[DUT Connect] Thư cảm ơn & Chứng nhận tham gia chiến dịch: " + campaignTitle;
-
-                String emailBody = buildVolunteerEmailHtml(v.fullName(), v.studentId(), campaignTitle, hoursDetail, request != null ? request.customMessage() : null);
-
-                try {
-                    emailService.sendWithImageAttachment(
-                            v.email(),
-                            subject,
-                            emailBody,
-                            "Giay_Chung_Nhan_DUT_" + v.studentId() + ".png",
-                            pngBytes,
-                            "image/png"
-                    );
-
-                    notificationService.notifyUser(
-                            v.userId(),
-                            "CAMPAIGN_THANK_YOU",
-                            "Thư cảm ơn & Chứng nhận tình nguyện: " + campaignTitle,
-                            "Ban Tổ chức chiến dịch trân trọng gửi lời cảm ơn và Giấy chứng nhận tham gia tình nguyện đến bạn. Vui lòng kiểm tra email để nhận chứng chỉ chính thức!",
-                            "CAMPAIGN",
-                            campaignId
-                    );
-
-                    sentRecipients.add(new ThankYouRecipientDto(
-                            v.userId(),
-                            v.fullName(),
-                            v.studentId(),
-                            v.email(),
-                            "VOLUNTEER",
-                            hoursDetail,
-                            true
-                    ));
-                    volunteersCount++;
-                } catch (Exception ex) {
-                    log.error("Failed to send thank you to volunteer userId={} email={}: {}", v.userId(), v.email(), ex.getMessage());
-                    sentRecipients.add(new ThankYouRecipientDto(
-                            v.userId(),
-                            v.fullName(),
-                            v.studentId(),
-                            v.email(),
-                            "VOLUNTEER",
-                            hoursDetail,
-                            false
-                    ));
-                }
+                imageCreated = true;
+                String subject = request != null && request.customSubject() != null && !request.customSubject().isBlank()
+                        ? request.customSubject().strip()
+                        : "[DUT Connect] Thư cảm ơn đóng góp chiến dịch: " + campaignTitle;
+                String message = request != null ? request.customMessage() : null;
+                String html = donor
+                        ? buildDonationEmailHtml(recipient.fullName(), recipient.studentId(), campaignTitle, detail.replace(" đ", ""), message)
+                        : buildVolunteerEmailHtml(recipient.fullName(), recipient.studentId(), campaignTitle, detail, message);
+                emailService.sendWithImageAttachment(recipient.email(), subject, html,
+                        "Giay_Chung_Nhan_DUT_" + recipient.studentId() + ".png", pngBytes, "image/png");
+            } catch (Exception ex) {
+                String code = ex instanceof vn.edu.dut.connect.shared.application.ApplicationFailure failure
+                        ? failure.code() : imageCreated ? "MAIL_DELIVERY_FAILED" : "CERTIFICATE_GENERATION_FAILED";
+                log.error("Thank-you delivery failed campaign={} user={} code={} cause={}",
+                        campaignId, recipient.userId(), code, ex.getClass().getSimpleName());
+                jdbc.sql("update dut_connect.campaign_thank_you_deliveries set status='FAILED', error_code=:code, updated_at=now() where campaign_id=:campaign and user_id=:user and contribution_type=:type")
+                        .param("code", code).param("campaign", campaignId).param("user", recipient.userId()).param("type", recipient.contributionType()).update();
+                sentRecipients.add(new ThankYouRecipientDto(recipient.userId(), recipient.fullName(),
+                        recipient.studentId(), recipient.email(), recipient.contributionType(), detail, false, code));
+                continue;
+            }
+            // An in-app notification failure must not turn an accepted email into a failed delivery.
+            try {
+                jdbc.sql("update dut_connect.campaign_thank_you_deliveries set status='SENT', error_code=null, sent_at=now(), updated_at=now() where campaign_id=:campaign and user_id=:user and contribution_type=:type")
+                        .param("campaign", campaignId).param("user", recipient.userId()).param("type", recipient.contributionType()).update();
+            } catch (Exception ex) {
+                // Keep SENDING when the provider accepted the message but recording failed; do not resend blindly.
+                log.error("Email accepted but delivery record could not be updated campaign={} user={}", campaignId, recipient.userId());
+            }
+            sentRecipients.add(new ThankYouRecipientDto(recipient.userId(), recipient.fullName(),
+                    recipient.studentId(), recipient.email(), recipient.contributionType(), detail, true));
+            if (donor) donorsCount++; else volunteersCount++;
+            try {
+                notificationService.notifyUser(recipient.userId(), "CAMPAIGN_THANK_YOU",
+                        "Thư cảm ơn đóng góp: " + campaignTitle,
+                        "Ban Tổ chức đã gửi thư cảm ơn và chứng nhận đến email của bạn. Vui lòng kiểm tra hộp thư và thư rác.",
+                        "CAMPAIGN", campaignId);
+            } catch (Exception ex) {
+                log.warn("Thank-you email accepted but notification failed campaign={} user={}", campaignId, recipient.userId());
             }
         }
 
         int totalSent = donorsCount + volunteersCount;
         log.info("Sent thank-you emails for campaignId={} totalSent={} donors={} volunteers={}", campaignId, totalSent, donorsCount, volunteersCount);
 
-        String summaryMessage = String.format("Đã gửi thành công %d thư cảm ơn và chứng chỉ xác nhận của Trường Đại học Bách khoa (Gồm %d sinh viên ủng hộ tài chính và %d tình nguyện viên).",
-                totalSent, donorsCount, volunteersCount);
+        int failed = sentRecipients.size() - totalSent;
+        String summaryMessage = sentRecipients.isEmpty() ? "Không có người nhận đủ điều kiện."
+                : totalSent == 0 ? "Chưa gửi được thư nào. Vui lòng kiểm tra lỗi gửi email trước khi thử lại."
+                : "Dịch vụ email đã tiếp nhận " + totalSent + " thư cảm ơn; " + failed + " thư chưa gửi được.";
 
         return new CampaignThankYouResponse(
                 donorsCount,
@@ -229,6 +162,18 @@ public class CampaignThankYouService {
                 summaryMessage,
                 sentRecipients
         );
+    }
+
+    private boolean claimDelivery(UUID campaignId, ThankYouRecipientDto recipient) {
+        return jdbc.sql("""
+                insert into dut_connect.campaign_thank_you_deliveries as delivery(campaign_id,user_id,contribution_type,status)
+                values(:campaign,:user,:type,'SENDING')
+                on conflict(campaign_id,user_id,contribution_type) do update
+                set status='SENDING', error_code=null, updated_at=now()
+                where delivery.status='FAILED'
+                returning status
+                """).param("campaign", campaignId).param("user", recipient.userId()).param("type", recipient.contributionType())
+                .query(String.class).optional().isPresent();
     }
 
     @Transactional(readOnly = true)
@@ -265,7 +210,7 @@ public class CampaignThankYouService {
                         d.studentId(),
                         d.email(),
                         "DONATION",
-                        String.format("%,d", d.totalAmount().longValue()).replace(',', '.') + " đ",
+                        String.format(java.util.Locale.ROOT, "%,d", d.totalAmount().toBigIntegerExact()).replace(',', '.') + " đ",
                         false
                 ))
                 .toList();
