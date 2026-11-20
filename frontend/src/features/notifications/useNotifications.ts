@@ -1,10 +1,10 @@
-import {useEffect} from 'react';
-import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
-import {useAuth} from '../auth/store';
+import { useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../auth/store';
 import * as api from './api';
 
 export function useNotifications() {
-    const {user} = useAuth();
+    const { user } = useAuth();
     const qc = useQueryClient();
 
     const unreadQuery = useQuery({
@@ -24,20 +24,20 @@ export function useNotifications() {
     const markReadMutation = useMutation({
         mutationFn: api.markAsRead,
         onSuccess: () => {
-            void qc.invalidateQueries({queryKey: ['notifications']});
+            void qc.invalidateQueries({ queryKey: ['notifications'] });
         },
     });
 
     const markAllReadMutation = useMutation({
         mutationFn: api.markAllAsRead,
         onSuccess: () => {
-            void qc.invalidateQueries({queryKey: ['notifications']});
+            void qc.invalidateQueries({ queryKey: ['notifications'] });
         },
     });
 
     useEffect(() => {
         const handler = () => {
-            void qc.invalidateQueries({queryKey: ['notifications']});
+            void qc.invalidateQueries({ queryKey: ['notifications'] });
         };
         window.addEventListener('app:new_notification', handler);
         window.addEventListener('app:donation_received', handler);
@@ -51,8 +51,17 @@ export function useNotifications() {
         unreadCount: unreadQuery.data?.count ?? 0,
         recentNotifications: recentQuery.data?.content ?? [],
         isLoading: recentQuery.isPending,
-        error: recentQuery.error || unreadQuery.error || markReadMutation.error || markAllReadMutation.error,
-        retry: () => {markReadMutation.reset(); markAllReadMutation.reset(); void recentQuery.refetch(); void unreadQuery.refetch();},
+        error:
+            recentQuery.error ||
+            unreadQuery.error ||
+            markReadMutation.error ||
+            markAllReadMutation.error,
+        retry: () => {
+            markReadMutation.reset();
+            markAllReadMutation.reset();
+            void recentQuery.refetch();
+            void unreadQuery.refetch();
+        },
         markAsRead: markReadMutation.mutate,
         markAllAsRead: markAllReadMutation.mutate,
         isMarkingAll: markAllReadMutation.isPending,

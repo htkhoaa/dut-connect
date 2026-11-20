@@ -1,27 +1,35 @@
 package vn.edu.dut.connect.donation.application;
 
+import static vn.edu.dut.connect.donation.application.DonationContracts.*;
+import static vn.edu.dut.connect.donation.application.PaymentGateway.*;
+
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
-
 import org.springframework.stereotype.Service;
 import vn.edu.dut.connect.identity.application.IdentityDirectoryPort;
 import vn.edu.dut.connect.shared.application.ApplicationFailure;
 
-import static vn.edu.dut.connect.donation.application.DonationContracts.*;
-import static vn.edu.dut.connect.donation.application.PaymentGateway.*;
-
 @Service
 public class PaymentService {
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PaymentService.class);
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(
+        PaymentService.class
+    );
     private final PaymentGateways gateways;
     private final PaymentTransactions transactions;
     private final DonationReadService reads;
     private final DonationPolicy policy;
     private final IdentityDirectoryPort identities;
 
-    public PaymentService(PaymentGateways gateways, PaymentTransactions transactions, DonationReadService reads, DonationPolicy policy, IdentityDirectoryPort identities) {
+    public PaymentService(
+        PaymentGateways gateways,
+        PaymentTransactions transactions,
+        DonationReadService reads,
+        DonationPolicy policy,
+        IdentityDirectoryPort identities
+    ) {
         this.gateways = gateways;
         this.transactions = transactions;
         this.reads = reads;
@@ -35,18 +43,36 @@ public class PaymentService {
         var result = gateway.createPayment(command);
         transactions.finalizeCreation(command.paymentId(), result);
         if (result.outcome() == PaymentGateway.Outcome.FAILED) {
-            log.error("Payment gateway failed to create order: code={} message={}", result.code(), result.message());
-            throw new ApplicationFailure(502, "PAYMENT_CREATION_FAILED", "Cổng thanh toán từ chối tạo đơn: " + result.message());
+            log.error(
+                "Payment gateway failed to create order: code={} message={}",
+                result.code(),
+                result.message()
+            );
+            throw new ApplicationFailure(
+                502,
+                "PAYMENT_CREATION_FAILED",
+                "Cổng thanh toán từ chối tạo đơn: " + result.message()
+            );
         }
         var d = reads.detail(command.donationId(), actor);
-        var p = d.payments().stream().filter(v -> v.id().equals(command.paymentId())).findFirst().orElseThrow();
+        var p = d
+            .payments()
+            .stream()
+            .filter(v -> v.id().equals(command.paymentId()))
+            .findFirst()
+            .orElseThrow();
 
         String orderCode = command.orderId();
 
         String qrCodeUrl;
-        if (result.qrCode() != null && !result.qrCode().isBlank() && !result.qrCode().startsWith("http")) {
-            qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=350x350&data="
-                    + URLEncoder.encode(result.qrCode(), StandardCharsets.UTF_8);
+        if (
+            result.qrCode() != null &&
+            !result.qrCode().isBlank() &&
+            !result.qrCode().startsWith("http")
+        ) {
+            qrCodeUrl =
+                "https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=" +
+                URLEncoder.encode(result.qrCode(), StandardCharsets.UTF_8);
         } else if (result.qrCode() != null && result.qrCode().startsWith("http")) {
             qrCodeUrl = result.qrCode();
         } else qrCodeUrl = null;
@@ -65,24 +91,44 @@ public class PaymentService {
         else if ("970448".equals(result.bin())) bankName = "OCB";
         else if ("970443".equals(result.bin())) bankName = "SHB";
         else if ("970403".equals(result.bin())) bankName = "Sacombank";
-        else if (result.bin() != null && !result.bin().isBlank()) bankName = "Ngân hàng (BIN " + result.bin() + ")";
+        else if (result.bin() != null && !result.bin().isBlank()) bankName =
+            "Ngân hàng (BIN " + result.bin() + ")";
 
-        String accountNumber = (result.accountNumber() != null && !result.accountNumber().isBlank())
-                ? result.accountNumber() : null;
-        String accountName = (result.accountName() != null && !result.accountName().isBlank())
-                ? result.accountName() : null;
+        String accountNumber =
+            result.accountNumber() != null && !result.accountNumber().isBlank()
+                ? result.accountNumber()
+                : null;
+        String accountName =
+            result.accountName() != null && !result.accountName().isBlank()
+                ? result.accountName()
+                : null;
 
         // A callback may settle the intent before the create-order response arrives.
-        return new CreationDto(d.id(), p.id(), d.status(), p.checkoutUrl(), p.failureReason(), orderCode, qrCodeUrl, accountNumber, accountName, bankName);
+        return new CreationDto(
+            d.id(),
+            p.id(),
+            d.status(),
+            p.checkoutUrl(),
+            p.failureReason(),
+            orderCode,
+            qrCodeUrl,
+            accountNumber,
+            accountName,
+            bankName
+        );
     }
 
     public DonationDto checkAndDetail(UUID donationId, UUID actor) {
         var d = reads.detail(donationId, actor);
-        if (d.status() == vn.edu.dut.connect.donation.domain.DonationStatus.CREATED
-                || d.status() == vn.edu.dut.connect.donation.domain.DonationStatus.PENDING_PAYMENT) {
+        if (
+            d.status() == vn.edu.dut.connect.donation.domain.DonationStatus.CREATED ||
+            d.status() == vn.edu.dut.connect.donation.domain.DonationStatus.PENDING_PAYMENT
+        ) {
             for (var p : d.payments()) {
-                if (p.status() == vn.edu.dut.connect.donation.domain.PaymentStatus.CREATED
-                        || p.status() == vn.edu.dut.connect.donation.domain.PaymentStatus.PROVIDER_PENDING) {
+                if (
+                    p.status() == vn.edu.dut.connect.donation.domain.PaymentStatus.CREATED ||
+                    p.status() == vn.edu.dut.connect.donation.domain.PaymentStatus.PROVIDER_PENDING
+                ) {
                     try {
                         var result = gateways.get(p.provider()).query(p.providerOrderId());
                         if (result.outcome() == Outcome.PAID) {
@@ -90,7 +136,11 @@ public class PaymentService {
                             return reads.detail(donationId, actor);
                         }
                     } catch (Exception e) {
-                        log.debug("Auto-check query failed for order={}: {}", p.providerOrderId(), e.getMessage());
+                        log.debug(
+                            "Auto-check query failed for order={}: {}",
+                            p.providerOrderId(),
+                            e.getMessage()
+                        );
                     }
                 }
             }
@@ -99,7 +149,9 @@ public class PaymentService {
     }
 
     public DonationDto adminSettle(UUID donationId, UUID actor) {
-        var account = identities.lockAccount(actor).orElseThrow(() -> ApplicationFailure.missing("Account not found"));
+        var account = identities
+            .lockAccount(actor)
+            .orElseThrow(() -> ApplicationFailure.missing("Account not found"));
         if (!account.active() || !account.admin()) {
             throw new ApplicationFailure(403, "ACCESS_DENIED", "Admin access required");
         }
@@ -110,13 +162,13 @@ public class PaymentService {
         for (var p : d.payments()) {
             if (p.status() != vn.edu.dut.connect.donation.domain.PaymentStatus.PAID) {
                 var verified = new VerifiedResult(
-                        p.provider(),
-                        p.providerOrderId(),
-                        Outcome.PAID,
-                        new BigDecimal(p.amount()),
-                        "ADMIN_MANUAL_" + UUID.randomUUID().toString().substring(0, 8),
-                        java.time.Instant.now(),
-                        "00"
+                    p.provider(),
+                    p.providerOrderId(),
+                    Outcome.PAID,
+                    new BigDecimal(p.amount()),
+                    "ADMIN_MANUAL_" + UUID.randomUUID().toString().substring(0, 8),
+                    java.time.Instant.now(),
+                    "00"
                 );
                 transactions.settle(verified);
                 return reads.detail(donationId, actor);
@@ -127,8 +179,10 @@ public class PaymentService {
 
     public DonationDto refresh(UUID id, UUID actor) {
         var p = reads.payment(id, actor);
-        if (p.status() == vn.edu.dut.connect.donation.domain.PaymentStatus.CREATED || p.status() == vn.edu.dut.connect.donation.domain.PaymentStatus.PROVIDER_PENDING)
-            transactions.settle(gateways.get(p.provider()).query(p.providerOrderId()));
+        if (
+            p.status() == vn.edu.dut.connect.donation.domain.PaymentStatus.CREATED ||
+            p.status() == vn.edu.dut.connect.donation.domain.PaymentStatus.PROVIDER_PENDING
+        ) transactions.settle(gateways.get(p.provider()).query(p.providerOrderId()));
         return reads.detail(reads.donationForPayment(id, actor), actor);
     }
 
@@ -147,6 +201,11 @@ public class PaymentService {
         } catch (vn.edu.dut.connect.shared.application.ApplicationFailure e) {
             available = false;
         }
-        return new SettingsDto(policy.provider(), policy.minimum().toPlainString(), policy.maximum().toPlainString(), available);
+        return new SettingsDto(
+            policy.provider(),
+            policy.minimum().toPlainString(),
+            policy.maximum().toPlainString(),
+            available
+        );
     }
 }

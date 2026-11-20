@@ -1,64 +1,284 @@
-import {ApiImage} from '../../shared/components/ApiImage';
-import {useLanguage, tr, renderText, locale} from "../../shared/lib/i18n";
-import {useState} from 'react';
-import {useForm} from 'react-hook-form';
-import {useQuery} from '@tanstack/react-query';
-import {z} from 'zod';
-import {useParams,useNavigate,Link} from 'react-router-dom';
-import {useProposal,useReviewProposal,useCancelProposal,useSubmitProposal} from './hooks';
-import {useAuth} from '../auth/store';
-import {proposalStatuses} from '../campaigns/presentation';
-import {PlanContent} from '../campaigns/components/PlanContent';
-import {PlanForm} from '../campaigns/components/PlanForm';
-import type {ReviewAction} from '../campaigns/types';
-import {apiClient} from '../../shared/api/client';
-import {errorMessage} from '../../shared/api/errors';
-import {Card} from '../../shared/components/Card';
-import {Badge} from '../../shared/components/Badge';
-import {Button} from '../../shared/components/Button';
-import {Textarea} from '../../shared/components/Textarea';
-import {FormField} from '../../shared/components/FormField';
-import {ConfirmDialog} from '../../shared/components/ConfirmDialog';
-import {LoadingState} from '../../shared/components/LoadingState';
-import {ErrorState} from '../../shared/components/ErrorState';
-export function ProposalDetailPage(){
+import { ApiImage } from '../../shared/components/ApiImage';
+import { useLanguage, tr, renderText, locale } from '../../shared/lib/i18n';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { useQuery } from '@tanstack/react-query';
+import { z } from 'zod';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useProposal, useReviewProposal, useCancelProposal, useSubmitProposal } from './hooks';
+import { useAuth } from '../auth/store';
+import { proposalStatuses } from '../campaigns/presentation';
+import { PlanContent } from '../campaigns/components/PlanContent';
+import { PlanForm } from '../campaigns/components/PlanForm';
+import type { ReviewAction } from '../campaigns/types';
+import { apiClient } from '../../shared/api/client';
+import { errorMessage } from '../../shared/api/errors';
+import { Card } from '../../shared/components/Card';
+import { Badge } from '../../shared/components/Badge';
+import { Button } from '../../shared/components/Button';
+import { Textarea } from '../../shared/components/Textarea';
+import { FormField } from '../../shared/components/FormField';
+import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
+import { LoadingState } from '../../shared/components/LoadingState';
+import { ErrorState } from '../../shared/components/ErrorState';
+export function ProposalDetailPage() {
     useLanguage();
-    const {id=''}=useParams();
-    return <ProposalDetail key={id} id={id}/>;
+    const { id = '' } = useParams();
+    return <ProposalDetail key={id} id={id} />;
 }
-function ProposalDetail({id}:{id:string}){
+function ProposalDetail({ id }: { id: string }) {
     useLanguage();
-    const query=useProposal(id);const review=useReviewProposal(id);const cancel=useCancelProposal();const submit=useSubmitProposal();const user=useAuth(s=>s.user);const navigate=useNavigate();
+    const query = useProposal(id);
+    const review = useReviewProposal(id);
+    const cancel = useCancelProposal();
+    const submit = useSubmitProposal();
+    const user = useAuth((s) => s.user);
+    const navigate = useNavigate();
     const galleryQuery = useQuery({
         queryKey: ['proposal-gallery', id],
-        queryFn: async () => (await apiClient.get<Array<{id: string; imageUrl: string; caption?: string}>>('/proposals/' + id + '/gallery')).data,
+        queryFn: async () =>
+            (
+                await apiClient.get<Array<{ id: string; imageUrl: string; caption?: string }>>(
+                    '/proposals/' + id + '/gallery',
+                )
+            ).data,
     });
-    const [action,setAction]=useState<ReviewAction|null>(null);const reason=useForm<{reason:string}>({defaultValues:{reason:''}});
-    if(query.isPending)return <LoadingState/>;if(query.isError)return <ErrorState message={errorMessage(query.error)} onRetry={()=>void query.refetch()}/>;
-    const p=query.data;
-    return <div className="space-y-6"><Link className="ui-button ui-button-secondary" to={user?.role==='ADMIN'?'/admin/proposals':'/proposals'}>{tr("Về danh sách đề xuất")}</Link><div className="flex flex-wrap items-center gap-3"><h1 className="max-w-full break-words text-3xl font-semibold">{renderText(p.content.title)}</h1><Badge tone={proposalStatuses[p.status].tone}>{renderText(proposalStatuses[p.status].label)}</Badge></div>
-        <Card><p className="mb-4 text-text-secondary">{tr("Người đề xuất: ")}{renderText(p.proposerName)} · {renderText(new Date(p.createdAt).toLocaleDateString(locale()))}</p><PlanContent content={p.content} organizerName={p.organizationName||p.proposerName} categoryName={p.categoryName}/>{renderText(p.rejectionReason&&<p role="status" className="mt-5 whitespace-pre-wrap text-danger">{tr("Lý do từ chối: ")}{renderText(p.rejectionReason)}</p>)}{renderText(p.reviewedAt&&<p className="mt-4 text-sm text-text-secondary">{tr("Xét duyệt: ")}{renderText(new Date(p.reviewedAt).toLocaleString(locale()))}</p>)}{renderText(p.campaignId&&<Link className="ui-button ui-button-secondary mt-4" to={'/campaigns/'+p.campaignId}>{tr("Xem chiến dịch")}</Link>)}
-        {galleryQuery.data && galleryQuery.data.length > 0 && (
-            <div className="mt-5 border-t border-border pt-4">
-                <h3 className="text-sm font-bold text-text-primary mb-3">📸 {tr("Hình ảnh đề xuất đính kèm")} ({galleryQuery.data.length})</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {galleryQuery.data.map(img => (
-                        <div key={img.id} className="aspect-4/3 rounded-xl overflow-hidden border border-border bg-surface-muted relative group">
-                            <ApiImage src={img.imageUrl} alt={img.caption || ''} className="w-full h-full object-cover" />
-                            {img.caption && <div className="absolute inset-x-0 bottom-0 bg-black/60 p-1.5 text-[10px] text-white truncate">{img.caption}</div>}
-                        </div>
-                    ))}
-                </div>
+    const [action, setAction] = useState<ReviewAction | null>(null);
+    const reason = useForm<{ reason: string }>({ defaultValues: { reason: '' } });
+    if (query.isPending) return <LoadingState />;
+    if (query.isError)
+        return (
+            <ErrorState message={errorMessage(query.error)} onRetry={() => void query.refetch()} />
+        );
+    const p = query.data;
+    return (
+        <div className="space-y-6">
+            <Link
+                className="ui-button ui-button-secondary"
+                to={user?.role === 'ADMIN' ? '/admin/proposals' : '/proposals'}
+            >
+                {tr('Về danh sách đề xuất')}
+            </Link>
+            <div className="flex flex-wrap items-center gap-3">
+                <h1 className="max-w-full break-words text-3xl font-semibold">
+                    {renderText(p.content.title)}
+                </h1>
+                <Badge tone={proposalStatuses[p.status].tone}>
+                    {renderText(proposalStatuses[p.status].label)}
+                </Badge>
             </div>
-        )}
-        {p.status==='DRAFT'&&p.canEdit&&<div className="mt-5 flex gap-3"><Button disabled={submit.isPending} onClick={()=>submit.mutate({id:p.id,version:p.version})}>{submit.isPending?tr("Đang gửi…"):tr("Gửi đề xuất xét duyệt")}</Button><Button variant="secondary" disabled={cancel.isPending} onClick={()=>cancel.mutate({id:p.id,version:p.version},{onSuccess:()=>navigate('/proposals')})}>{tr("Hủy bản nháp")}</Button></div>}
-        </Card>
-        {renderText(p.canEdit&&<Card><h2 className="mb-5 text-xl font-semibold">{renderText(p.status==='REJECTED'?tr("Chỉnh sửa và gửi lại đề xuất"):p.status==='DRAFT'?tr("Chỉnh sửa bản nháp đề xuất"):tr("Chỉnh sửa đề xuất chờ duyệt"))}</h2><PlanForm key={p.id} id={p.id} content={p.content} version={p.version} categoryName={p.categoryName} organizationName={p.organizationName||undefined}/>{renderText(p.status==='REJECTED'&&<Button variant="secondary" className="mt-4" disabled={cancel.isPending} onClick={()=>cancel.mutate({id:p.id,version:p.version},{onSuccess:()=>navigate('/proposals')})}>{tr("Hủy đề xuất")}</Button>)}</Card>)}
-        {renderText(user?.role==='ADMIN'&&p.status==='PENDING'&&<Card><h2 className="mb-4 text-xl font-semibold">{tr("Duyệt đề xuất")}</h2><Button disabled={review.isPending} onClick={()=>setAction({command:'approve',version:p.version})}>{tr("Duyệt đề xuất")}</Button><form className="mt-5 space-y-3" onSubmit={reason.handleSubmit(v=>{const parsed=z.string().trim().min(1,tr("Nhập lý do từ chối")).max(1000).safeParse(v.reason);if(parsed.success)setAction({command:'reject',reason:parsed.data,version:p.version});else reason.setError('reason',{message:parsed.error.issues[0].message});})}><FormField id="rejection-reason" label={tr("Lý do từ chối")} error={reason.formState.errors.reason?.message}><Textarea id="rejection-reason" maxLength={1000} disabled={review.isPending} {...reason.register('reason')}/></FormField><Button type="submit" disabled={review.isPending}>{tr("Từ chối đề xuất")}</Button></form></Card>)}
-        {renderText(review.isError&&<ErrorState message={errorMessage(review.error)}/>)}
-        {submit.isError && <ErrorState message={errorMessage(submit.error)}/>}
-        {cancel.isError && <ErrorState message={errorMessage(cancel.error)}/>}
-        {renderText(review.isSuccess&&<p role="status" className="text-success">{tr("Đã xét duyệt đề xuất.")}</p>)}
-        <ConfirmDialog open={action!==null} title={action?.command==='approve'?tr("Duyệt đề xuất?"):tr("Từ chối đề xuất?")} message={action?.command==='approve'?tr("Phê duyệt đề xuất, kích hoạt chiến dịch ở trạng thái đang hoạt động và gán người đề xuất làm chủ sở hữu."):tr("Lý do được lưu để người đề xuất chỉnh sửa và gửi lại nếu cần.")} busy={review.isPending} confirmLabel={tr("Xác nhận")} onClose={()=>setAction(null)} onConfirm={()=>{if(action)review.mutate(action,{onSuccess:result=>{if(action.command==='approve')navigate('/manage/campaigns/'+result.id);},onSettled:()=>setAction(null)});}}/>
-    </div>;
+            <Card>
+                <p className="mb-4 text-text-secondary">
+                    {tr('Người đề xuất: ')}
+                    {renderText(p.proposerName)} ·{' '}
+                    {renderText(new Date(p.createdAt).toLocaleDateString(locale()))}
+                </p>
+                <PlanContent
+                    content={p.content}
+                    organizerName={p.organizationName || p.proposerName}
+                    categoryName={p.categoryName}
+                />
+                {renderText(
+                    p.rejectionReason && (
+                        <p role="status" className="mt-5 whitespace-pre-wrap text-danger">
+                            {tr('Lý do từ chối: ')}
+                            {renderText(p.rejectionReason)}
+                        </p>
+                    ),
+                )}
+                {renderText(
+                    p.reviewedAt && (
+                        <p className="mt-4 text-sm text-text-secondary">
+                            {tr('Xét duyệt: ')}
+                            {renderText(new Date(p.reviewedAt).toLocaleString(locale()))}
+                        </p>
+                    ),
+                )}
+                {renderText(
+                    p.campaignId && (
+                        <Link
+                            className="ui-button ui-button-secondary mt-4"
+                            to={'/campaigns/' + p.campaignId}
+                        >
+                            {tr('Xem chiến dịch')}
+                        </Link>
+                    ),
+                )}
+                {galleryQuery.data && galleryQuery.data.length > 0 && (
+                    <div className="mt-5 border-t border-border pt-4">
+                        <h3 className="text-sm font-bold text-text-primary mb-3">
+                            📸 {tr('Hình ảnh đề xuất đính kèm')} ({galleryQuery.data.length})
+                        </h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            {galleryQuery.data.map((img) => (
+                                <div
+                                    key={img.id}
+                                    className="aspect-4/3 rounded-xl overflow-hidden border border-border bg-surface-muted relative group"
+                                >
+                                    <ApiImage
+                                        src={img.imageUrl}
+                                        alt={img.caption || ''}
+                                        className="w-full h-full object-cover"
+                                    />
+                                    {img.caption && (
+                                        <div className="absolute inset-x-0 bottom-0 bg-black/60 p-1.5 text-[10px] text-white truncate">
+                                            {img.caption}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                {p.status === 'DRAFT' && p.canEdit && (
+                    <div className="mt-5 flex gap-3">
+                        <Button
+                            disabled={submit.isPending}
+                            onClick={() => submit.mutate({ id: p.id, version: p.version })}
+                        >
+                            {submit.isPending ? tr('Đang gửi…') : tr('Gửi đề xuất xét duyệt')}
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            disabled={cancel.isPending}
+                            onClick={() =>
+                                cancel.mutate(
+                                    { id: p.id, version: p.version },
+                                    { onSuccess: () => navigate('/proposals') },
+                                )
+                            }
+                        >
+                            {tr('Hủy bản nháp')}
+                        </Button>
+                    </div>
+                )}
+            </Card>
+            {renderText(
+                p.canEdit && (
+                    <Card>
+                        <h2 className="mb-5 text-xl font-semibold">
+                            {renderText(
+                                p.status === 'REJECTED'
+                                    ? tr('Chỉnh sửa và gửi lại đề xuất')
+                                    : p.status === 'DRAFT'
+                                      ? tr('Chỉnh sửa bản nháp đề xuất')
+                                      : tr('Chỉnh sửa đề xuất chờ duyệt'),
+                            )}
+                        </h2>
+                        <PlanForm
+                            key={p.id}
+                            id={p.id}
+                            content={p.content}
+                            version={p.version}
+                            categoryName={p.categoryName}
+                            organizationName={p.organizationName || undefined}
+                        />
+                        {renderText(
+                            p.status === 'REJECTED' && (
+                                <Button
+                                    variant="secondary"
+                                    className="mt-4"
+                                    disabled={cancel.isPending}
+                                    onClick={() =>
+                                        cancel.mutate(
+                                            { id: p.id, version: p.version },
+                                            { onSuccess: () => navigate('/proposals') },
+                                        )
+                                    }
+                                >
+                                    {tr('Hủy đề xuất')}
+                                </Button>
+                            ),
+                        )}
+                    </Card>
+                ),
+            )}
+            {renderText(
+                user?.role === 'ADMIN' && p.status === 'PENDING' && (
+                    <Card>
+                        <h2 className="mb-4 text-xl font-semibold">{tr('Duyệt đề xuất')}</h2>
+                        <Button
+                            disabled={review.isPending}
+                            onClick={() => setAction({ command: 'approve', version: p.version })}
+                        >
+                            {tr('Duyệt đề xuất')}
+                        </Button>
+                        <form
+                            className="mt-5 space-y-3"
+                            onSubmit={reason.handleSubmit((v) => {
+                                const parsed = z
+                                    .string()
+                                    .trim()
+                                    .min(1, tr('Nhập lý do từ chối'))
+                                    .max(1000)
+                                    .safeParse(v.reason);
+                                if (parsed.success)
+                                    setAction({
+                                        command: 'reject',
+                                        reason: parsed.data,
+                                        version: p.version,
+                                    });
+                                else
+                                    reason.setError('reason', {
+                                        message: parsed.error.issues[0].message,
+                                    });
+                            })}
+                        >
+                            <FormField
+                                id="rejection-reason"
+                                label={tr('Lý do từ chối')}
+                                error={reason.formState.errors.reason?.message}
+                            >
+                                <Textarea
+                                    id="rejection-reason"
+                                    maxLength={1000}
+                                    disabled={review.isPending}
+                                    {...reason.register('reason')}
+                                />
+                            </FormField>
+                            <Button type="submit" disabled={review.isPending}>
+                                {tr('Từ chối đề xuất')}
+                            </Button>
+                        </form>
+                    </Card>
+                ),
+            )}
+            {renderText(review.isError && <ErrorState message={errorMessage(review.error)} />)}
+            {submit.isError && <ErrorState message={errorMessage(submit.error)} />}
+            {cancel.isError && <ErrorState message={errorMessage(cancel.error)} />}
+            {renderText(
+                review.isSuccess && (
+                    <p role="status" className="text-success">
+                        {tr('Đã xét duyệt đề xuất.')}
+                    </p>
+                ),
+            )}
+            <ConfirmDialog
+                open={action !== null}
+                title={
+                    action?.command === 'approve' ? tr('Duyệt đề xuất?') : tr('Từ chối đề xuất?')
+                }
+                message={
+                    action?.command === 'approve'
+                        ? tr(
+                              'Phê duyệt đề xuất, kích hoạt chiến dịch ở trạng thái đang hoạt động và gán người đề xuất làm chủ sở hữu.',
+                          )
+                        : tr('Lý do được lưu để người đề xuất chỉnh sửa và gửi lại nếu cần.')
+                }
+                busy={review.isPending}
+                confirmLabel={tr('Xác nhận')}
+                onClose={() => setAction(null)}
+                onConfirm={() => {
+                    if (action)
+                        review.mutate(action, {
+                            onSuccess: (result) => {
+                                if (action.command === 'approve')
+                                    navigate('/manage/campaigns/' + result.id);
+                            },
+                            onSettled: () => setAction(null),
+                        });
+                }}
+            />
+        </div>
+    );
 }

@@ -1,22 +1,26 @@
 package vn.edu.dut.connect.identity.application;
 
-import java.util.*;
+import static vn.edu.dut.connect.identity.application.IdentityContracts.*;
 
+import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.edu.dut.connect.identity.domain.*;
-import vn.edu.dut.connect.shared.application.PageResult;
 import vn.edu.dut.connect.shared.application.ApplicationFailure;
-
-import static vn.edu.dut.connect.identity.application.IdentityContracts.*;
+import vn.edu.dut.connect.shared.application.PageResult;
 
 @Service
 public class ProfileService {
+
     private final UserRepository users;
     private final ProfileRepository profiles;
     private final SkillRepository skills;
 
-    public ProfileService(UserRepository users, ProfileRepository profiles, SkillRepository skills) {
+    public ProfileService(
+        UserRepository users,
+        ProfileRepository profiles,
+        SkillRepository skills
+    ) {
         this.users = users;
         this.profiles = profiles;
         this.skills = skills;
@@ -29,14 +33,24 @@ public class ProfileService {
 
     @Transactional
     public ProfileResponse update(UUID id, ProfileRequest request) {
-        User user = users.lockUser(id).orElseThrow(() -> ApplicationFailure.missing("User not found"));
+        User user = users
+            .lockUser(id)
+            .orElseThrow(() -> ApplicationFailure.missing("User not found"));
         IdentityAccess.requireActive(user);
         StudentProfile profile = profile(id);
         RegistrationRules.version(user.version(), request.userVersion());
         RegistrationRules.version(profile.version(), request.version());
-        if (!profile.faculty().equals(request.faculty().trim())) Faculties.require(request.faculty());
+        if (!profile.faculty().equals(request.faculty().trim())) Faculties.require(
+            request.faculty()
+        );
         user.rename(request.fullName().trim());
-        profile.update(request.faculty().trim(), trim(request.bio()), request.preferredTrack(), trim(request.experience()), trim(request.className()));
+        profile.update(
+            request.faculty().trim(),
+            trim(request.bio()),
+            request.preferredTrack(),
+            trim(request.experience()),
+            trim(request.className())
+        );
         users.saveUser(user);
         profiles.saveProfile(profile);
         return response(user, profile);
@@ -44,13 +58,18 @@ public class ProfileService {
 
     @Transactional
     public ProfileResponse updateSkills(UUID id, SkillsRequest request) {
-        User user = users.lockUser(id).orElseThrow(() -> ApplicationFailure.missing("User not found"));
+        User user = users
+            .lockUser(id)
+            .orElseThrow(() -> ApplicationFailure.missing("User not found"));
         IdentityAccess.requireActive(user);
-        StudentProfile profile = profiles.lockProfile(id).orElseThrow(() -> ApplicationFailure.missing("Student profile not found"));
+        StudentProfile profile = profiles
+            .lockProfile(id)
+            .orElseThrow(() -> ApplicationFailure.missing("Student profile not found"));
         RegistrationRules.version(profile.version(), request.version());
         Set<UUID> ids = new HashSet<>(request.skillIds());
-        if (ids.size() != request.skillIds().size() || !skills.allActive(ids))
-            throw new ApplicationFailure(400, "VALIDATION_ERROR", "Select distinct, active skills");
+        if (
+            ids.size() != request.skillIds().size() || !skills.allActive(ids)
+        ) throw new ApplicationFailure(400, "VALIDATION_ERROR", "Select distinct, active skills");
         skills.replaceSkills(id, ids);
         profile.touch();
         profiles.saveProfile(profile);
@@ -63,18 +82,30 @@ public class ProfileService {
     }
 
     private User user(UUID id) {
-        User user = users.findUser(id).orElseThrow(() -> ApplicationFailure.missing("User not found"));
+        User user = users
+            .findUser(id)
+            .orElseThrow(() -> ApplicationFailure.missing("User not found"));
         IdentityAccess.requireActive(user);
         return user;
     }
 
     private StudentProfile profile(UUID id) {
-        return profiles.findProfile(id).orElseThrow(() -> ApplicationFailure.missing("Student profile not found"));
+        return profiles
+            .findProfile(id)
+            .orElseThrow(() -> ApplicationFailure.missing("Student profile not found"));
     }
 
     private ProfileResponse response(User user, StudentProfile profile) {
-        return new ProfileResponse(UserSummary.from(user), profile.faculty(), profile.className(), profile.bio(), profile.preferredTrack(), profile.experience(),
-                profile.version(), skills.userSkills(user.id()).stream().map(SkillResponse::from).toList());
+        return new ProfileResponse(
+            UserSummary.from(user),
+            profile.faculty(),
+            profile.className(),
+            profile.bio(),
+            profile.preferredTrack(),
+            profile.experience(),
+            profile.version(),
+            skills.userSkills(user.id()).stream().map(SkillResponse::from).toList()
+        );
     }
 
     private static String trim(String value) {

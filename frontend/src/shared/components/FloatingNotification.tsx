@@ -1,5 +1,5 @@
-import {useState, useEffect} from 'react';
-import {useLanguage, tr, renderText} from '../lib/i18n';
+import { useState, useEffect } from 'react';
+import { useLanguage, tr, renderText } from '../lib/i18n';
 
 export interface BannerItem {
     id: string;
@@ -29,15 +29,21 @@ export function FloatingNotificationContainer() {
 
             const notif = data.notification || data;
             const notifType = notif.type || '';
-            const isDonationRelated = notifType === 'DONATION_RECEIVED' || notifType === 'DONATION_SUCCESS';
-            const id = notif.id ? `notif-${notif.id}` : `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+            const isDonationRelated =
+                notifType === 'DONATION_RECEIVED' || notifType === 'DONATION_SUCCESS';
+            const id = notif.id
+                ? `notif-${notif.id}`
+                : `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
 
             const newBanner: BannerItem = {
                 id,
                 type: isDonationRelated ? 'donation' : 'notification',
-                title: notif.title || tr("Thông báo mới 🔔"),
+                title: notif.title || tr('Thông báo mới 🔔'),
                 message: notif.body || notif.content || notif.message || '',
-                actionUrl: notif.entityType === 'CAMPAIGN' && notif.entityId ? `/campaigns/${notif.entityId}` : undefined,
+                actionUrl:
+                    notif.entityType === 'CAMPAIGN' && notif.entityId
+                        ? `/campaigns/${notif.entityId}`
+                        : undefined,
             };
 
             setBanners((prev) => {
@@ -55,7 +61,7 @@ export function FloatingNotificationContainer() {
             const event = e as CustomEvent<BannerItem>;
             if (!event.detail) return;
             const id = event.detail.id || 'custom-' + Date.now();
-            setBanners((prev) => [{...event.detail, id}, ...prev.slice(0, 3)]);
+            setBanners((prev) => [{ ...event.detail, id }, ...prev.slice(0, 3)]);
             setTimeout(() => {
                 setBanners((prev) => prev.filter((b) => b.id !== id));
             }, 8000);
@@ -74,7 +80,7 @@ export function FloatingNotificationContainer() {
 
     return (
         <aside
-            aria-label={tr("Thông báo hệ thống")}
+            aria-label={tr('Thông báo hệ thống')}
             className="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full px-4 sm:px-0 pointer-events-none"
         >
             {banners.map((item) => (
@@ -110,7 +116,7 @@ export function FloatingNotificationContainer() {
                                 {renderText(item.message)}
                             </p>
                             <span className="mt-1.5 block text-[10px] font-medium text-text-muted">
-                                {tr("Vừa xong · Realtime")}
+                                {tr('Vừa xong · Realtime')}
                             </span>
                         </div>
 
@@ -119,7 +125,7 @@ export function FloatingNotificationContainer() {
                             type="button"
                             onClick={() => remove(item.id)}
                             className="absolute top-3 right-3 flex h-6 w-6 items-center justify-center rounded-lg text-text-muted hover:bg-surface-muted hover:text-text-primary transition-colors text-xs font-bold"
-                            title={tr("Đóng thông báo")}
+                            title={tr('Đóng thông báo')}
                         >
                             ✕
                         </button>

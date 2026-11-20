@@ -1,7 +1,7 @@
-import {useQuery} from '@tanstack/react-query';
-import {useLanguage, tr, renderText, locale} from '../../shared/lib/i18n';
-import {apiClient} from '../../shared/api/client';
-import {Icon} from '../../shared/components/Icon';
+import { useQuery } from '@tanstack/react-query';
+import { useLanguage, tr, renderText, locale } from '../../shared/lib/i18n';
+import { apiClient } from '../../shared/api/client';
+import { Icon } from '../../shared/components/Icon';
 
 interface ActivityItem {
     id: string;
@@ -14,18 +14,19 @@ interface ActivityItem {
 
 function timeAgo(dateStr: string) {
     const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-    if (diff < 60) return tr("Vừa xong");
-    if (diff < 3600) return `${Math.floor(diff / 60)} ${tr("phút trước")}`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} ${tr("giờ trước")}`;
+    if (diff < 60) return tr('Vừa xong');
+    if (diff < 3600) return `${Math.floor(diff / 60)} ${tr('phút trước')}`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} ${tr('giờ trước')}`;
     return new Date(dateStr).toLocaleDateString(locale());
 }
 
-export function CampaignActivityFeed({campaignId}: {campaignId: string}) {
+export function CampaignActivityFeed({ campaignId }: { campaignId: string }) {
     useLanguage();
     const query = useQuery({
         queryKey: ['campaign-activities', campaignId],
         queryFn: async () => {
-            return (await apiClient.get<ActivityItem[]>(`/campaigns/${campaignId}/activities`)).data;
+            return (await apiClient.get<ActivityItem[]>(`/campaigns/${campaignId}/activities`))
+                .data;
         },
         refetchInterval: 12_000, // Poll every 12s
     });
@@ -41,7 +42,9 @@ export function CampaignActivityFeed({campaignId}: {campaignId: string}) {
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
                         <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
                     </span>
-                    <h3 className="text-sm font-bold text-text-primary">{tr("Nhịp đập chiến dịch")}</h3>
+                    <h3 className="text-sm font-bold text-text-primary">
+                        {tr('Nhịp đập chiến dịch')}
+                    </h3>
                 </div>
             </div>
 
@@ -52,20 +55,28 @@ export function CampaignActivityFeed({campaignId}: {campaignId: string}) {
                         <Icon name="spark" size={18} />
                     </div>
                     <p className="text-xs text-text-secondary leading-relaxed">
-                        {tr("Chưa có lượt tương tác nào.")}<br/>
-                        <span className="text-primary font-medium">{tr("Hãy là người đầu tiên tiếp sức cho chiến dịch này!")}</span>
+                        {tr('Chưa có lượt tương tác nào.')}
+                        <br />
+                        <span className="text-primary font-medium">
+                            {tr('Hãy là người đầu tiên tiếp sức cho chiến dịch này!')}
+                        </span>
                     </p>
                 </div>
             ) : (
                 <div className="space-y-3 max-h-80 overflow-y-auto pr-1 divide-y divide-border/30">
-                    {items.map(item => (
+                    {items.map((item) => (
                         <div key={item.id} className="pt-2.5 first:pt-0 flex items-start gap-3">
-                            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg mt-0.5 ${
-                                item.type === 'DONATION'
-                                    ? 'bg-rose-50 text-rose-600'
-                                    : 'bg-primary-light text-primary'
-                            }`}>
-                                <Icon name={item.type === 'DONATION' ? 'heart' : 'users'} size={14} />
+                            <span
+                                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg mt-0.5 ${
+                                    item.type === 'DONATION'
+                                        ? 'bg-rose-50 text-rose-600'
+                                        : 'bg-primary-light text-primary'
+                                }`}
+                            >
+                                <Icon
+                                    name={item.type === 'DONATION' ? 'heart' : 'users'}
+                                    size={14}
+                                />
                             </span>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-baseline justify-between gap-1">

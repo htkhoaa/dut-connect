@@ -1,18 +1,18 @@
 package vn.edu.dut.connect.identity.api;
 
-import java.util.UUID;
+import static vn.edu.dut.connect.identity.application.IdentityContracts.*;
 
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.dut.connect.identity.application.ProfileService;
+import vn.edu.dut.connect.shared.api.CurrentActor;
 import vn.edu.dut.connect.shared.api.PageResponse;
-
-import static vn.edu.dut.connect.identity.application.IdentityContracts.*;
 
 @RestController
 @RequestMapping("/api/v1")
 public class ProfileController {
+
     private final ProfileService service;
 
     public ProfileController(ProfileService service) {
@@ -20,22 +20,25 @@ public class ProfileController {
     }
 
     @GetMapping("/skills")
-    public PageResponse<SkillResponse> skills(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+    public PageResponse<SkillResponse> skills(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "20") int size
+    ) {
         return PageResponse.from(service.catalog(page, size));
     }
 
     @GetMapping("/me/profile")
     public ProfileResponse get(Authentication auth) {
-        return service.get(UUID.fromString(auth.getName()));
+        return service.get(CurrentActor.id(auth));
     }
 
     @PutMapping("/me/profile")
     public ProfileResponse update(Authentication auth, @Valid @RequestBody ProfileRequest request) {
-        return service.update(UUID.fromString(auth.getName()), request);
+        return service.update(CurrentActor.id(auth), request);
     }
 
     @PutMapping("/me/skills")
     public ProfileResponse skills(Authentication auth, @Valid @RequestBody SkillsRequest request) {
-        return service.updateSkills(UUID.fromString(auth.getName()), request);
+        return service.updateSkills(CurrentActor.id(auth), request);
     }
 }

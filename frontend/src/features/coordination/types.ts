@@ -1,5 +1,5 @@
-import type {SkillTrack} from '../campaigns/types';
-export {tracks} from '../volunteers/presentation';
+import type { SkillTrack } from '../campaigns/types';
+export { tracks } from '../volunteers/presentation';
 export type Track = SkillTrack;
 export type AttendanceStatus = 'PRESENT' | 'ABSENT';
 export type MeetingType = 'ONLINE' | 'OFFLINE';
@@ -13,7 +13,7 @@ export interface Resource {
     createdAt: string;
     updatedAt: string;
     version: number;
-    createdByUserId: string
+    createdByUserId: string;
 }
 
 export interface Meeting extends Resource {
@@ -23,14 +23,14 @@ export interface Meeting extends Resource {
     endsAt: string;
     location: string | null;
     meetingUrl: string | null;
-    canManage: boolean
+    canManage: boolean;
 }
 
 export interface Assignee {
     userId: string;
     fullName: string;
     studentId: string;
-    assignedTrack: Track
+    assignedTrack: Track;
 }
 
 export interface Task extends Resource {
@@ -44,12 +44,12 @@ export interface Task extends Resource {
     verifiedByUserId: string | null;
     verifiedAt: string | null;
     canManage: boolean;
-    canProgress: boolean
+    canProgress: boolean;
 }
 
 export interface Session extends Resource {
     startsAt: string;
-    endsAt: string
+    endsAt: string;
 }
 
 export interface AttendanceRecord {
@@ -61,7 +61,7 @@ export interface AttendanceRecord {
     status: AttendanceStatus;
     recordedByUserId: string;
     recordedAt: string;
-    updatedAt: string
+    updatedAt: string;
 }
 
 export interface Completion {
@@ -78,7 +78,7 @@ export interface Completion {
     verifiedAt: string | null;
     version: number | null;
     presentSessions: number;
-    totalSessions: number
+    totalSessions: number;
 }
 
 export interface History {
@@ -91,14 +91,23 @@ export interface History {
     verifiedAt: string | null;
     note: string | null;
     presentSessions: number;
-    totalSessions: number
+    totalSessions: number;
 }
 
-export const taskStatuses = {TODO: 'Cần làm', IN_PROGRESS: 'Đang thực hiện', DONE: 'Đã làm xong', VERIFIED: 'Đã xác minh'};
-export const completionStatuses = {PENDING: 'Chờ xử lý', COMPLETED: 'Đã hoàn thành', VERIFIED: 'Đã xác minh'};
-export const attendanceStatuses = {PRESENT: 'Có mặt', ABSENT: 'Vắng mặt'};
-export const meetingTypes = {ONLINE: 'Trực tuyến', OFFLINE: 'Trực tiếp'};
-export const priorities = {LOW: 'Thấp', MEDIUM: 'Trung bình', HIGH: 'Cao'};
+export const taskStatuses = {
+    TODO: 'Cần làm',
+    IN_PROGRESS: 'Đang thực hiện',
+    DONE: 'Đã làm xong',
+    VERIFIED: 'Đã xác minh',
+};
+export const completionStatuses = {
+    PENDING: 'Chờ xử lý',
+    COMPLETED: 'Đã hoàn thành',
+    VERIFIED: 'Đã xác minh',
+};
+export const attendanceStatuses = { PRESENT: 'Có mặt', ABSENT: 'Vắng mặt' };
+export const meetingTypes = { ONLINE: 'Trực tuyến', OFFLINE: 'Trực tiếp' };
+export const priorities = { LOW: 'Thấp', MEDIUM: 'Trung bình', HIGH: 'Cao' };
 
 export interface MeetingInput {
     title: string;
@@ -109,7 +118,7 @@ export interface MeetingInput {
     location: string | null;
     meetingUrl: string | null;
     clearFields?: string[];
-    version?: number
+    version?: number;
 }
 
 export interface TaskInput {
@@ -121,21 +130,21 @@ export interface TaskInput {
     assigneeUserIds?: string[];
     status?: TaskStatus;
     clearFields?: string[];
-    version?: number
+    version?: number;
 }
 
 export interface SessionInput {
     title: string;
     startsAt: string;
     endsAt: string;
-    version?: number
+    version?: number;
 }
 
 export interface CompletionInput {
     status: CompletionStatus;
     verifiedHours: string | null;
     note: string;
-    version: number | null
+    version: number | null;
 }
 
 export interface AttendanceRecordInput {

@@ -1,4 +1,4 @@
-import type {AccountStatus} from '../../auth/types';
+import type { AccountStatus } from '../../auth/types';
 
 export interface ChangeStatusRequest {
     id: string;

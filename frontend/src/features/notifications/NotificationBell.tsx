@@ -1,11 +1,11 @@
-import {useState, useRef, useEffect} from 'react';
-import {useLanguage, tr, renderText, locale} from '../../shared/lib/i18n';
-import {Icon} from '../../shared/components/Icon';
-import {useNotifications} from './useNotifications';
-import {NotificationModal} from './NotificationModal';
-import {LoadingState} from '../../shared/components/LoadingState';
-import {ErrorState} from '../../shared/components/ErrorState';
-import {errorMessage} from '../../shared/api/errors';
+import { useState, useRef, useEffect } from 'react';
+import { useLanguage, tr, renderText, locale } from '../../shared/lib/i18n';
+import { Icon } from '../../shared/components/Icon';
+import { useNotifications } from './useNotifications';
+import { NotificationModal } from './NotificationModal';
+import { LoadingState } from '../../shared/components/LoadingState';
+import { ErrorState } from '../../shared/components/ErrorState';
+import { errorMessage } from '../../shared/api/errors';
 
 function notificationIcon(type: string) {
     if (type.includes('DONATION')) return 'heart';
@@ -16,15 +16,24 @@ function notificationIcon(type: string) {
 
 function timeAgo(dateStr: string) {
     const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-    if (diff < 60) return tr("Vừa xong");
-    if (diff < 3600) return `${Math.floor(diff / 60)} ${tr("phút trước")}`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} ${tr("giờ trước")}`;
+    if (diff < 60) return tr('Vừa xong');
+    if (diff < 3600) return `${Math.floor(diff / 60)} ${tr('phút trước')}`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} ${tr('giờ trước')}`;
     return new Date(dateStr).toLocaleDateString(locale());
 }
 
 export function NotificationBell() {
     useLanguage();
-    const {unreadCount, recentNotifications, markAsRead, markAllAsRead, isMarkingAll, isLoading, error, retry} = useNotifications();
+    const {
+        unreadCount,
+        recentNotifications,
+        markAsRead,
+        markAllAsRead,
+        isMarkingAll,
+        isLoading,
+        error,
+        retry,
+    } = useNotifications();
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
@@ -43,8 +52,8 @@ export function NotificationBell() {
         <div className="relative" ref={ref}>
             <button
                 type="button"
-                onClick={() => setDropdownOpen(o => !o)}
-                aria-label={tr("Thông báo")}
+                onClick={() => setDropdownOpen((o) => !o)}
+                aria-label={tr('Thông báo')}
                 className="relative flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-text-secondary transition-all hover:border-primary-muted hover:text-text-primary hover:shadow-xs focus:outline-none"
             >
                 <Icon name="bell" size={17} />
@@ -59,10 +68,12 @@ export function NotificationBell() {
                 <div className="absolute right-0 mt-2 w-80 sm:w-96 origin-top-right rounded-2xl border border-border bg-white p-2 shadow-2xl ring-1 ring-black/5 animate-in fade-in-50 zoom-in-95 z-50">
                     <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
                         <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-text-primary">{tr("Thông báo")}</span>
+                            <span className="text-sm font-bold text-text-primary">
+                                {tr('Thông báo')}
+                            </span>
                             {unreadCount > 0 && (
                                 <span className="rounded-full bg-danger/10 px-2 py-0.5 text-[10px] font-bold text-danger">
-                                    {unreadCount} {tr("mới")}
+                                    {unreadCount} {tr('mới')}
                                 </span>
                             )}
                         </div>
@@ -73,35 +84,47 @@ export function NotificationBell() {
                                 onClick={() => markAllAsRead()}
                                 className="text-xs font-semibold text-primary hover:underline disabled:opacity-50"
                             >
-                                {tr("Đã đọc tất cả")}
+                                {tr('Đã đọc tất cả')}
                             </button>
                         )}
                     </div>
 
                     <div className="max-h-72 overflow-y-auto divide-y divide-border/40 py-1">
-                        {isLoading ? <LoadingState/> : error ? <ErrorState message={errorMessage(error)} onRetry={retry}/> : recentNotifications.length === 0 ? (
+                        {isLoading ? (
+                            <LoadingState />
+                        ) : error ? (
+                            <ErrorState message={errorMessage(error)} onRetry={retry} />
+                        ) : recentNotifications.length === 0 ? (
                             <div className="py-6 text-center text-xs text-text-secondary">
-                                {tr("Bạn chưa có thông báo nào.")}
+                                {tr('Bạn chưa có thông báo nào.')}
                             </div>
                         ) : (
-                            recentNotifications.map(n => (
+                            recentNotifications.map((n) => (
                                 <div
                                     key={n.id}
                                     onClick={() => {
                                         if (!n.isRead) markAsRead(n.id);
                                     }}
                                     className={`flex items-start gap-2.5 rounded-xl p-2.5 cursor-pointer transition-colors ${
-                                        n.isRead ? 'bg-white hover:bg-surface-muted/50' : 'bg-primary-light/40 hover:bg-primary-light/60'
+                                        n.isRead
+                                            ? 'bg-white hover:bg-surface-muted/50'
+                                            : 'bg-primary-light/40 hover:bg-primary-light/60'
                                     }`}
                                 >
-                                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
-                                        n.isRead ? 'bg-surface-muted text-text-secondary' : 'bg-primary text-white'
-                                    }`}>
+                                    <span
+                                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+                                            n.isRead
+                                                ? 'bg-surface-muted text-text-secondary'
+                                                : 'bg-primary text-white'
+                                        }`}
+                                    >
                                         <Icon name={notificationIcon(n.type)} size={14} />
                                     </span>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between gap-1">
-                                            <p className={`text-xs truncate ${n.isRead ? 'font-normal text-text-primary' : 'font-bold text-text-primary'}`}>
+                                            <p
+                                                className={`text-xs truncate ${n.isRead ? 'font-normal text-text-primary' : 'font-bold text-text-primary'}`}
+                                            >
                                                 {renderText(n.title)}
                                             </p>
                                             <span className="text-[10px] text-text-secondary shrink-0">
@@ -129,7 +152,7 @@ export function NotificationBell() {
                             }}
                             className="flex w-full items-center justify-center rounded-xl py-2 text-xs font-bold text-primary hover:bg-primary-light transition-colors"
                         >
-                            {tr("Xem thêm tất cả")}
+                            {tr('Xem thêm tất cả')}
                         </button>
                     </div>
                 </div>

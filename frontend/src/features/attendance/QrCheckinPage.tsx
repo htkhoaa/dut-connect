@@ -1,27 +1,39 @@
-import {useLanguage, tr} from "../../shared/lib/i18n";
-import {useState, useEffect} from 'react';
-import {useSearchParams, Link} from 'react-router-dom';
-import {useMutation} from '@tanstack/react-query';
-import {apiClient} from '../../shared/api/client';
-import {useAuth} from '../auth/store';
-import {Card} from '../../shared/components/Card';
-import {Button} from '../../shared/components/Button';
-import {Icon} from '../../shared/components/Icon';
-import {errorMessage} from '../../shared/api/errors';
+import { useLanguage, tr } from '../../shared/lib/i18n';
+import { useState, useEffect } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
+import { apiClient } from '../../shared/api/client';
+import { useAuth } from '../auth/store';
+import { Card } from '../../shared/components/Card';
+import { Button } from '../../shared/components/Button';
+import { Icon } from '../../shared/components/Icon';
+import { errorMessage } from '../../shared/api/errors';
+
+interface QrCheckinResult {
+    sessionTitle: string;
+    campaignTitle?: string;
+}
 
 export function QrCheckinPage() {
     useLanguage();
-    const user = useAuth(s => s.user);
-    const initialized = useAuth(s => s.initialized);
+    const user = useAuth((s) => s.user);
+    const initialized = useAuth((s) => s.initialized);
     const [searchParams] = useSearchParams();
     const rawToken = searchParams.get('token') || '';
     const [token, setToken] = useState(rawToken);
-    const [successData, setSuccessData] = useState<{sessionTitle: string; campaignTitle?: string} | null>(null);
+    const [successData, setSuccessData] = useState<{
+        sessionTitle: string;
+        campaignTitle?: string;
+    } | null>(null);
 
     const cleanToken = (input: string) => {
         try {
             if (input.includes('token=')) {
-                const url = new URL(input.startsWith('http') ? input : 'https://dummy.com' + (input.startsWith('/') ? input : '/' + input));
+                const url = new URL(
+                    input.startsWith('http')
+                        ? input
+                        : 'https://dummy.com' + (input.startsWith('/') ? input : '/' + input),
+                );
                 return url.searchParams.get('token') || input.trim();
             }
         } catch {
@@ -33,18 +45,28 @@ export function QrCheckinPage() {
     const checkinMutation = useMutation({
         mutationFn: async (tokenVal: string) => {
             const cleaned = cleanToken(tokenVal);
-            return (await apiClient.post(`/attendance-sessions/checkin-qr?token=${encodeURIComponent(cleaned)}`)).data;
+            return (
+                await apiClient.post<QrCheckinResult>(
+                    `/attendance-sessions/checkin-qr?token=${encodeURIComponent(cleaned)}`,
+                )
+            ).data;
         },
-        onSuccess: (data: any) => {
+        onSuccess: (data: QrCheckinResult) => {
             setSuccessData({
                 sessionTitle: data.sessionTitle,
                 campaignTitle: data.campaignTitle,
             });
-        }
+        },
     });
 
     useEffect(() => {
-        if (rawToken && user && !successData && !checkinMutation.isPending && !checkinMutation.isError) {
+        if (
+            rawToken &&
+            user &&
+            !successData &&
+            !checkinMutation.isPending &&
+            !checkinMutation.isError
+        ) {
             checkinMutation.mutate(rawToken);
         }
     }, [rawToken, user]);
@@ -64,9 +86,11 @@ export function QrCheckinPage() {
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-light text-primary">
                         <Icon name="calendar" size={32} />
                     </div>
-                    <h1 className="text-2xl font-bold">{tr("Điểm danh bằng QR Code")}</h1>
+                    <h1 className="text-2xl font-bold">{tr('Điểm danh bằng QR Code')}</h1>
                     <p className="text-xs text-text-secondary">
-                        {tr("Xác nhận sự hiện diện của bạn tại buổi họp hoặc hoạt động tình nguyện.")}
+                        {tr(
+                            'Xác nhận sự hiện diện của bạn tại buổi họp hoặc hoạt động tình nguyện.',
+                        )}
                     </p>
                 </div>
 
@@ -76,17 +100,21 @@ export function QrCheckinPage() {
                             <span className="text-xl">⚠️</span>
                         </div>
                         <div>
-                            <h2 className="text-base font-bold text-amber-900">{tr("Cần đăng nhập để điểm danh")}</h2>
+                            <h2 className="text-base font-bold text-amber-900">
+                                {tr('Cần đăng nhập để điểm danh')}
+                            </h2>
                             <p className="mt-1 text-xs text-amber-700 leading-relaxed">
-                                {tr("Bạn cần đăng nhập tài khoản sinh viên DUT Connect trên thiết bị này để hệ thống xác nhận điểm danh cho bạn.")}
+                                {tr(
+                                    'Bạn cần đăng nhập tài khoản sinh viên DUT Connect trên thiết bị này để hệ thống xác nhận điểm danh cho bạn.',
+                                )}
                             </p>
                         </div>
                         <Link
                             to="/login"
-                            state={{from: '/attendance/checkin?token=' + (rawToken || token)}}
+                            state={{ from: '/attendance/checkin?token=' + (rawToken || token) }}
                             className="ui-button ui-button-primary w-full text-sm font-semibold"
                         >
-                            {tr("Đăng nhập để điểm danh ngay")}
+                            {tr('Đăng nhập để điểm danh ngay')}
                         </Link>
                     </div>
                 ) : successData ? (
@@ -95,26 +123,38 @@ export function QrCheckinPage() {
                             <span className="text-xl font-bold">✓</span>
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-success">{tr("Điểm danh thành công!")}</h2>
-                            <p className="mt-1 text-sm font-semibold text-text-primary">{successData.sessionTitle}</p>
-                            <p className="mt-0.5 text-xs text-text-secondary">{tr("Sự có mặt của bạn đã được ghi nhận vào hệ thống.")}</p>
+                            <h2 className="text-lg font-bold text-success">
+                                {tr('Điểm danh thành công!')}
+                            </h2>
+                            <p className="mt-1 text-sm font-semibold text-text-primary">
+                                {successData.sessionTitle}
+                            </p>
+                            <p className="mt-0.5 text-xs text-text-secondary">
+                                {tr('Sự có mặt của bạn đã được ghi nhận vào hệ thống.')}
+                            </p>
                         </div>
                         <div className="pt-2">
-                            <Link to="/me/history" className="ui-button ui-button-primary w-full text-sm">
-                                {tr("Xem lịch sử tham gia")}
+                            <Link
+                                to="/me/history"
+                                className="ui-button ui-button-primary w-full text-sm"
+                            >
+                                {tr('Xem lịch sử tham gia')}
                             </Link>
                         </div>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                         <div className="space-y-1.5">
-                            <label htmlFor="token" className="block text-xs font-semibold text-text-secondary">
-                                {tr("Mã điểm danh hoặc liên kết QR")}
+                            <label
+                                htmlFor="token"
+                                className="block text-xs font-semibold text-text-secondary"
+                            >
+                                {tr('Mã điểm danh hoặc liên kết QR')}
                             </label>
                             <input
                                 id="token"
                                 type="text"
-                                placeholder={tr("Nhập mã token điểm danh…")}
+                                placeholder={tr('Nhập mã token điểm danh…')}
                                 value={token}
                                 onChange={(e) => setToken(e.target.value)}
                                 className="w-full rounded-xl border border-border p-3 text-sm font-mono"
@@ -134,7 +174,9 @@ export function QrCheckinPage() {
                             className="w-full"
                             disabled={checkinMutation.isPending || !token.trim()}
                         >
-                            {checkinMutation.isPending ? tr("Đang xác nhận…") : tr("Xác nhận điểm danh")}
+                            {checkinMutation.isPending
+                                ? tr('Đang xác nhận…')
+                                : tr('Xác nhận điểm danh')}
                         </Button>
                     </form>
                 )}

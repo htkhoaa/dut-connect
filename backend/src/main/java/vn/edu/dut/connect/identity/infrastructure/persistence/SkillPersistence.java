@@ -1,17 +1,17 @@
 package vn.edu.dut.connect.identity.infrastructure.persistence;
 
 import java.util.*;
-
+import org.springframework.data.domain.*;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
-import org.springframework.data.domain.*;
-import vn.edu.dut.connect.identity.domain.Skill;
-import vn.edu.dut.connect.identity.application.SkillRepository;
 import vn.edu.dut.connect.identity.application.Pagination;
+import vn.edu.dut.connect.identity.application.SkillRepository;
+import vn.edu.dut.connect.identity.domain.Skill;
 import vn.edu.dut.connect.shared.application.PageResult;
 
 @Repository
 public class SkillPersistence implements SkillRepository {
+
     private final JpaSkillRepository skills;
     private final JdbcClient jdbc;
 
@@ -21,10 +21,22 @@ public class SkillPersistence implements SkillRepository {
     }
 
     public PageResult<Skill> activeSkills(Pagination query) {
-        Page<Skill> page = skills.findByActiveTrue(PageRequest.of(query.page(), query.size(),
-                Sort.by("name").ascending().and(Sort.by("id"))));
-        return new PageResult<>(page.getContent(), page.getNumber(), page.getSize(), page.getTotalElements(),
-                page.getTotalPages(), page.hasNext(), page.hasPrevious());
+        Page<Skill> page = skills.findByActiveTrue(
+            PageRequest.of(
+                query.page(),
+                query.size(),
+                Sort.by("name").ascending().and(Sort.by("id"))
+            )
+        );
+        return new PageResult<>(
+            page.getContent(),
+            page.getNumber(),
+            page.getSize(),
+            page.getTotalElements(),
+            page.getTotalPages(),
+            page.hasNext(),
+            page.hasPrevious()
+        );
     }
 
     public List<Skill> userSkills(UUID id) {
@@ -36,9 +48,15 @@ public class SkillPersistence implements SkillRepository {
     }
 
     public void replaceSkills(UUID id, Set<UUID> ids) {
-        jdbc.sql("delete from dut_connect.student_skills where user_id=:id").param("id", id).update();
+        jdbc.sql("delete from dut_connect.student_skills where user_id=:id")
+            .param("id", id)
+            .update();
         for (UUID skill : ids)
-            jdbc.sql("insert into dut_connect.student_skills(user_id,skill_id) values (:user,:skill)")
-                    .param("user", id).param("skill", skill).update();
+            jdbc.sql(
+                "insert into dut_connect.student_skills(user_id,skill_id) values (:user,:skill)"
+            )
+                .param("user", id)
+                .param("skill", skill)
+                .update();
     }
 }

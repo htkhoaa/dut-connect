@@ -1,13 +1,13 @@
 package vn.edu.dut.connect.identity.infrastructure.persistence;
 
 import java.util.*;
-
 import org.springframework.stereotype.Repository;
-import vn.edu.dut.connect.identity.domain.StudentProfile;
 import vn.edu.dut.connect.identity.application.ProfileRepository;
+import vn.edu.dut.connect.identity.domain.StudentProfile;
 
 @Repository
 public class ProfilePersistence implements ProfileRepository {
+
     private final JpaProfileRepository profiles;
 
     public ProfilePersistence(JpaProfileRepository profiles) {

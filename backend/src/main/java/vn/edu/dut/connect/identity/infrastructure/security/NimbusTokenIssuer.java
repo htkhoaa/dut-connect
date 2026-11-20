@@ -1,18 +1,18 @@
 package vn.edu.dut.connect.identity.infrastructure.security;
 
-import java.time.Instant;
-import java.security.*;
 import java.nio.charset.StandardCharsets;
+import java.security.*;
+import java.time.Instant;
 import java.util.*;
-
-import org.springframework.stereotype.Component;
-import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.*;
+import org.springframework.stereotype.Component;
 import vn.edu.dut.connect.identity.application.TokenIssuer;
 import vn.edu.dut.connect.identity.domain.User;
 
 @Component
 public class NimbusTokenIssuer implements TokenIssuer {
+
     private final JwtEncoder encoder;
     private final IdentitySettings settings;
     private final SecureRandom random = new SecureRandom();
@@ -23,9 +23,17 @@ public class NimbusTokenIssuer implements TokenIssuer {
     }
 
     public String accessToken(User user, Instant now) {
-        JwtClaimsSet claims = JwtClaimsSet.builder().issuer("dut-connect").subject(user.id().toString())
-                .issuedAt(now).expiresAt(now.plusSeconds(accessSeconds())).claim("role", user.role().name()).claim("email", user.email()).build();
-        return encoder.encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+            .issuer("dut-connect")
+            .subject(user.id().toString())
+            .issuedAt(now)
+            .expiresAt(now.plusSeconds(accessSeconds()))
+            .claim("role", user.role().name())
+            .claim("email", user.email())
+            .build();
+        return encoder
+            .encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims))
+            .getTokenValue();
     }
 
     public String randomRefreshToken() {
@@ -36,7 +44,9 @@ public class NimbusTokenIssuer implements TokenIssuer {
 
     public String hash(String raw) {
         try {
-            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(raw.getBytes(StandardCharsets.UTF_8)));
+            return HexFormat.of().formatHex(
+                MessageDigest.getInstance("SHA-256").digest(raw.getBytes(StandardCharsets.UTF_8))
+            );
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 unavailable", e);
         }

@@ -1,15 +1,14 @@
 package vn.edu.dut.connect.identity.api;
 
 import jakarta.servlet.http.*;
-
 import java.time.Duration;
-
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import vn.edu.dut.connect.identity.infrastructure.security.IdentitySettings;
 
 @Component
 public class RefreshCookie {
+
     public static final String NAME = "dut_refresh";
     private final IdentitySettings settings;
 
@@ -26,7 +25,16 @@ public class RefreshCookie {
     }
 
     private void write(HttpServletResponse response, String value, Duration age) {
-        response.addHeader(HttpHeaders.SET_COOKIE, ResponseCookie.from(NAME, value).httpOnly(true).secure(settings.secure())
-                .sameSite("Lax").path("/api/v1/auth").maxAge(age).build().toString());
+        response.addHeader(
+            HttpHeaders.SET_COOKIE,
+            ResponseCookie.from(NAME, value)
+                .httpOnly(true)
+                .secure(settings.secure())
+                .sameSite("Lax")
+                .path("/api/v1/auth")
+                .maxAge(age)
+                .build()
+                .toString()
+        );
     }
 }

@@ -1,89 +1,108 @@
 package vn.edu.dut.connect.campaign.api;
 
-import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.web.bind.annotation.*;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
+import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/campaigns/{campaignId}/activities")
 public class CampaignActivityController {
+
     private final JdbcClient jdbc;
     private final vn.edu.dut.connect.campaign.application.CampaignAccessPort campaigns;
 
-    public CampaignActivityController(JdbcClient jdbc, vn.edu.dut.connect.campaign.application.CampaignAccessPort campaigns) {
+    public CampaignActivityController(
+        JdbcClient jdbc,
+        vn.edu.dut.connect.campaign.application.CampaignAccessPort campaigns
+    ) {
         this.jdbc = jdbc;
         this.campaigns = campaigns;
     }
 
     public record CampaignActivity(
-            String id,
-            String type, // DONATION, VOLUNTEER, MILESTONE
-            String title,
-            String description,
-            BigDecimal amount,
-            Instant timestamp
+        String id,
+        String type, // DONATION, VOLUNTEER, MILESTONE
+        String title,
+        String description,
+        BigDecimal amount,
+        Instant timestamp
     ) {}
 
     @GetMapping
     public List<CampaignActivity> getRecentActivities(@PathVariable UUID campaignId) {
-        if (campaigns.getCampaign(campaignId).status() == vn.edu.dut.connect.campaign.domain.CampaignStatus.DRAFT)
-            throw vn.edu.dut.connect.shared.application.ApplicationFailure.missing("Campaign not found");
+        if (
+            campaigns.getCampaign(campaignId).status() ==
+            vn.edu.dut.connect.campaign.domain.CampaignStatus.DRAFT
+        ) throw vn.edu.dut.connect.shared.application.ApplicationFailure.missing(
+            "Campaign not found"
+        );
         List<CampaignActivity> list = new ArrayList<>();
 
         // Recent paid donations
         try {
-            var donations = jdbc.sql("""
-                select d.id, d.amount, d.created_at, u.full_name
-                from dut_connect.donations d
-                left join dut_connect.users u on d.donor_user_id = u.id
-                where d.campaign_id = :campaignId and d.status = 'PAID'
-                order by d.created_at desc
-                limit 10
-            """).param("campaignId", campaignId)
-            .query((rs, rowNum) -> {
-                String fullName = rs.getString("full_name");
-                String masked = maskName(fullName);
-                BigDecimal amt = rs.getBigDecimal("amount");
-                Instant time = rs.getTimestamp("created_at").toInstant();
-                return new CampaignActivity(
+            var donations = jdbc
+                .sql(
+                    """
+                        select d.id, d.amount, d.created_at, u.full_name
+                        from dut_connect.donations d
+                        left join dut_connect.users u on d.donor_user_id = u.id
+                        where d.campaign_id = :campaignId and d.status = 'PAID'
+                        order by d.created_at desc
+                        limit 10
+                    """
+                )
+                .param("campaignId", campaignId)
+                .query((rs, rowNum) -> {
+                    String fullName = rs.getString("full_name");
+                    String masked = maskName(fullName);
+                    BigDecimal amt = rs.getBigDecimal("amount");
+                    Instant time = rs.getTimestamp("created_at").toInstant();
+                    return new CampaignActivity(
                         rs.getString("id"),
                         "DONATION",
                         masked + " đã ủng hộ",
                         "Khoản tiếp sức: " + formatVnd(amt),
                         amt,
                         time
-                );
-            }).list();
+                    );
+                })
+                .list();
             list.addAll(donations);
         } catch (Exception ignored) {}
 
         // Recent volunteer registrations
         try {
-            var volunteers = jdbc.sql("""
-                select v.id, v.created_at, u.full_name, v.preferred_track
-                from dut_connect.volunteer_registrations v
-                left join dut_connect.users u on v.user_id = u.id
-                where v.campaign_id = :campaignId
-                order by v.created_at desc, v.id
-                limit 10
-            """).param("campaignId", campaignId)
-            .query((rs, rowNum) -> {
-                String fullName = rs.getString("full_name");
-                String masked = maskName(fullName);
-                Instant time = rs.getTimestamp("created_at").toInstant();
-                String track = "TECHNICAL".equalsIgnoreCase(rs.getString("preferred_track")) ? "Kỹ thuật" : "Hậu cần";
-                return new CampaignActivity(
+            var volunteers = jdbc
+                .sql(
+                    """
+                        select v.id, v.created_at, u.full_name, v.preferred_track
+                        from dut_connect.volunteer_registrations v
+                        left join dut_connect.users u on v.user_id = u.id
+                        where v.campaign_id = :campaignId
+                        order by v.created_at desc, v.id
+                        limit 10
+                    """
+                )
+                .param("campaignId", campaignId)
+                .query((rs, rowNum) -> {
+                    String fullName = rs.getString("full_name");
+                    String masked = maskName(fullName);
+                    Instant time = rs.getTimestamp("created_at").toInstant();
+                    String track = "TECHNICAL".equalsIgnoreCase(rs.getString("preferred_track"))
+                        ? "Kỹ thuật"
+                        : "Hậu cần";
+                    return new CampaignActivity(
                         rs.getString("id"),
                         "VOLUNTEER",
                         masked + " vừa đăng ký tình nguyện",
                         "Vị trí quan tâm: " + track,
                         null,
                         time
-                );
-            }).list();
+                    );
+                })
+                .list();
             list.addAll(volunteers);
         } catch (Exception ignored) {}
 

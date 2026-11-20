@@ -2,7 +2,6 @@ package vn.edu.dut.connect.identity.application;
 
 import java.time.Instant;
 import java.util.*;
-
 import vn.edu.dut.connect.identity.domain.RefreshToken;
 
 public interface RefreshTokenRepository {

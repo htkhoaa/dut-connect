@@ -1,25 +1,25 @@
 package vn.edu.dut.connect.campaign.application;
 
+import static vn.edu.dut.connect.campaign.application.CampaignThankYouContracts.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.edu.dut.connect.campaign.domain.Campaign;
 import vn.edu.dut.connect.campaign.domain.ContributionMode;
 import vn.edu.dut.connect.notification.application.NotificationService;
 import vn.edu.dut.connect.shared.application.EmailNotificationService;
-import static vn.edu.dut.connect.campaign.application.CampaignThankYouContracts.*;
 
 @Service
 public class CampaignThankYouService {
+
     private static final Logger log = LoggerFactory.getLogger(CampaignThankYouService.class);
 
-    private final JdbcClient jdbc;
+    private final CampaignThankYouRepository repository;
     private final CampaignAuthorization access;
     private final CampaignAccessPort campaigns;
     private final EmailNotificationService emailService;
@@ -27,13 +27,14 @@ public class CampaignThankYouService {
     private final DutCertificateGenerator certificateGenerator;
 
     public CampaignThankYouService(
-            JdbcClient jdbc,
-            CampaignAuthorization access,
-            CampaignAccessPort campaigns,
-            EmailNotificationService emailService,
-            NotificationService notificationService,
-            DutCertificateGenerator certificateGenerator) {
-        this.jdbc = jdbc;
+        CampaignThankYouRepository repository,
+        CampaignAuthorization access,
+        CampaignAccessPort campaigns,
+        EmailNotificationService emailService,
+        NotificationService notificationService,
+        DutCertificateGenerator certificateGenerator
+    ) {
+        this.repository = repository;
         this.access = access;
         this.campaigns = campaigns;
         this.emailService = emailService;
@@ -50,27 +51,43 @@ public class CampaignThankYouService {
         List<ThankYouRecipientDto> volunteers = getVolunteers(campaignId);
 
         return new CampaignRecipientsSummary(
-                campaignId,
-                campaign.title(),
-                campaign.contributionMode().name(),
-                donors.size(),
-                volunteers.size(),
-                donors,
-                volunteers
+            campaignId,
+            campaign.title(),
+            campaign.contributionMode().name(),
+            donors.size(),
+            volunteers.size(),
+            donors,
+            volunteers
         );
     }
 
-    public CampaignThankYouResponse sendThankYou(UUID campaignId, UUID actorId, SendThankYouRequest request) {
+    public CampaignThankYouResponse sendThankYou(
+        UUID campaignId,
+        UUID actorId,
+        SendThankYouRequest request
+    ) {
         access.manager(campaignId, actorId);
         var campaign = campaigns.getCampaign(campaignId);
-        if (campaign.status() != vn.edu.dut.connect.campaign.domain.CampaignStatus.COMPLETED)
-            throw new vn.edu.dut.connect.shared.application.ApplicationFailure(409, "INVALID_STATE_TRANSITION", "Complete the campaign before sending certificates");
-        if (!emailService.available())
-            throw new vn.edu.dut.connect.shared.application.ApplicationFailure(503, "MAIL_UNAVAILABLE", "Email delivery is not configured");
+        if (
+            campaign.status() != vn.edu.dut.connect.campaign.domain.CampaignStatus.COMPLETED
+        ) throw new vn.edu.dut.connect.shared.application.ApplicationFailure(
+            409,
+            "INVALID_STATE_TRANSITION",
+            "Complete the campaign before sending certificates"
+        );
+        if (
+            !emailService.available()
+        ) throw new vn.edu.dut.connect.shared.application.ApplicationFailure(
+            503,
+            "MAIL_UNAVAILABLE",
+            "Email delivery is not configured"
+        );
         String campaignTitle = campaign.title();
         ContributionMode mode = campaign.contributionMode();
 
-        String todayStr = LocalDate.now().format(DateTimeFormatter.ofPattern("'ngày' dd 'tháng' MM 'năm' yyyy"));
+        String todayStr = LocalDate.now().format(
+            DateTimeFormatter.ofPattern("'ngày' dd 'tháng' MM 'năm' yyyy")
+        );
 
         List<ThankYouRecipientDto> sentRecipients = new ArrayList<>();
         int donorsCount = 0;
@@ -83,115 +100,203 @@ public class CampaignThankYouService {
         if (mode != ContributionMode.DONATION_ONLY) recipients.addAll(getVolunteers(campaignId));
         for (var recipient : recipients) {
             String key = recipient.contributionType() + ":" + recipient.userId();
-            if (request != null && request.recipientKeys() != null && !request.recipientKeys().contains(key)) continue;
+            if (
+                request != null &&
+                request.recipientKeys() != null &&
+                !request.recipientKeys().contains(key)
+            ) continue;
             boolean donor = "DONATION".equals(recipient.contributionType());
             String detail = recipient.detail();
             // Claim each recipient once, including concurrent clicks and repeated requests.
-            if (!claimDelivery(campaignId, recipient)) {
-                String state = jdbc.sql("select status from dut_connect.campaign_thank_you_deliveries where campaign_id=:campaign and user_id=:user and contribution_type=:type")
-                        .param("campaign", campaignId).param("user", recipient.userId()).param("type", recipient.contributionType()).query(String.class).single();
+            if (!repository.claimDelivery(campaignId, recipient)) {
+                String state = repository.deliveryStatus(campaignId, recipient);
                 boolean sent = "SENT".equals(state);
-                sentRecipients.add(new ThankYouRecipientDto(recipient.userId(), recipient.fullName(), recipient.studentId(),
-                        recipient.email(), recipient.contributionType(), detail, sent, sent ? null : "MAIL_IN_PROGRESS"));
-                if (sent) {if (donor) donorsCount++; else volunteersCount++;}
+                sentRecipients.add(
+                    new ThankYouRecipientDto(
+                        recipient.userId(),
+                        recipient.fullName(),
+                        recipient.studentId(),
+                        recipient.email(),
+                        recipient.contributionType(),
+                        detail,
+                        sent,
+                        sent ? null : "MAIL_IN_PROGRESS"
+                    )
+                );
+                if (sent) {
+                    if (donor) donorsCount++;
+                    else volunteersCount++;
+                }
                 continue;
             }
             var certData = new DutCertificateGenerator.CertificateData(
-                    generateCode(donor ? "DON" : "VOL", campaignId, recipient.userId()),
-                    recipient.fullName(), recipient.studentId(), campaignTitle,
-                    donor ? DutCertificateGenerator.CertificateData.ContributionType.DONATION
-                          : DutCertificateGenerator.CertificateData.ContributionType.VOLUNTEER,
-                    detail, todayStr);
+                generateCode(donor ? "DON" : "VOL", campaignId, recipient.userId()),
+                recipient.fullName(),
+                recipient.studentId(),
+                campaignTitle,
+                donor
+                    ? DutCertificateGenerator.CertificateData.ContributionType.DONATION
+                    : DutCertificateGenerator.CertificateData.ContributionType.VOLUNTEER,
+                detail,
+                todayStr
+            );
             boolean imageCreated = false;
             try {
                 byte[] pngBytes = certificateGenerator.generatePng(certData);
                 imageCreated = true;
-                String subject = request != null && request.customSubject() != null && !request.customSubject().isBlank()
+                String subject =
+                    request != null &&
+                    request.customSubject() != null &&
+                    !request.customSubject().isBlank()
                         ? request.customSubject().strip()
                         : "[DUT Connect] Thư cảm ơn đóng góp chiến dịch: " + campaignTitle;
                 String message = request != null ? request.customMessage() : null;
                 String html = donor
-                        ? buildDonationEmailHtml(recipient.fullName(), recipient.studentId(), campaignTitle, detail.replace(" đ", ""), message)
-                        : buildVolunteerEmailHtml(recipient.fullName(), recipient.studentId(), campaignTitle, detail, message);
-                emailService.sendWithImageAttachment(recipient.email(), subject, html,
-                        "Giay_Chung_Nhan_DUT_" + recipient.studentId() + ".png", pngBytes, "image/png");
+                    ? CampaignThankYouEmailTemplate.buildDonationEmailHtml(
+                          recipient.fullName(),
+                          recipient.studentId(),
+                          campaignTitle,
+                          detail.replace(" đ", ""),
+                          message
+                      )
+                    : CampaignThankYouEmailTemplate.buildVolunteerEmailHtml(
+                          recipient.fullName(),
+                          recipient.studentId(),
+                          campaignTitle,
+                          detail,
+                          message
+                      );
+                emailService.sendWithImageAttachment(
+                    recipient.email(),
+                    subject,
+                    html,
+                    "Giay_Chung_Nhan_DUT_" + recipient.studentId() + ".png",
+                    pngBytes,
+                    "image/png"
+                );
             } catch (Exception ex) {
-                String code = ex instanceof vn.edu.dut.connect.shared.application.ApplicationFailure failure
-                        ? failure.code() : imageCreated ? "MAIL_DELIVERY_FAILED" : "CERTIFICATE_GENERATION_FAILED";
-                log.error("Thank-you delivery failed campaign={} user={} code={} cause={}",
-                        campaignId, recipient.userId(), code, ex.getClass().getSimpleName());
-                jdbc.sql("update dut_connect.campaign_thank_you_deliveries set status='FAILED', error_code=:code, updated_at=now() where campaign_id=:campaign and user_id=:user and contribution_type=:type")
-                        .param("code", code).param("campaign", campaignId).param("user", recipient.userId()).param("type", recipient.contributionType()).update();
-                sentRecipients.add(new ThankYouRecipientDto(recipient.userId(), recipient.fullName(),
-                        recipient.studentId(), recipient.email(), recipient.contributionType(), detail, false, code));
+                String code =
+                    ex instanceof vn.edu.dut.connect.shared.application.ApplicationFailure failure
+                        ? failure.code()
+                        : imageCreated
+                          ? "MAIL_DELIVERY_FAILED"
+                          : "CERTIFICATE_GENERATION_FAILED";
+                log.error(
+                    "Thank-you delivery failed campaign={} user={} code={} cause={}",
+                    campaignId,
+                    recipient.userId(),
+                    code,
+                    ex.getClass().getSimpleName()
+                );
+                repository.markFailed(campaignId, recipient, code);
+                sentRecipients.add(
+                    new ThankYouRecipientDto(
+                        recipient.userId(),
+                        recipient.fullName(),
+                        recipient.studentId(),
+                        recipient.email(),
+                        recipient.contributionType(),
+                        detail,
+                        false,
+                        code
+                    )
+                );
                 continue;
             }
             // An in-app notification failure must not turn an accepted email into a failed delivery.
             try {
-                jdbc.sql("update dut_connect.campaign_thank_you_deliveries set status='SENT', error_code=null, sent_at=now(), updated_at=now() where campaign_id=:campaign and user_id=:user and contribution_type=:type")
-                        .param("campaign", campaignId).param("user", recipient.userId()).param("type", recipient.contributionType()).update();
+                repository.markSent(campaignId, recipient);
             } catch (Exception ex) {
                 // Keep SENDING when the provider accepted the message but recording failed; do not resend blindly.
-                log.error("Email accepted but delivery record could not be updated campaign={} user={}", campaignId, recipient.userId());
+                log.error(
+                    "Email accepted but delivery record could not be updated campaign={} user={}",
+                    campaignId,
+                    recipient.userId()
+                );
             }
-            sentRecipients.add(new ThankYouRecipientDto(recipient.userId(), recipient.fullName(),
-                    recipient.studentId(), recipient.email(), recipient.contributionType(), detail, true));
-            if (donor) donorsCount++; else volunteersCount++;
+            sentRecipients.add(
+                new ThankYouRecipientDto(
+                    recipient.userId(),
+                    recipient.fullName(),
+                    recipient.studentId(),
+                    recipient.email(),
+                    recipient.contributionType(),
+                    detail,
+                    true
+                )
+            );
+            if (donor) donorsCount++;
+            else volunteersCount++;
             try {
-                notificationService.notifyUser(recipient.userId(), "CAMPAIGN_THANK_YOU",
-                        "Thư cảm ơn đóng góp: " + campaignTitle,
-                        "Ban Tổ chức đã gửi thư cảm ơn và chứng nhận đến email của bạn. Vui lòng kiểm tra hộp thư và thư rác.",
-                        "CAMPAIGN", campaignId);
+                notificationService.notifyUser(
+                    recipient.userId(),
+                    "CAMPAIGN_THANK_YOU",
+                    "Thư cảm ơn đóng góp: " + campaignTitle,
+                    "Ban Tổ chức đã gửi thư cảm ơn và chứng nhận đến email của bạn. Vui lòng kiểm tra hộp thư và thư rác.",
+                    "CAMPAIGN",
+                    campaignId
+                );
             } catch (Exception ex) {
-                log.warn("Thank-you email accepted but notification failed campaign={} user={}", campaignId, recipient.userId());
+                log.warn(
+                    "Thank-you email accepted but notification failed campaign={} user={}",
+                    campaignId,
+                    recipient.userId()
+                );
             }
         }
 
         int totalSent = donorsCount + volunteersCount;
-        log.info("Sent thank-you emails for campaignId={} totalSent={} donors={} volunteers={}", campaignId, totalSent, donorsCount, volunteersCount);
+        log.info(
+            "Sent thank-you emails for campaignId={} totalSent={} donors={} volunteers={}",
+            campaignId,
+            totalSent,
+            donorsCount,
+            volunteersCount
+        );
 
         int failed = sentRecipients.size() - totalSent;
-        String summaryMessage = sentRecipients.isEmpty() ? "Không có người nhận đủ điều kiện."
-                : totalSent == 0 ? "Chưa gửi được thư nào. Vui lòng kiểm tra lỗi gửi email trước khi thử lại."
-                : "Dịch vụ email đã tiếp nhận " + totalSent + " thư cảm ơn; " + failed + " thư chưa gửi được.";
+        String summaryMessage = sentRecipients.isEmpty()
+            ? "Không có người nhận đủ điều kiện."
+            : totalSent == 0
+              ? "Chưa gửi được thư nào. Vui lòng kiểm tra lỗi gửi email trước khi thử lại."
+              : "Dịch vụ email đã tiếp nhận " +
+                totalSent +
+                " thư cảm ơn; " +
+                failed +
+                " thư chưa gửi được.";
 
         return new CampaignThankYouResponse(
-                donorsCount,
-                volunteersCount,
-                totalSent,
-                summaryMessage,
-                sentRecipients
+            donorsCount,
+            volunteersCount,
+            totalSent,
+            summaryMessage,
+            sentRecipients
         );
-    }
-
-    private boolean claimDelivery(UUID campaignId, ThankYouRecipientDto recipient) {
-        return jdbc.sql("""
-                insert into dut_connect.campaign_thank_you_deliveries as delivery(campaign_id,user_id,contribution_type,status)
-                values(:campaign,:user,:type,'SENDING')
-                on conflict(campaign_id,user_id,contribution_type) do update
-                set status='SENDING', error_code=null, updated_at=now()
-                where delivery.status='FAILED'
-                returning status
-                """).param("campaign", campaignId).param("user", recipient.userId()).param("type", recipient.contributionType())
-                .query(String.class).optional().isPresent();
     }
 
     @Transactional(readOnly = true)
     public String previewCertificateSvg(UUID campaignId, String type) {
         var campaign = campaigns.getCampaign(campaignId);
-        if (campaign.status() == vn.edu.dut.connect.campaign.domain.CampaignStatus.DRAFT)
-            throw vn.edu.dut.connect.shared.application.ApplicationFailure.missing("Campaign not found");
+        if (
+            campaign.status() == vn.edu.dut.connect.campaign.domain.CampaignStatus.DRAFT
+        ) throw vn.edu.dut.connect.shared.application.ApplicationFailure.missing(
+            "Campaign not found"
+        );
         boolean isVolunteer = "VOLUNTEER".equalsIgnoreCase(type);
-        String todayStr = LocalDate.now().format(DateTimeFormatter.ofPattern("'ngày' dd 'tháng' MM 'năm' yyyy"));
+        String todayStr = LocalDate.now().format(
+            DateTimeFormatter.ofPattern("'ngày' dd 'tháng' MM 'năm' yyyy")
+        );
 
         var certData = new DutCertificateGenerator.CertificateData(
-                "DUT-SAMPLE-2026",
-                "NGUYỄN VĂN AN",
-                "102210001",
-                campaign.title(),
-                isVolunteer ? DutCertificateGenerator.CertificateData.ContributionType.VOLUNTEER : DutCertificateGenerator.CertificateData.ContributionType.DONATION,
-                isVolunteer ? "30 GIỜ TÌNH NGUYỆN" : "500.000",
-                todayStr
+            "DUT-SAMPLE-2026",
+            "NGUYỄN VĂN AN",
+            "102210001",
+            campaign.title(),
+            isVolunteer
+                ? DutCertificateGenerator.CertificateData.ContributionType.VOLUNTEER
+                : DutCertificateGenerator.CertificateData.ContributionType.DONATION,
+            isVolunteer ? "30 GIỜ TÌNH NGUYỆN" : "500.000",
+            todayStr
         );
 
         return certificateGenerator.generateSvg(certData);
@@ -203,185 +308,49 @@ public class CampaignThankYouService {
     }
 
     private List<ThankYouRecipientDto> getDonors(UUID campaignId) {
-        return queryDonors(campaignId).stream()
-                .map(d -> new ThankYouRecipientDto(
-                        d.userId(),
-                        d.fullName(),
-                        d.studentId(),
-                        d.email(),
-                        "DONATION",
-                        String.format(java.util.Locale.ROOT, "%,d", d.totalAmount().toBigIntegerExact()).replace(',', '.') + " đ",
-                        false
-                ))
-                .toList();
+        return repository
+            .donors(campaignId)
+            .stream()
+            .map(d ->
+                new ThankYouRecipientDto(
+                    d.userId(),
+                    d.fullName(),
+                    d.studentId(),
+                    d.email(),
+                    "DONATION",
+                    String.format(
+                        java.util.Locale.ROOT,
+                        "%,d",
+                        d.totalAmount().toBigIntegerExact()
+                    ).replace(',', '.') + " đ",
+                    false
+                )
+            )
+            .toList();
     }
 
     private List<ThankYouRecipientDto> getVolunteers(UUID campaignId) {
-        return queryVolunteers(campaignId).stream()
-                .map(v -> new ThankYouRecipientDto(
-                        v.userId(),
-                        v.fullName(),
-                        v.studentId(),
-                        v.email(),
-                        "VOLUNTEER",
-                        v.verifiedHours().compareTo(BigDecimal.ZERO) > 0
-                                ? v.verifiedHours().stripTrailingZeros().toPlainString() + " giờ"
-                                : "Tham gia",
-                        false
-                ))
-                .toList();
-    }
-
-    private record DonorRecord(UUID userId, String studentId, String fullName, String email, BigDecimal totalAmount) {}
-
-    private List<DonorRecord> queryDonors(UUID campaignId) {
-        return jdbc.sql("""
-            select u.id as user_id, u.student_id, u.full_name, u.email, sum(d.amount) as total_amount
-            from dut_connect.donations d
-            join dut_connect.users u on u.id = d.donor_user_id
-            where d.campaign_id = :id and d.status = 'PAID'
-            group by u.id, u.student_id, u.full_name, u.email
-            order by sum(d.amount) desc, u.full_name
-            """)
-                .param("id", campaignId)
-                .query((rs, n) -> new DonorRecord(
-                        rs.getObject("user_id", UUID.class),
-                        rs.getString("student_id"),
-                        rs.getString("full_name"),
-                        rs.getString("email"),
-                        rs.getBigDecimal("total_amount")
-                ))
-                .list();
-    }
-
-    private record VolunteerRecord(UUID userId, String studentId, String fullName, String email, BigDecimal verifiedHours) {}
-
-    private List<VolunteerRecord> queryVolunteers(UUID campaignId) {
-        return jdbc.sql("""
-            select u.id as user_id, u.student_id, u.full_name, u.email,
-                   coalesce(com.verified_hours, 0) as verified_hours
-            from dut_connect.volunteer_registrations v
-            join dut_connect.users u on u.id = v.user_id
-            left join dut_connect.volunteer_completions com on com.campaign_id = v.campaign_id and com.user_id = v.user_id
-            where v.campaign_id = :id and v.status = 'ACCEPTED' and com.status = 'VERIFIED'
-            order by u.full_name
-            """)
-                .param("id", campaignId)
-                .query((rs, n) -> new VolunteerRecord(
-                        rs.getObject("user_id", UUID.class),
-                        rs.getString("student_id"),
-                        rs.getString("full_name"),
-                        rs.getString("email"),
-                        rs.getBigDecimal("verified_hours")
-                ))
-                .list();
+        return repository
+            .volunteers(campaignId)
+            .stream()
+            .map(v ->
+                new ThankYouRecipientDto(
+                    v.userId(),
+                    v.fullName(),
+                    v.studentId(),
+                    v.email(),
+                    "VOLUNTEER",
+                    v.verifiedHours().compareTo(BigDecimal.ZERO) > 0
+                        ? v.verifiedHours().stripTrailingZeros().toPlainString() + " giờ"
+                        : "Tham gia",
+                    false
+                )
+            )
+            .toList();
     }
 
     private String generateCode(String prefix, UUID campaignId, UUID userId) {
         int hash = Math.abs(Objects.hash(campaignId, userId, 2026));
         return prefix + "-" + String.format("%04X", hash % 0xFFFF);
-    }
-
-    private String buildDonationEmailHtml(String studentName, String studentId, String campaignTitle, String amountFormatted, String customMessage) {
-        return """
-            <div style="font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; max-width: 650px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.06);">
-              <!-- Top Banner -->
-              <div style="background: linear-gradient(135deg, #0f2b5c 0%%, #1e3a8a 100%%); padding: 26px 30px; text-align: center; color: #ffffff;">
-                <p style="margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; color: #fbbf24; font-weight: bold;">Đại học Đà Nẵng · Trường Đại học Bách khoa</p>
-                <h1 style="margin: 8px 0 0; font-size: 22px; font-weight: 800; color: #ffffff;">HỆ THỐNG DUT CONNECT</h1>
-              </div>
-
-              <!-- Main Content -->
-              <div style="padding: 30px 32px; color: #1e293b; line-height: 1.6;">
-                <p style="font-size: 16px; margin-top: 0;">Kính gửi bạn <strong>%s</strong> (MSSV: <strong>%s</strong>),</p>
-                <p style="font-size: 15px;">Thay mặt Ban Tổ chức chiến dịch <strong>« %s »</strong> và Trường Đại học Bách khoa - Đại học Đà Nẵng, chúng tôi xin gửi lời cảm ơn chân thành và sâu sắc nhất đến bạn!</p>
-                
-                <div style="background: #f0fdf4; border-left: 4px solid #16a34a; padding: 14px 18px; margin: 20px 0; border-radius: 0 8px 8px 0;">
-                  <p style="margin: 0; font-size: 14px; color: #166534;">
-                    Đóng góp tài chính của bạn: <strong style="font-size: 17px; color: #15803d;">%s VNĐ</strong>
-                  </p>
-                </div>
-
-                %s
-
-                <p style="font-size: 15px;">Sự chung tay, sẻ chia và ủng hộ quý báu của bạn là nguồn động viên to lớn, giúp chiến dịch hoàn thành xuất sắc mục tiêu và lan tỏa những giá trị nhân văn cao đẹp đến cộng đồng.</p>
-
-                <!-- Certificate Note -->
-                <div style="margin: 25px 0; padding: 18px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; text-align: center;">
-                  <p style="margin: 0 0 10px; font-weight: bold; color: #0f2b5c; font-size: 15px;">🎖️ GIẤY CHỨNG NHẬN ĐÓNG GÓP CHÍNH THỨC</p>
-                  <p style="margin: 0 0 12px; font-size: 13px; color: #64748b;">Nhà trường xin trân trọng trao tặng Giấy chứng nhận có chữ ký & con dấu của Trường Đại học Bách khoa (đính kèm tệp và hiển thị bên dưới):</p>
-                  <img src="cid:certificateImage" alt="Giấy chứng nhận tham gia chiến dịch" style="max-width: 100%%; height: auto; border-radius: 6px; box-shadow: 0 3px 10px rgba(0,0,0,0.12);" />
-                </div>
-
-                <p style="font-size: 14px; color: #475569; margin-bottom: 0;">Chúc bạn luôn dồi dào sức khỏe, học tập tốt và tiếp tục đồng hành cùng phong trào sinh viên Bách khoa!</p>
-              </div>
-
-              <!-- Footer -->
-              <div style="background: #f8fafc; padding: 18px 30px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
-                <p style="margin: 0;">Trường Đại học Bách khoa - Đại học Đà Nẵng · 54 Nguyễn Lương Bằng, Liên Chiểu, Đà Nẵng</p>
-                <p style="margin: 4px 0 0;">DUT Connect · Nền tảng kết nối nguồn lực sinh viên và cộng đồng</p>
-              </div>
-            </div>
-            """.formatted(
-                escape(studentName),
-                escape(studentId),
-                escape(campaignTitle),
-                amountFormatted,
-                customMessage != null && !customMessage.isBlank() ? "<p style=\"font-size: 15px;\">" + escape(customMessage) + "</p>" : ""
-        );
-    }
-
-    private String buildVolunteerEmailHtml(String studentName, String studentId, String campaignTitle, String hoursDetail, String customMessage) {
-        return """
-            <div style="font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; max-width: 650px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.06);">
-              <!-- Top Banner -->
-              <div style="background: linear-gradient(135deg, #0f2b5c 0%%, #1e3a8a 100%%); padding: 26px 30px; text-align: center; color: #ffffff;">
-                <p style="margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; color: #fbbf24; font-weight: bold;">Đại học Đà Nẵng · Trường Đại học Bách khoa</p>
-                <h1 style="margin: 8px 0 0; font-size: 22px; font-weight: 800; color: #ffffff;">HỆ THỐNG DUT CONNECT</h1>
-              </div>
-
-              <!-- Main Content -->
-              <div style="padding: 30px 32px; color: #1e293b; line-height: 1.6;">
-                <p style="font-size: 16px; margin-top: 0;">Kính gửi bạn <strong>%s</strong> (MSSV: <strong>%s</strong>),</p>
-                <p style="font-size: 15px;">Thay mặt Ban Tổ chức chiến dịch <strong>« %s »</strong> và Trường Đại học Bách khoa - Đại học Đà Nẵng, chúng tôi trân trọng biểu dương và cảm ơn sự tham gia tích cực của bạn!</p>
-                
-                <div style="background: #f0fdf4; border-left: 4px solid #16a34a; padding: 14px 18px; margin: 20px 0; border-radius: 0 8px 8px 0;">
-                  <p style="margin: 0; font-size: 14px; color: #166534;">
-                    Ghi nhận cống hiến: <strong style="font-size: 17px; color: #15803d;">%s</strong>
-                  </p>
-                </div>
-
-                %s
-
-                <p style="font-size: 15px;">Sự nhiệt huyết, tinh thần xung kích và trách nhiệm cống hiến của bạn đã góp phần quan trọng vào thành công rực rỡ của chiến dịch, khẳng định bản lĩnh và nhiệt huyết của tuổi trẻ Bách khoa.</p>
-
-                <!-- Certificate Note -->
-                <div style="margin: 25px 0; padding: 18px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; text-align: center;">
-                  <p style="margin: 0 0 10px; font-weight: bold; color: #0f2b5c; font-size: 15px;">🎖️ GIẤY CHỨNG NHẬN TÌNH NGUYỆN CHÍNH THỨC</p>
-                  <p style="margin: 0 0 12px; font-size: 13px; color: #64748b;">Nhà trường xin trân trọng trao tặng Giấy chứng nhận có chữ ký & con dấu của Trường Đại học Bách khoa (đính kèm tệp và hiển thị bên dưới):</p>
-                  <img src="cid:certificateImage" alt="Giấy chứng nhận tình nguyện chiến dịch" style="max-width: 100%%; height: auto; border-radius: 6px; box-shadow: 0 3px 10px rgba(0,0,0,0.12);" />
-                </div>
-
-                <p style="font-size: 14px; color: #475569; margin-bottom: 0;">Chúc bạn luôn giữ vững ngọn lửa nhiệt huyết, gặt hái nhiều thành công trong học tập và rèn luyện!</p>
-              </div>
-
-              <!-- Footer -->
-              <div style="background: #f8fafc; padding: 18px 30px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
-                <p style="margin: 0;">Trường Đại học Bách khoa - Đại học Đà Nẵng · 54 Nguyễn Lương Bằng, Liên Chiểu, Đà Nẵng</p>
-                <p style="margin: 4px 0 0;">DUT Connect · Nền tảng kết nối nguồn lực sinh viên và cộng đồng</p>
-              </div>
-            </div>
-            """.formatted(
-                escape(studentName),
-                escape(studentId),
-                escape(campaignTitle),
-                hoursDetail,
-                customMessage != null && !customMessage.isBlank() ? "<p style=\"font-size: 15px;\">" + escape(customMessage) + "</p>" : ""
-        );
-    }
-
-    private static String escape(String value) {
-        if (value == null) return "";
-        return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     }
 }

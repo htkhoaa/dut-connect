@@ -1,10 +1,9 @@
 package vn.edu.dut.connect.volunteer.application;
 
 import java.util.*;
-
-import vn.edu.dut.connect.volunteer.domain.*;
-import vn.edu.dut.connect.shared.application.PageResult;
 import vn.edu.dut.connect.identity.application.Pagination;
+import vn.edu.dut.connect.shared.application.PageResult;
+import vn.edu.dut.connect.volunteer.domain.*;
 
 public interface MeetingRepository {
     Optional<Meeting> meeting(UUID id);

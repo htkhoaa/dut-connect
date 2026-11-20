@@ -1,11 +1,18 @@
 package vn.edu.dut.connect.campaign.application;
-import java.util.*;
+
+import static vn.edu.dut.connect.campaign.application.CampaignContracts.*;
+
 import java.time.*;
+import java.util.*;
 import vn.edu.dut.connect.campaign.domain.*;
 import vn.edu.dut.connect.shared.application.PageResult;
-import static vn.edu.dut.connect.campaign.application.CampaignContracts.*;
+
 public interface CampaignRepository {
-    enum Visibility { PUBLIC, ALL }
+    enum Visibility {
+        PUBLIC,
+        ALL,
+    }
+
     Optional<Campaign> find(UUID id);
     List<Campaign> findAll(Set<UUID> ids);
     Optional<Campaign> bySlug(String slug);
@@ -13,7 +20,7 @@ public interface CampaignRepository {
     Optional<Campaign> lock(UUID id);
     Campaign save(Campaign campaign);
     PageResult<Campaign> list(CampaignQuery query, UUID manager, Visibility visibility);
-    Set<UUID> managedCampaigns(Set<UUID> ids,UUID userId);
+    Set<UUID> managedCampaigns(Set<UUID> ids, UUID userId);
     List<UUID> managers(UUID campaignId);
     Optional<ManagerRole> role(UUID campaignId, UUID userId);
     void addManager(UUID campaignId, UUID userId, ManagerRole role);

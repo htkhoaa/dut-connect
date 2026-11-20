@@ -1,12 +1,13 @@
-import {apiClient} from '../../shared/api/client';
-import type {NotificationPage} from './types';
+import { apiClient } from '../../shared/api/client';
+import type { NotificationPage } from './types';
 
 export async function getNotifications(page = 0, size = 10) {
-    return (await apiClient.get<NotificationPage>('/notifications', {params: {page, size}})).data;
+    return (await apiClient.get<NotificationPage>('/notifications', { params: { page, size } }))
+        .data;
 }
 
 export async function getUnreadCount() {
-    return (await apiClient.get<{count: number}>('/notifications/unread-count')).data;
+    return (await apiClient.get<{ count: number }>('/notifications/unread-count')).data;
 }
 
 export async function getUnreadNotifications(): Promise<NotificationPage> {
@@ -15,10 +16,16 @@ export async function getUnreadNotifications(): Promise<NotificationPage> {
     let totalPages = 1;
     do {
         const result = await getNotifications(page++, 100);
-        items.push(...result.content.filter(item => !item.isRead));
+        items.push(...result.content.filter((item) => !item.isRead));
         totalPages = result.totalPages;
     } while (page < totalPages);
-    return {content: items, totalElements: items.length, totalPages: Math.ceil(items.length / 15), number: 0, size: 15};
+    return {
+        content: items,
+        totalElements: items.length,
+        totalPages: Math.ceil(items.length / 15),
+        number: 0,
+        size: 15,
+    };
 }
 
 export async function markAsRead(id: string) {
@@ -26,5 +33,5 @@ export async function markAsRead(id: string) {
 }
 
 export async function markAllAsRead() {
-    return (await apiClient.post<{updated: number}>('/notifications/read-all')).data;
+    return (await apiClient.post<{ updated: number }>('/notifications/read-all')).data;
 }

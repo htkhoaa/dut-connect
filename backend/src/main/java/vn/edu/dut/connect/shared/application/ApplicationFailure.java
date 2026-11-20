@@ -1,6 +1,7 @@
 package vn.edu.dut.connect.shared.application;
 
 public class ApplicationFailure extends RuntimeException {
+
     private final int status;
     private final String code;
 

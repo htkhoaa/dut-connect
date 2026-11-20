@@ -1,12 +1,11 @@
 package vn.edu.dut.connect.finance.application;
 
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.edu.dut.connect.finance.domain.Expense;
 import vn.edu.dut.connect.finance.domain.ExpenseStatus;
 import vn.edu.dut.connect.shared.application.ApplicationFailure;
-
-import java.util.UUID;
 
 @Service
 public class ExpenseReceiptService {
@@ -15,8 +14,11 @@ public class ExpenseReceiptService {
     private final FinanceAuthorization access;
     private final vn.edu.dut.connect.campaign.application.CampaignAccessPort campaigns;
 
-    public ExpenseReceiptService(ExpenseRepository expenseRepository, FinanceAuthorization access,
-                                 vn.edu.dut.connect.campaign.application.CampaignAccessPort campaigns) {
+    public ExpenseReceiptService(
+        ExpenseRepository expenseRepository,
+        FinanceAuthorization access,
+        vn.edu.dut.connect.campaign.application.CampaignAccessPort campaigns
+    ) {
         this.expenseRepository = expenseRepository;
         this.access = access;
         this.campaigns = campaigns;
@@ -26,13 +28,18 @@ public class ExpenseReceiptService {
 
     @Transactional
     public void upload(UUID expenseId, UUID actorId, byte[] data, String contentType) {
-        Expense expense = expenseRepository.find(expenseId)
-                .orElseThrow(() -> ApplicationFailure.missing("Expense not found"));
+        Expense expense = expenseRepository
+            .find(expenseId)
+            .orElseThrow(() -> ApplicationFailure.missing("Expense not found"));
         // Require manager access on campaign
         access.manager(expense.campaignId(), actorId);
         access.mutable(campaigns.lockCampaign(expense.campaignId()));
         if (expense.status() != ExpenseStatus.PENDING) {
-            throw new ApplicationFailure(400, "EXPENSE_NOT_PENDING", "Can only upload receipt for pending expenses");
+            throw new ApplicationFailure(
+                400,
+                "EXPENSE_NOT_PENDING",
+                "Can only upload receipt for pending expenses"
+            );
         }
         expense.setReceiptData(data, contentType);
         expenseRepository.save(expense);
@@ -40,12 +47,17 @@ public class ExpenseReceiptService {
 
     @Transactional(readOnly = true)
     public ReceiptData download(UUID expenseId, UUID actorId) {
-        Expense expense = expenseRepository.find(expenseId)
-                .orElseThrow(() -> ApplicationFailure.missing("Expense not found"));
+        Expense expense = expenseRepository
+            .find(expenseId)
+            .orElseThrow(() -> ApplicationFailure.missing("Expense not found"));
         if (expense.status() == ExpenseStatus.APPROVED) {
             access.visible(campaigns.getCampaign(expense.campaignId()), actorId);
         } else {
-            if (actorId == null) throw new ApplicationFailure(401, "AUTHENTICATION_REQUIRED", "Login required");
+            if (actorId == null) throw new ApplicationFailure(
+                401,
+                "AUTHENTICATION_REQUIRED",
+                "Login required"
+            );
             access.manager(expense.campaignId(), actorId);
         }
         if (expense.receiptData() == null || expense.receiptData().length == 0) {
@@ -56,12 +68,17 @@ public class ExpenseReceiptService {
 
     @Transactional
     public void delete(UUID expenseId, UUID actorId) {
-        Expense expense = expenseRepository.find(expenseId)
-                .orElseThrow(() -> ApplicationFailure.missing("Expense not found"));
+        Expense expense = expenseRepository
+            .find(expenseId)
+            .orElseThrow(() -> ApplicationFailure.missing("Expense not found"));
         access.manager(expense.campaignId(), actorId);
         access.mutable(campaigns.lockCampaign(expense.campaignId()));
         if (expense.status() != ExpenseStatus.PENDING) {
-            throw new ApplicationFailure(400, "EXPENSE_NOT_PENDING", "Can only delete receipt for pending expenses");
+            throw new ApplicationFailure(
+                400,
+                "EXPENSE_NOT_PENDING",
+                "Can only delete receipt for pending expenses"
+            );
         }
         expense.setReceiptData(null, null);
         expenseRepository.save(expense);

@@ -1,4 +1,4 @@
-import {locale} from './i18n';
+import { locale } from './i18n';
 
 // Round to one decimal place using integer VND values before formatting.
 export function fundraisingPercent(raised: string, goal: string | null): number | null {
@@ -8,5 +8,5 @@ export function fundraisingPercent(raised: string, goal: string | null): number 
 }
 
 export function formatPercent(percent: number): string {
-    return new Intl.NumberFormat(locale(), {maximumFractionDigits: 1}).format(percent) + '%';
+    return new Intl.NumberFormat(locale(), { maximumFractionDigits: 1 }).format(percent) + '%';
 }

@@ -16,17 +16,17 @@ export interface AuthResponse {
     accessToken: string;
     tokenType: 'Bearer';
     expiresIn: number;
-    user: UserSummary
+    user: UserSummary;
 }
 
 export interface LoginValues {
     studentId?: string;
     email?: string;
-    password: string
+    password: string;
 }
 
 export interface RegisterValues extends LoginValues {
     email: string;
     fullName: string;
-    faculty: string
+    faculty: string;
 }

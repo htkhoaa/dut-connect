@@ -1,5 +1,7 @@
-export type DonationStatus = 'CREATED' | 'PENDING_PAYMENT' | 'PAID' | 'FAILED' | 'CANCELLED' | 'REFUNDED';
-export type PaymentStatus = 'CREATED' | 'PROVIDER_PENDING' | 'PAID' | 'FAILED' | 'CANCELLED' | 'REFUNDED';
+export type DonationStatus =
+    'CREATED' | 'PENDING_PAYMENT' | 'PAID' | 'FAILED' | 'CANCELLED' | 'REFUNDED';
+export type PaymentStatus =
+    'CREATED' | 'PROVIDER_PENDING' | 'PAID' | 'FAILED' | 'CANCELLED' | 'REFUNDED';
 
 export interface Payment {
     id: string;
@@ -13,7 +15,7 @@ export interface Payment {
     failureReason: string | null;
     expiresAt: string | null;
     paidAt: string | null;
-    version: number
+    version: number;
 }
 
 export interface Donation {
@@ -26,7 +28,7 @@ export interface Donation {
     createdAt: string;
     updatedAt: string;
     version: number;
-    payments: Payment[]
+    payments: Payment[];
 }
 
 export interface Creation {
@@ -46,16 +48,16 @@ export interface DonationSettings {
     provider: string;
     minimumVnd: string;
     maximumVnd: string;
-    available: boolean
+    available: boolean;
 }
 
 export const donationStatuses = {
-    CREATED: {label: 'Chờ xác nhận thanh toán', tone: 'neutral'},
-    PENDING_PAYMENT: {label: 'Chờ thanh toán', tone: 'neutral'},
-    PAID: {label: 'Đã thanh toán', tone: 'success'},
-    FAILED: {label: 'Thất bại', tone: 'danger'},
-    CANCELLED: {label: 'Đã hủy', tone: 'neutral'},
-    REFUNDED: {label: 'Đã hoàn tiền', tone: 'neutral'}
+    CREATED: { label: 'Chờ xác nhận thanh toán', tone: 'neutral' },
+    PENDING_PAYMENT: { label: 'Chờ thanh toán', tone: 'neutral' },
+    PAID: { label: 'Đã thanh toán', tone: 'success' },
+    FAILED: { label: 'Thất bại', tone: 'danger' },
+    CANCELLED: { label: 'Đã hủy', tone: 'neutral' },
+    REFUNDED: { label: 'Đã hoàn tiền', tone: 'neutral' },
 } as const;
 export const paymentStatuses = {
     CREATED: donationStatuses.CREATED,
@@ -63,16 +65,21 @@ export const paymentStatuses = {
     PAID: donationStatuses.PAID,
     FAILED: donationStatuses.FAILED,
     CANCELLED: donationStatuses.CANCELLED,
-    REFUNDED: donationStatuses.REFUNDED
+    REFUNDED: donationStatuses.REFUNDED,
 } as const;
-export const validId = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+export const validId = (id: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
 export function checkoutLink(url: string | null): string | null {
     if (!url) return null;
     if (url.startsWith('/')) return url.startsWith('//') || url.includes('\\') ? null : url;
     try {
         const parsed = new URL(url);
-        return (parsed.protocol === 'https:' || parsed.protocol === 'http:') && !parsed.username && !parsed.password ? parsed.href : null;
+        return (parsed.protocol === 'https:' || parsed.protocol === 'http:') &&
+            !parsed.username &&
+            !parsed.password
+            ? parsed.href
+            : null;
     } catch {
         return null;
     }

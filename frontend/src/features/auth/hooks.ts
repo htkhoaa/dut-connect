@@ -1,30 +1,32 @@
-import {useMutation} from '@tanstack/react-query';
-import {useEffect} from 'react';
-import {login, register, logout, requestLoginLink, verifyLoginLink} from './api';
-import {refreshSession} from '../../shared/api/client';
+import { useMutation } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { login, register, logout, requestLoginLink, verifyLoginLink } from './api';
+import { refreshSession } from '../../shared/api/client';
 
 let initialization: Promise<void> | undefined;
 
 export function useInitializeAuth() {
     useEffect(() => {
-        initialization ??= refreshSession().then(() => undefined).catch(() => undefined);
+        initialization ??= refreshSession()
+            .then(() => undefined)
+            .catch(() => undefined);
     }, []);
 }
 
 export function useLogin() {
-    return useMutation({mutationFn: login});
+    return useMutation({ mutationFn: login });
 }
 
 export function useRegister() {
-    return useMutation({mutationFn: register});
+    return useMutation({ mutationFn: register });
 }
 
 export function useLogout() {
-    return useMutation({mutationFn: logout});
+    return useMutation({ mutationFn: logout });
 }
 export function useRequestLoginLink() {
-    return useMutation({mutationFn: requestLoginLink});
+    return useMutation({ mutationFn: requestLoginLink });
 }
 export function useVerifyLoginLink() {
-    return useMutation({mutationFn: verifyLoginLink});
+    return useMutation({ mutationFn: verifyLoginLink });
 }

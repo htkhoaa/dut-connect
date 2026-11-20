@@ -1,11 +1,11 @@
-import type {UserSummary} from '../auth/types';
+import type { UserSummary } from '../auth/types';
 
 export type Track = 'TECHNICAL' | 'LOGISTICS';
 
 export interface Skill {
     id: string;
     name: string;
-    active: boolean
+    active: boolean;
 }
 
 export interface Profile {
