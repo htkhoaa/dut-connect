@@ -1,5 +1,13 @@
 /** Vietnamese remains the source language; translations are bundled, with no runtime service. */
 export const english: Record<string, string> = Object.fromEntries(`
+Xác định mục tiêu, thời hạn và tài khoản nhận giải ngân.|Set the goal, deadline and payout account.
+Nhập số tiền nguyên, không có dấu chấm hoặc dấu phẩy. Ví dụ: 5000000 = 5.000.000 VND.|Enter a whole amount without separators. Example: 5000000 = 5,000,000 VND.
+Hạn gây quỹ *|Fundraising deadline *
+Chọn ngày và giờ theo giờ địa phương của bạn.|Choose the date and time in your local time zone.
+Thông tin dùng để đối soát và giải ngân, không hiển thị công khai trên trang chiến dịch.|This information is used for reconciliation and payouts and is not displayed publicly on the campaign page.
+Chọn ngân hàng nhận giải ngân|Select the bank for payouts
+Nhập số tài khoản ngân hàng|Enter the bank account number
+Kiểm tra số tài khoản và nhập tên chủ tài khoản đúng như thông tin tại ngân hàng.|Check the account number and enter the account holder's name as registered with the bank.
 Mã sinh viên|Student ID
 Lớp sinh hoạt (VD: 21TCLC_DT1)|Class (e.g. 21TCLC_DT1)
 Lớp sinh hoạt|Class

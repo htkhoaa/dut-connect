@@ -1,4 +1,5 @@
 import {defaults, payload} from '../planValues';
+import {vietnameseBanks} from '../banks';
 import {ApiImage} from '../../../shared/components/ApiImage';
 import {useLanguage, tr, renderText} from "../../../shared/lib/i18n";
 import {catalogLabel} from '../../../shared/lib/catalogLabels';
@@ -141,6 +142,7 @@ export function PlanForm({
     const mutation = kind === 'proposal' ? proposal : campaign;
     const mode = form.watch('contributionMode');
     const organizer = form.watch('organizerType');
+    const selectedBank = form.watch('donationBankName');
 
     // Fetch existing gallery images for proposal or campaign if id exists
     const galleryQuery = useQuery({
@@ -465,25 +467,51 @@ export function PlanForm({
 
                 {renderText(
                     mode !== 'VOLUNTEER_ONLY' && (
-                        <div className="space-y-4 rounded-2xl border border-sky-100 bg-sky-50/40 p-4">
-                            <h3 className="text-base font-bold text-text-primary">{tr("Kế hoạch gây quỹ tài chính")}</h3>
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                {input('fundraisingGoal', tr("Mục tiêu gây quỹ (VND) *"))}
-                                {input('fundraisingDeadline', tr("Hạn gây quỹ * (giờ địa phương)"), 'datetime-local')}
+                        <section aria-labelledby="fundraising-heading" className="min-w-0 space-y-5 rounded-2xl border border-sky-100 bg-sky-50/40 p-4 sm:p-5">
+                            <div className="space-y-1">
+                                <h3 id="fundraising-heading" className="text-base font-bold text-text-primary">{tr("Kế hoạch gây quỹ tài chính")}</h3>
+                                <p className="text-sm text-text-secondary">{tr("Xác định mục tiêu, thời hạn và tài khoản nhận giải ngân.")}</p>
                             </div>
-
-                            <div className="rounded-xl border border-primary-muted/50 bg-white p-4">
-                                <h4 className="text-sm font-bold text-text-primary">{tr("Tài khoản nhận giải ngân")}</h4>
-                                <p className="mt-1 text-xs text-text-secondary leading-relaxed">
-                                    {tr("Thông tin bảo mật: Chỉ Quản trị viên hệ thống có thể xem trong trang quản trị để đối soát và giải ngân (không hiển thị công khai trên trang chiến dịch).")}
-                                </p>
-                                <div className="mt-3 grid gap-4 sm:grid-cols-3">
-                                    {input('donationBankName', tr("Ngân hàng *"), 'text', 120)}
-                                    {input('donationAccountNumber', tr("Số tài khoản *"), 'text', 64)}
-                                    {input('donationAccountHolder', tr("Chủ tài khoản *"), 'text', 200)}
+                            <div className="grid min-w-0 gap-4 md:grid-cols-2">
+                                <div className="min-w-0 space-y-2">
+                                    <FormField id="plan-fundraisingGoal" label={tr("Mục tiêu gây quỹ (VND) *")} error={form.formState.errors.fundraisingGoal?.message}>
+                                        <Input id="plan-fundraisingGoal" inputMode="numeric" placeholder="5000000" maxLength={19} {...form.register('fundraisingGoal')} />
+                                    </FormField>
+                                    <p className="text-xs leading-relaxed text-text-secondary">{tr("Nhập số tiền nguyên, không có dấu chấm hoặc dấu phẩy. Ví dụ: 5000000 = 5.000.000 VND.")}</p>
+                                </div>
+                                <div className="min-w-0 space-y-2">
+                                    <FormField id="plan-fundraisingDeadline" label={tr("Hạn gây quỹ *")} error={form.formState.errors.fundraisingDeadline?.message}>
+                                        <Input id="plan-fundraisingDeadline" type="datetime-local" step={60} className="min-w-0 max-w-full" {...form.register('fundraisingDeadline')} />
+                                    </FormField>
+                                    <p className="text-xs leading-relaxed text-text-secondary">{tr("Chọn ngày và giờ theo giờ địa phương của bạn.")}</p>
                                 </div>
                             </div>
-                        </div>
+
+                            <div className="min-w-0 space-y-4 rounded-xl border border-border bg-white p-4 sm:p-5">
+                                <div className="space-y-1">
+                                    <h4 className="text-sm font-bold text-text-primary">{tr("Tài khoản nhận giải ngân")}</h4>
+                                    <p className="text-xs leading-relaxed text-text-secondary">
+                                        {tr("Thông tin dùng để đối soát và giải ngân, không hiển thị công khai trên trang chiến dịch.")}
+                                    </p>
+                                </div>
+                                <FormField id="plan-donationBankName" label={tr("Ngân hàng *")} error={form.formState.errors.donationBankName?.message}>
+                                    <Select id="plan-donationBankName" {...form.register('donationBankName')}>
+                                        <option value="">{tr("Chọn ngân hàng nhận giải ngân")}</option>
+                                        {selectedBank && !vietnameseBanks.includes(selectedBank) && <option value={selectedBank}>{selectedBank}</option>}
+                                        {vietnameseBanks.map(bank => <option key={bank} value={bank}>{bank}</option>)}
+                                    </Select>
+                                </FormField>
+                                <div className="grid min-w-0 gap-4 md:grid-cols-2">
+                                    <FormField id="plan-donationAccountNumber" label={tr("Số tài khoản *")} error={form.formState.errors.donationAccountNumber?.message}>
+                                        <Input id="plan-donationAccountNumber" type="text" placeholder={tr("Nhập số tài khoản ngân hàng")} maxLength={64} autoComplete="off" spellCheck={false} {...form.register('donationAccountNumber')} />
+                                    </FormField>
+                                    <FormField id="plan-donationAccountHolder" label={tr("Chủ tài khoản *")} error={form.formState.errors.donationAccountHolder?.message}>
+                                        <Input id="plan-donationAccountHolder" type="text" placeholder="NGUYEN VAN A" maxLength={200} autoComplete="off" spellCheck={false} {...form.register('donationAccountHolder')} />
+                                    </FormField>
+                                </div>
+                                <p className="text-xs leading-relaxed text-text-secondary">{tr("Kiểm tra số tài khoản và nhập tên chủ tài khoản đúng như thông tin tại ngân hàng.")}</p>
+                            </div>
+                        </section>
                     )
                 )}
 
