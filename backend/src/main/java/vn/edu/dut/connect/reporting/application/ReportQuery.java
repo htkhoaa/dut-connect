@@ -5,6 +5,7 @@ import java.util.UUID;
 
 public interface ReportQuery {
     record Sheet(String name, List<String> headers, List<List<String>> rows) {}
+
     List<List<String>> volunteers(UUID campaign);
     List<List<String>> donations(UUID campaign);
     List<List<String>> expenses(UUID campaign);

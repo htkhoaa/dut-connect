@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {errorLabel, validationLabel} from './errorLabels';
+import { errorLabel, validationLabel } from './errorLabels';
 
 export interface ApiError {
     timestamp: string;
@@ -14,7 +14,15 @@ export interface ApiError {
 export function apiError(error: unknown): ApiError | undefined {
     if (axios.isAxiosError<ApiError>(error)) {
         const data = error.response?.data;
-        if (data && typeof data.code === 'string') return {...data, message: errorLabel(data.code, data.status), fieldErrors: (data.fieldErrors || []).map(field => ({...field, message: validationLabel(field.message)}))};
+        if (data && typeof data.code === 'string')
+            return {
+                ...data,
+                message: errorLabel(data.code, data.status),
+                fieldErrors: (data.fieldErrors || []).map((field) => ({
+                    ...field,
+                    message: validationLabel(field.message),
+                })),
+            };
     }
     return undefined;
 }

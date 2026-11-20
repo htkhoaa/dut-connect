@@ -1,7 +1,6 @@
 package vn.edu.dut.connect.donation.domain;
 
 import jakarta.persistence.*;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
@@ -10,26 +9,33 @@ import java.util.UUID;
 @Entity
 @Table(name = "donations")
 public class Donation {
+
     @Id
     private UUID id;
+
     @Column(nullable = false)
     private UUID campaignId;
+
     @Column(nullable = false)
     private UUID donorUserId;
+
     @Column(nullable = false, precision = 19, scale = 0)
     private BigDecimal amount;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private DonationStatus status;
+
     @Column(nullable = false)
     private Instant createdAt;
+
     @Column(nullable = false)
     private Instant updatedAt;
+
     @Version
     private Long version;
 
-    protected Donation() {
-    }
+    protected Donation() {}
 
     public Donation(UUID campaign, UUID donor, BigDecimal amount) {
         this.amount = integerAmount(amount);
@@ -42,8 +48,15 @@ public class Donation {
     }
 
     public static BigDecimal integerAmount(BigDecimal amount) {
-        if (amount == null || amount.signum() <= 0 || amount.compareTo(new BigDecimal("9999999999999999999")) > 0)
-            throw new PaymentViolation("VALIDATION_ERROR", "Enter a positive integer VND amount", "amount");
+        if (
+            amount == null ||
+            amount.signum() <= 0 ||
+            amount.compareTo(new BigDecimal("9999999999999999999")) > 0
+        ) throw new PaymentViolation(
+            "VALIDATION_ERROR",
+            "Enter a positive integer VND amount",
+            "amount"
+        );
         try {
             return amount.setScale(0, RoundingMode.UNNECESSARY);
         } catch (ArithmeticException e) {
@@ -79,7 +92,11 @@ public class Donation {
     }
 
     private void invalid() {
-        throw new PaymentViolation("INVALID_STATE_TRANSITION", "Donation cannot perform this transition", null);
+        throw new PaymentViolation(
+            "INVALID_STATE_TRANSITION",
+            "Donation cannot perform this transition",
+            null
+        );
     }
 
     private void change(DonationStatus next) {

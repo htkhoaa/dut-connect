@@ -10,7 +10,11 @@ export function getWsUrl(): string {
         return `${protocol}//${url.host}/ws/notifications`;
     }
     // On Vercel or cloud domain, direct WebSocket connections directly to Render backend
-    if (typeof window !== 'undefined' && (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('dutconnect'))) {
+    if (
+        typeof window !== 'undefined' &&
+        (window.location.hostname.includes('vercel.app') ||
+            window.location.hostname.includes('dutconnect'))
+    ) {
         return 'wss://dut-connect.onrender.com/ws/notifications';
     }
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -38,7 +42,9 @@ export function useGlobalRealtime() {
                 ws.onopen = () => {
                     pingInterval = setInterval(() => {
                         if (ws.readyState === WebSocket.OPEN) {
-                            try { ws.send('ping'); } catch {}
+                            try {
+                                ws.send('ping');
+                            } catch {}
                         }
                     }, 25000);
                 };
@@ -50,13 +56,27 @@ export function useGlobalRealtime() {
 
                         window.dispatchEvent(new CustomEvent('app:ws_message', { detail: data }));
 
-                        if (data.action === 'DONATION_RECEIVED' || data.action === 'DONATION_SUCCESS') {
-                            window.dispatchEvent(new CustomEvent('app:donation_received', { detail: data }));
-                            for (const key of ['finance', 'campaigns', 'dashboard', 'activities', 'notifications', 'donations']) {
-                                void qc.invalidateQueries({queryKey: [key]});
+                        if (
+                            data.action === 'DONATION_RECEIVED' ||
+                            data.action === 'DONATION_SUCCESS'
+                        ) {
+                            window.dispatchEvent(
+                                new CustomEvent('app:donation_received', { detail: data }),
+                            );
+                            for (const key of [
+                                'finance',
+                                'campaigns',
+                                'dashboard',
+                                'activities',
+                                'notifications',
+                                'donations',
+                            ]) {
+                                void qc.invalidateQueries({ queryKey: [key] });
                             }
                         } else if (data.action === 'NEW_NOTIFICATION') {
-                            window.dispatchEvent(new CustomEvent('app:new_notification', { detail: data }));
+                            window.dispatchEvent(
+                                new CustomEvent('app:new_notification', { detail: data }),
+                            );
                             void qc.invalidateQueries({ queryKey: ['notifications'] });
                             if ('vibrate' in navigator) navigator.vibrate(100);
                         } else if (data.action === 'CAMPAIGN_UPDATED') {

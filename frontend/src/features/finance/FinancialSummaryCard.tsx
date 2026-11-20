@@ -1,13 +1,13 @@
-import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
-import {useState, useEffect} from 'react';
-import {useFinancialSummary} from './hooks';
-import {vnd} from '../campaigns/presentation';
-import {LoadingState} from '../../shared/components/LoadingState';
-import {ErrorState} from '../../shared/components/ErrorState';
-import {errorMessage} from '../../shared/api/errors';
-import {fundraisingPercent, formatPercent} from '../../shared/lib/fundraising';
+import { useLanguage, tr, renderText } from '../../shared/lib/i18n';
+import { useState, useEffect } from 'react';
+import { useFinancialSummary } from './hooks';
+import { vnd } from '../campaigns/presentation';
+import { LoadingState } from '../../shared/components/LoadingState';
+import { ErrorState } from '../../shared/components/ErrorState';
+import { errorMessage } from '../../shared/api/errors';
+import { fundraisingPercent, formatPercent } from '../../shared/lib/fundraising';
 
-export function FinancialSummaryCard({campaignId}: {campaignId: string}) {
+export function FinancialSummaryCard({ campaignId }: { campaignId: string }) {
     useLanguage();
     const query = useFinancialSummary(campaignId);
     const [recentDonationNotice, setRecentDonationNotice] = useState<string | null>(null);
@@ -22,7 +22,9 @@ export function FinancialSummaryCard({campaignId}: {campaignId: string}) {
                 void query.refetch();
                 if (data.amount) {
                     const donor = data.donorName || 'Một tấm lòng hảo tâm';
-                    setRecentDonationNotice(`+${Number(data.amount).toLocaleString('vi-VN')} đ từ ${donor}`);
+                    setRecentDonationNotice(
+                        `+${Number(data.amount).toLocaleString('vi-VN')} đ từ ${donor}`,
+                    );
                     setTimeout(() => setRecentDonationNotice(null), 6000);
                 }
             }
@@ -32,11 +34,27 @@ export function FinancialSummaryCard({campaignId}: {campaignId: string}) {
         return () => window.removeEventListener('app:donation_received', handler);
     }, [campaignId, query]);
 
-    if (query.isPending) return <div className="rounded-2xl border border-border bg-white p-6 shadow-xs"><LoadingState /></div>;
-    if (query.isError) return <div className="rounded-2xl border border-border bg-white p-6 shadow-xs"><ErrorState message={errorMessage(query.error)} onRetry={() => void query.refetch()} /></div>;
+    if (query.isPending)
+        return (
+            <div className="rounded-2xl border border-border bg-white p-6 shadow-xs">
+                <LoadingState />
+            </div>
+        );
+    if (query.isError)
+        return (
+            <div className="rounded-2xl border border-border bg-white p-6 shadow-xs">
+                <ErrorState
+                    message={errorMessage(query.error)}
+                    onRetry={() => void query.refetch()}
+                />
+            </div>
+        );
 
     const d = query.data;
-    const hasFinancialData = BigInt(d.fundraisingGoal ?? 0) > 0n || BigInt(d.verifiedDonations ?? 0) > 0n || d.successfulDonationCount > 0;
+    const hasFinancialData =
+        BigInt(d.fundraisingGoal ?? 0) > 0n ||
+        BigInt(d.verifiedDonations ?? 0) > 0n ||
+        d.successfulDonationCount > 0;
     if (!hasFinancialData) return null;
 
     const goalNum = Number(d.fundraisingGoal ?? 0);
@@ -54,10 +72,10 @@ export function FinancialSummaryCard({campaignId}: {campaignId: string}) {
                     </span>
                     <div>
                         <h2 className="text-base font-bold text-text-primary tracking-tight">
-                            {tr("Tiếp sức gây quỹ chiến dịch")}
+                            {tr('Tiếp sức gây quỹ chiến dịch')}
                         </h2>
                         <p className="text-xs text-text-secondary">
-                            {tr("Đóng góp trực tiếp minh bạch từ cộng đồng")}
+                            {tr('Đóng góp trực tiếp minh bạch từ cộng đồng')}
                         </p>
                     </div>
                 </div>
@@ -67,9 +85,16 @@ export function FinancialSummaryCard({campaignId}: {campaignId: string}) {
                 <div className="mb-4 flex items-center justify-between gap-2 rounded-2xl border border-emerald-300 bg-emerald-100/80 px-4 py-2 text-xs font-bold text-emerald-900 shadow-sm animate-fade-in">
                     <div className="flex items-center gap-2">
                         <span className="text-base">✓</span>
-                        <span>{tr("Giao dịch mới vừa được ghi nhận:")} <span className="text-emerald-700 font-extrabold">{recentDonationNotice}</span></span>
+                        <span>
+                            {tr('Giao dịch mới vừa được ghi nhận:')}{' '}
+                            <span className="text-emerald-700 font-extrabold">
+                                {recentDonationNotice}
+                            </span>
+                        </span>
                     </div>
-                    <span className="text-[10px] text-emerald-600 uppercase tracking-wider">{tr("Realtime")}</span>
+                    <span className="text-[10px] text-emerald-600 uppercase tracking-wider">
+                        {tr('Realtime')}
+                    </span>
                 </div>
             )}
 
@@ -87,7 +112,7 @@ export function FinancialSummaryCard({campaignId}: {campaignId: string}) {
                 </div>
                 {goalNum > 0 && (
                     <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-                        {percentDisplay} {tr("mục tiêu")}
+                        {percentDisplay} {tr('mục tiêu')}
                     </span>
                 )}
             </div>
@@ -98,7 +123,7 @@ export function FinancialSummaryCard({campaignId}: {campaignId: string}) {
                     <div className="h-3 w-full overflow-hidden rounded-full bg-border/60">
                         <div
                             className="h-full rounded-full bg-linear-to-r from-primary to-sky-500 transition-all duration-700 ease-out"
-                            style={{width: `${barWidthPercent}%`}}
+                            style={{ width: `${barWidthPercent}%` }}
                         />
                     </div>
                 </div>
@@ -107,16 +132,28 @@ export function FinancialSummaryCard({campaignId}: {campaignId: string}) {
             {/* Quick Stat Pill Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 border-t border-border/50">
                 <div className="rounded-2xl bg-white/80 border border-border/60 p-3 shadow-2xs">
-                    <p className="text-[11px] font-semibold text-text-secondary">{tr("Đã quyên góp")}</p>
-                    <p className="text-base font-bold text-primary mt-0.5 truncate">{renderText(vnd(d.verifiedDonations))}</p>
+                    <p className="text-[11px] font-semibold text-text-secondary">
+                        {tr('Đã quyên góp')}
+                    </p>
+                    <p className="text-base font-bold text-primary mt-0.5 truncate">
+                        {renderText(vnd(d.verifiedDonations))}
+                    </p>
                 </div>
                 <div className="rounded-2xl bg-white/80 border border-border/60 p-3 shadow-2xs">
-                    <p className="text-[11px] font-semibold text-text-secondary">{tr("Mục tiêu chiến dịch")}</p>
-                    <p className="text-base font-bold text-text-primary mt-0.5 truncate">{renderText(vnd(d.fundraisingGoal))}</p>
+                    <p className="text-[11px] font-semibold text-text-secondary">
+                        {tr('Mục tiêu chiến dịch')}
+                    </p>
+                    <p className="text-base font-bold text-text-primary mt-0.5 truncate">
+                        {renderText(vnd(d.fundraisingGoal))}
+                    </p>
                 </div>
                 <div className="col-span-2 sm:col-span-1 rounded-2xl bg-white/80 border border-border/60 p-3 shadow-2xs">
-                    <p className="text-[11px] font-semibold text-text-secondary">{tr("Lượt tiếp sức thành công")}</p>
-                    <p className="text-base font-bold text-emerald-600 mt-0.5">{renderText(d.successfulDonationCount)} {tr("lượt")}</p>
+                    <p className="text-[11px] font-semibold text-text-secondary">
+                        {tr('Lượt tiếp sức thành công')}
+                    </p>
+                    <p className="text-base font-bold text-emerald-600 mt-0.5">
+                        {renderText(d.successfulDonationCount)} {tr('lượt')}
+                    </p>
                 </div>
             </div>
         </div>

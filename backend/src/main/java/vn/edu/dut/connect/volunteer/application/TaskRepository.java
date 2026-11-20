@@ -1,10 +1,9 @@
 package vn.edu.dut.connect.volunteer.application;
 
 import java.util.*;
-
-import vn.edu.dut.connect.volunteer.domain.*;
-import vn.edu.dut.connect.shared.application.PageResult;
 import vn.edu.dut.connect.identity.application.Pagination;
+import vn.edu.dut.connect.shared.application.PageResult;
+import vn.edu.dut.connect.volunteer.domain.*;
 
 public interface TaskRepository {
     Optional<VolunteerTask> task(UUID id);
@@ -15,7 +14,12 @@ public interface TaskRepository {
 
     void deleteTask(UUID id);
 
-    PageResult<VolunteerTask> tasks(UUID campaign, UUID assignee, TaskStatus status, Pagination page);
+    PageResult<VolunteerTask> tasks(
+        UUID campaign,
+        UUID assignee,
+        TaskStatus status,
+        Pagination page
+    );
 
     Map<UUID, List<UUID>> assignees(Set<UUID> taskIds);
 

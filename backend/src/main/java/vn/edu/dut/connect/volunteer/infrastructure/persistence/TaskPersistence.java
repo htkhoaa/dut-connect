@@ -1,19 +1,19 @@
 package vn.edu.dut.connect.volunteer.infrastructure.persistence;
 
-import java.util.*;
-import java.time.Instant;
+import static vn.edu.dut.connect.volunteer.application.CoordinationContracts.*;
 
-import org.springframework.stereotype.Repository;
+import java.time.Instant;
+import java.util.*;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.stereotype.Repository;
+import vn.edu.dut.connect.identity.application.Pagination;
+import vn.edu.dut.connect.shared.application.PageResult;
 import vn.edu.dut.connect.volunteer.application.*;
 import vn.edu.dut.connect.volunteer.domain.*;
-import vn.edu.dut.connect.shared.application.PageResult;
-import vn.edu.dut.connect.identity.application.Pagination;
-
-import static vn.edu.dut.connect.volunteer.application.CoordinationContracts.*;
 
 @Repository
 public class TaskPersistence implements TaskRepository {
+
     private final JdbcClient jdbc;
     private final JpaTaskRepository tasks;
 
@@ -27,7 +27,11 @@ public class TaskPersistence implements TaskRepository {
     }
 
     public Optional<UUID> taskCampaign(UUID id) {
-        return jdbc.sql("select campaign_id from dut_connect.volunteer_tasks where id=:id").param("id", id).query(UUID.class).optional();
+        return jdbc
+            .sql("select campaign_id from dut_connect.volunteer_tasks where id=:id")
+            .param("id", id)
+            .query(UUID.class)
+            .optional();
     }
 
     public VolunteerTask saveTask(VolunteerTask v) {
@@ -55,30 +59,73 @@ public class TaskPersistence implements TaskRepository {
             args.put("s", status.name());
         }
         var page = pageIds(where, args, p);
-        var map = tasks.findAllById(page.items()).stream().collect(java.util.stream.Collectors.toMap(VolunteerTask::id, v -> v));
+        var map = tasks
+            .findAllById(page.items())
+            .stream()
+            .collect(java.util.stream.Collectors.toMap(VolunteerTask::id, v -> v));
         return page.map(map::get);
     }
 
     public Map<UUID, List<UUID>> assignees(Set<UUID> ids) {
         var out = new HashMap<UUID, List<UUID>>();
         if (ids.isEmpty()) return out;
-        jdbc.sql("select task_id,user_id from dut_connect.task_assignees where task_id in(:ids) order by user_id").param("ids", ids).query((rs, n) -> {
-            out.computeIfAbsent(rs.getObject(1, UUID.class), k -> new ArrayList<>()).add(rs.getObject(2, UUID.class));
-            return 0;
-        }).list();
+        jdbc.sql(
+            "select task_id,user_id from dut_connect.task_assignees where task_id in(:ids) order by user_id"
+        )
+            .param("ids", ids)
+            .query((rs, n) -> {
+                out.computeIfAbsent(rs.getObject(1, UUID.class), k -> new ArrayList<>()).add(
+                    rs.getObject(2, UUID.class)
+                );
+                return 0;
+            })
+            .list();
         return out;
     }
 
     public void assign(UUID id, List<UUID> users) {
-        jdbc.sql("delete from dut_connect.task_assignees where task_id=:id and user_id not in (:users)").param("id", id).param("users", users.isEmpty() ? List.of(new UUID(0, 0)) : users).update();
+        jdbc.sql(
+            "delete from dut_connect.task_assignees where task_id=:id and user_id not in (:users)"
+        )
+            .param("id", id)
+            .param("users", users.isEmpty() ? List.of(new UUID(0, 0)) : users)
+            .update();
         for (var user : users)
-            jdbc.sql("insert into dut_connect.task_assignees(task_id,user_id,assigned_at) values(:id,:u,:now) on conflict(task_id,user_id) do nothing").param("id", id).param("u", user).param("now", java.sql.Timestamp.from(Instant.now())).update();
+            jdbc.sql(
+                "insert into dut_connect.task_assignees(task_id,user_id,assigned_at) values(:id,:u,:now) on conflict(task_id,user_id) do nothing"
+            )
+                .param("id", id)
+                .param("u", user)
+                .param("now", java.sql.Timestamp.from(Instant.now()))
+                .update();
     }
 
     private PageResult<UUID> pageIds(String where, Map<String, Object> args, Pagination p) {
-        long total = jdbc.sql("select count(*) from dut_connect.volunteer_tasks where " + where).params(args).query(Long.class).single();
-        var ids = jdbc.sql("select id from dut_connect.volunteer_tasks where " + where + " order by created_at desc,id limit :size offset :offset").params(args).param("size", p.size()).param("offset", (long) p.page() * p.size()).query(UUID.class).list();
+        long total = jdbc
+            .sql("select count(*) from dut_connect.volunteer_tasks where " + where)
+            .params(args)
+            .query(Long.class)
+            .single();
+        var ids = jdbc
+            .sql(
+                "select id from dut_connect.volunteer_tasks where " +
+                    where +
+                    " order by created_at desc,id limit :size offset :offset"
+            )
+            .params(args)
+            .param("size", p.size())
+            .param("offset", (long) p.page() * p.size())
+            .query(UUID.class)
+            .list();
         int pages = (int) Math.min(Integer.MAX_VALUE, (total + p.size() - 1) / p.size());
-        return new PageResult<>(ids, p.page(), p.size(), total, pages, p.page() + 1L < pages, p.page() > 0);
+        return new PageResult<>(
+            ids,
+            p.page(),
+            p.size(),
+            total,
+            pages,
+            p.page() + 1L < pages,
+            p.page() > 0
+        );
     }
 }

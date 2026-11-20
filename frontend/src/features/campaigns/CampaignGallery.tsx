@@ -1,15 +1,15 @@
-import {ImageViewer} from '../../shared/components/ImageViewer';
-import {ApiImage} from '../../shared/components/ApiImage';
-import {useState, useRef, useEffect} from 'react';
-import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
-import {useLanguage, tr, renderText} from '../../shared/lib/i18n';
-import {apiClient} from '../../shared/api/client';
-import {Card} from '../../shared/components/Card';
-import {Icon} from '../../shared/components/Icon';
-import {Button} from '../../shared/components/Button';
-import {LoadingState} from '../../shared/components/LoadingState';
-import {ErrorState} from '../../shared/components/ErrorState';
-import {errorMessage} from '../../shared/api/errors';
+import { ImageViewer } from '../../shared/components/ImageViewer';
+import { ApiImage } from '../../shared/components/ApiImage';
+import { useState, useRef, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLanguage, tr, renderText } from '../../shared/lib/i18n';
+import { apiClient } from '../../shared/api/client';
+import { Card } from '../../shared/components/Card';
+import { Icon } from '../../shared/components/Icon';
+import { Button } from '../../shared/components/Button';
+import { LoadingState } from '../../shared/components/LoadingState';
+import { ErrorState } from '../../shared/components/ErrorState';
+import { errorMessage } from '../../shared/api/errors';
 
 export interface GalleryItem {
     id: string;
@@ -20,7 +20,13 @@ export interface GalleryItem {
     imageUrl: string;
 }
 
-export function CampaignGallery({campaignId, canManage = false}: {campaignId: string; canManage?: boolean}) {
+export function CampaignGallery({
+    campaignId,
+    canManage = false,
+}: {
+    campaignId: string;
+    canManage?: boolean;
+}) {
     useLanguage();
     const qc = useQueryClient();
     const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
@@ -36,16 +42,18 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
     });
 
     const uploadMutation = useMutation({
-        mutationFn: async ({file, caption}: {file: File; caption: string}) => {
+        mutationFn: async ({ file, caption }: { file: File; caption: string }) => {
             const formData = new FormData();
             formData.append('file', file);
             if (caption) formData.append('caption', caption);
-            return (await apiClient.post<GalleryItem>(`/campaigns/${campaignId}/gallery`, formData, {
-                headers: {'Content-Type': 'multipart/form-data'},
-            })).data;
+            return (
+                await apiClient.post<GalleryItem>(`/campaigns/${campaignId}/gallery`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                })
+            ).data;
         },
         onSuccess: () => {
-            void qc.invalidateQueries({queryKey: ['campaign-gallery', campaignId]});
+            void qc.invalidateQueries({ queryKey: ['campaign-gallery', campaignId] });
             setCaptionInput('');
             if (fileInputRef.current) fileInputRef.current.value = '';
         },
@@ -56,13 +64,13 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
             await apiClient.delete(`/campaigns/gallery/${imageId}`);
         },
         onSuccess: () => {
-            void qc.invalidateQueries({queryKey: ['campaign-gallery', campaignId]});
+            void qc.invalidateQueries({ queryKey: ['campaign-gallery', campaignId] });
             if (selectedImage) setSelectedImage(null);
         },
     });
 
     const items = query.data ?? [];
-    const currentIndex = selectedImage ? items.findIndex(x => x.id === selectedImage.id) : -1;
+    const currentIndex = selectedImage ? items.findIndex((x) => x.id === selectedImage.id) : -1;
 
     const showPrev = () => {
         if (items.length <= 1) return;
@@ -87,19 +95,24 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
         return () => window.removeEventListener('keydown', handleKeyDown);
     });
 
-    if (query.isPending) return <LoadingState/>;
-    if (query.isError) return <ErrorState message={errorMessage(query.error)} onRetry={() => void query.refetch()}/>;
+    if (query.isPending) return <LoadingState />;
+    if (query.isError)
+        return (
+            <ErrorState message={errorMessage(query.error)} onRetry={() => void query.refetch()} />
+        );
     if (items.length === 0 && !canManage) return null;
 
     return (
         <Card className="overflow-hidden">
-            {fileError && <ErrorState message={fileError}/>}
-            {(uploadMutation.isError || deleteMutation.isError) && <ErrorState message={errorMessage(uploadMutation.error || deleteMutation.error)}/>}
+            {fileError && <ErrorState message={fileError} />}
+            {(uploadMutation.isError || deleteMutation.isError) && (
+                <ErrorState message={errorMessage(uploadMutation.error || deleteMutation.error)} />
+            )}
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-xl font-semibold text-text-primary">{tr("Thư viện ảnh")}</h2>
+                <h2 className="text-xl font-semibold text-text-primary">{tr('Thư viện ảnh')}</h2>
                 {items.length > 0 && (
                     <span className="text-xs font-semibold text-text-secondary">
-                        {items.length} {tr("hình ảnh")}
+                        {items.length} {tr('hình ảnh')}
                     </span>
                 )}
             </div>
@@ -107,27 +120,33 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
             {/* Gallery Grid */}
             {items.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-border py-8 text-center text-sm text-text-secondary">
-                    {tr("Chưa có hình ảnh nào được tải lên cho chiến dịch này.")}
+                    {tr('Chưa có hình ảnh nào được tải lên cho chiến dịch này.')}
                 </div>
             ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {items.map(item => (
+                    {items.map((item) => (
                         <div
                             key={item.id}
                             className="group relative aspect-4/3 overflow-hidden rounded-xl border border-border bg-surface-muted cursor-pointer transition-all hover:shadow-md"
-
                         >
-                            <button type="button" onClick={() => setSelectedImage(item)} aria-label={item.caption || tr("Xem ảnh chiến dịch")} className="h-full w-full">
-                            <ApiImage
-                                src={item.imageUrl}
-                                alt={item.caption || tr("Hình ảnh chiến dịch")}
-                                loading="lazy"
-                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            />
+                            <button
+                                type="button"
+                                onClick={() => setSelectedImage(item)}
+                                aria-label={item.caption || tr('Xem ảnh chiến dịch')}
+                                className="h-full w-full"
+                            >
+                                <ApiImage
+                                    src={item.imageUrl}
+                                    alt={item.caption || tr('Hình ảnh chiến dịch')}
+                                    loading="lazy"
+                                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                />
                             </button>
                             {item.caption && (
                                 <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/40 to-transparent p-2 pt-6 text-[11px] text-white">
-                                    <p className="truncate font-medium">{renderText(item.caption)}</p>
+                                    <p className="truncate font-medium">
+                                        {renderText(item.caption)}
+                                    </p>
                                 </div>
                             )}
                             {canManage && (
@@ -135,12 +154,12 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
                                     type="button"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        if (confirm(tr("Xóa ảnh này khỏi thư viện?"))) {
+                                        if (confirm(tr('Xóa ảnh này khỏi thư viện?'))) {
                                             deleteMutation.mutate(item.id);
                                         }
                                     }}
                                     className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-lg bg-black/60 text-white opacity-0 transition-opacity hover:bg-danger group-hover:opacity-100"
-                                    title={tr("Xóa ảnh")}
+                                    title={tr('Xóa ảnh')}
                                 >
                                     <Icon name="close" size={14} />
                                 </button>
@@ -154,12 +173,12 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
             {canManage && (
                 <div className="mt-5 rounded-xl border border-border/70 bg-surface-muted/40 p-4">
                     <p className="text-xs font-semibold text-text-primary mb-2">
-                        {tr("Tải thêm ảnh vào thư viện (tối đa 5MB / ảnh)")}
+                        {tr('Tải thêm ảnh vào thư viện (tối đa 5MB / ảnh)')}
                     </p>
                     <div className="flex flex-col sm:flex-row gap-2">
                         <input
                             type="text"
-                            placeholder={tr("Chú thích ngắn về bức ảnh…")}
+                            placeholder={tr('Chú thích ngắn về bức ảnh…')}
                             value={captionInput}
                             onChange={(e) => setCaptionInput(e.target.value)}
                             className="flex-1 rounded-xl border border-border bg-white px-3 py-2 text-xs text-text-primary focus:outline-primary"
@@ -174,13 +193,17 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
                                 const file = e.target.files?.[0];
                                 setFileError('');
                                 uploadMutation.reset();
-                                if (file && (!['image/png', 'image/jpeg'].includes(file.type) || file.size > 5 * 1024 * 1024)) {
+                                if (
+                                    file &&
+                                    (!['image/png', 'image/jpeg'].includes(file.type) ||
+                                        file.size > 5 * 1024 * 1024)
+                                ) {
                                     setFileError(tr('Chọn ảnh PNG hoặc JPEG không quá 5 MB.'));
                                     e.target.value = '';
                                     return;
                                 }
                                 if (file) {
-                                    uploadMutation.mutate({file, caption: captionInput});
+                                    uploadMutation.mutate({ file, caption: captionInput });
                                 }
                             }}
                         />
@@ -191,18 +214,23 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
                             className="text-xs py-2 whitespace-nowrap"
                         >
                             <Icon name="file" size={15} />
-                            {uploadMutation.isPending ? tr("Đang tải ảnh…") : tr("Chọn và tải ảnh")}
+                            {uploadMutation.isPending ? tr('Đang tải ảnh…') : tr('Chọn và tải ảnh')}
                         </Button>
                     </div>
                 </div>
             )}
 
-            {selectedImage && <ImageViewer key={selectedImage.id} src={selectedImage.imageUrl}
-                caption={selectedImage.caption || tr('Hình ảnh chiến dịch DUT Connect')}
-                onClose={() => setSelectedImage(null)}
-                onPrevious={items.length > 1 ? showPrev : undefined} onNext={items.length > 1 ? showNext : undefined}
-                position={`${currentIndex + 1} / ${items.length}`}/>}
-
+            {selectedImage && (
+                <ImageViewer
+                    key={selectedImage.id}
+                    src={selectedImage.imageUrl}
+                    caption={selectedImage.caption || tr('Hình ảnh chiến dịch DUT Connect')}
+                    onClose={() => setSelectedImage(null)}
+                    onPrevious={items.length > 1 ? showPrev : undefined}
+                    onNext={items.length > 1 ? showNext : undefined}
+                    position={`${currentIndex + 1} / ${items.length}`}
+                />
+            )}
         </Card>
     );
 }

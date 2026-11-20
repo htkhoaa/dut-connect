@@ -2,13 +2,13 @@ package vn.edu.dut.connect.donation.infrastructure.gateway;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.HexFormat;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import java.util.HexFormat;
 
 final class PaymentMac {
-    private PaymentMac() {
-    }
+
+    private PaymentMac() {}
 
     static String sign(String data, String key) {
         try {
@@ -22,6 +22,9 @@ final class PaymentMac {
 
     static boolean valid(String data, String supplied, String key) {
         if (data == null || supplied == null || !supplied.matches("[0-9a-fA-F]{64}")) return false;
-        return MessageDigest.isEqual(HexFormat.of().parseHex(sign(data, key)), HexFormat.of().parseHex(supplied));
+        return MessageDigest.isEqual(
+            HexFormat.of().parseHex(sign(data, key)),
+            HexFormat.of().parseHex(supplied)
+        );
     }
 }

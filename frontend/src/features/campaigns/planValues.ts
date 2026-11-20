@@ -1,4 +1,4 @@
-import type {Content, FormValues} from './types';
+import type { Content, FormValues } from './types';
 
 function localTime(value: string | null | undefined) {
     if (!value) return '';
@@ -31,13 +31,15 @@ export function defaults(content?: Content): FormValues {
         estimatedBudget: content?.estimatedBudget || '',
         donationBankName: content?.donationBankName || '',
         donationAccountNumber: content?.donationAccountNumber || '',
-        donationAccountHolder: content?.donationAccountHolder || ''
+        donationAccountHolder: content?.donationAccountHolder || '',
     };
 }
 
 function instant(value: string, original?: string | null) {
     const date = new Date(value);
-    return original && date.getTime() === new Date(original).getTime() ? original : date.toISOString();
+    return original && date.getTime() === new Date(original).getTime()
+        ? original
+        : date.toISOString();
 }
 
 export function payload(v: FormValues, original?: Content): Content {
@@ -49,11 +51,20 @@ export function payload(v: FormValues, original?: Content): Content {
         contributionMode: v.contributionMode as Content['contributionMode'],
         organizationId: v.organizerType === 'ORGANIZATION' ? v.organizationId : null,
         expectedImpact: v.expectedImpact.trim() || null,
-        targetVolunteerCount: volunteers && v.targetVolunteerCount ? Number(v.targetVolunteerCount) : null,
-        targetTechnicalCount: volunteers && v.targetTechnicalCount ? Number(v.targetTechnicalCount) : null,
-        targetLogisticsCount: volunteers && v.targetLogisticsCount ? Number(v.targetLogisticsCount) : null,
-        applicationDeadline: volunteers && v.applicationDeadline ? instant(v.applicationDeadline, original?.applicationDeadline) : null,
-        fundraisingDeadline: donations && v.fundraisingDeadline ? instant(v.fundraisingDeadline, original?.fundraisingDeadline) : null,
+        targetVolunteerCount:
+            volunteers && v.targetVolunteerCount ? Number(v.targetVolunteerCount) : null,
+        targetTechnicalCount:
+            volunteers && v.targetTechnicalCount ? Number(v.targetTechnicalCount) : null,
+        targetLogisticsCount:
+            volunteers && v.targetLogisticsCount ? Number(v.targetLogisticsCount) : null,
+        applicationDeadline:
+            volunteers && v.applicationDeadline
+                ? instant(v.applicationDeadline, original?.applicationDeadline)
+                : null,
+        fundraisingDeadline:
+            donations && v.fundraisingDeadline
+                ? instant(v.fundraisingDeadline, original?.fundraisingDeadline)
+                : null,
         fundraisingGoal: donations ? v.fundraisingGoal || null : null,
         volunteerRequirements: volunteers ? v.volunteerRequirements.trim() || null : null,
         institutionalFunding: v.institutionalFunding || '0',
@@ -62,6 +73,6 @@ export function payload(v: FormValues, original?: Content): Content {
         estimatedBudget: v.estimatedBudget || null,
         donationBankName: donations ? v.donationBankName.trim() || null : null,
         donationAccountNumber: donations ? v.donationAccountNumber.trim() || null : null,
-        donationAccountHolder: donations ? v.donationAccountHolder.trim() || null : null
+        donationAccountHolder: donations ? v.donationAccountHolder.trim() || null : null,
     };
 }

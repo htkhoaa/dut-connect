@@ -1,27 +1,33 @@
 package vn.edu.dut.connect.volunteer.domain;
 
-import jakarta.persistence.*;
+import static vn.edu.dut.connect.volunteer.domain.CoordinationValues.*;
 
+import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
-
-import static vn.edu.dut.connect.volunteer.domain.CoordinationValues.*;
 
 @Entity
 @Table(name = "attendance_sessions")
 public class AttendanceSession {
+
     @Id
     private UUID id;
+
     @Column(nullable = false)
     private UUID campaignId;
+
     @Column(nullable = false)
     private Instant createdAt;
+
     @Column(nullable = false)
     private Instant updatedAt;
+
     @Version
     private Long version;
+
     @Column(length = 64)
     private String qrToken;
+
     private Instant qrExpiresAt;
 
     public UUID id() {
@@ -54,7 +60,8 @@ public class AttendanceSession {
 
     public String generateQrToken() {
         this.qrToken = UUID.randomUUID().toString().replace("-", "");
-        this.qrExpiresAt = endsAt != null ? endsAt : Instant.now().plus(java.time.Duration.ofHours(4));
+        this.qrExpiresAt =
+            endsAt != null ? endsAt : Instant.now().plus(java.time.Duration.ofHours(4));
         touch();
         return this.qrToken;
     }
@@ -69,15 +76,17 @@ public class AttendanceSession {
 
     @Column(nullable = false, length = 200)
     private String title;
+
     @Column(nullable = false)
     private Instant startsAt;
+
     @Column(nullable = false)
     private Instant endsAt;
+
     @Column(nullable = false)
     private UUID createdByUserId;
 
-    protected AttendanceSession() {
-    }
+    protected AttendanceSession() {}
 
     public AttendanceSession(UUID campaign, UUID actor, String title, Instant start, Instant end) {
         identifier(campaign, "campaignId");

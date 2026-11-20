@@ -1,23 +1,23 @@
-import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
-import {useState, useEffect} from 'react';
-import {Link} from 'react-router-dom';
-import {useForm} from 'react-hook-form';
-import {z} from 'zod';
-import {useQueryClient} from '@tanstack/react-query';
-import {useAuth} from '../auth/store';
-import type {CampaignDetail} from '../campaigns/types';
-import {vnd} from '../campaigns/presentation';
-import {useDonationSettings, useDonationMutation} from './hooks';
+import { useLanguage, tr, renderText } from '../../shared/lib/i18n';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../auth/store';
+import type { CampaignDetail } from '../campaigns/types';
+import { vnd } from '../campaigns/presentation';
+import { useDonationSettings, useDonationMutation } from './hooks';
 import * as api from './api';
-import {checkoutLink} from './types';
-import {Card} from '../../shared/components/Card';
-import {Button} from '../../shared/components/Button';
-import {Input} from '../../shared/components/Input';
-import {FormField} from '../../shared/components/FormField';
-import {ConfirmDialog} from '../../shared/components/ConfirmDialog';
-import {LoadingState} from '../../shared/components/LoadingState';
-import {ErrorState} from '../../shared/components/ErrorState';
-import {errorMessage, apiError} from '../../shared/api/errors';
+import { checkoutLink } from './types';
+import { Card } from '../../shared/components/Card';
+import { Button } from '../../shared/components/Button';
+import { Input } from '../../shared/components/Input';
+import { FormField } from '../../shared/components/FormField';
+import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
+import { LoadingState } from '../../shared/components/LoadingState';
+import { ErrorState } from '../../shared/components/ErrorState';
+import { errorMessage, apiError } from '../../shared/api/errors';
 
 const QUICK_AMOUNTS = ['50000', '100000', '200000', '500000', '1000000'];
 
@@ -34,12 +34,12 @@ interface ActiveDonation {
     isDirectPayos?: boolean;
 }
 
-export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
+export function DonationPanel({ campaign }: { campaign: CampaignDetail }) {
     useLanguage();
-    const {user, initialized} = useAuth();
+    const { user, initialized } = useAuth();
     const settings = useDonationSettings();
     const queryClient = useQueryClient();
-    const f = useForm<{amount: string}>({defaultValues: {amount: '100000'}});
+    const f = useForm<{ amount: string }>({ defaultValues: { amount: '100000' } });
     const [confirm, setConfirm] = useState<string | null>(null);
     const [activeDonation, setActiveDonation] = useState<ActiveDonation | null>(null);
     const [secondsLeft, setSecondsLeft] = useState(600); // 10 minutes limit
@@ -87,14 +87,18 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
 
             if (isCurrentDonation) {
                 setIsPaid(true);
-                setCheckMessage(tr("Đã nhận được tiền ủng hộ thành công!"));
+                setCheckMessage(tr('Đã nhận được tiền ủng hộ thành công!'));
                 if ('vibrate' in navigator) navigator.vibrate([100, 50, 200]);
-                void queryClient.invalidateQueries({queryKey: ['campaign', campaign.id]});
-                void queryClient.invalidateQueries({queryKey: ['financial-summary', campaign.id]});
-                void queryClient.invalidateQueries({queryKey: ['campaign-dashboard', campaign.id]});
-                void queryClient.invalidateQueries({queryKey: ['notifications']});
-                void queryClient.invalidateQueries({queryKey: ['donations']});
-                void queryClient.invalidateQueries({queryKey: ['me', 'donations']});
+                void queryClient.invalidateQueries({ queryKey: ['campaign', campaign.id] });
+                void queryClient.invalidateQueries({
+                    queryKey: ['financial-summary', campaign.id],
+                });
+                void queryClient.invalidateQueries({
+                    queryKey: ['campaign-dashboard', campaign.id],
+                });
+                void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+                void queryClient.invalidateQueries({ queryKey: ['donations'] });
+                void queryClient.invalidateQueries({ queryKey: ['me', 'donations'] });
             }
         };
 
@@ -119,12 +123,20 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
             }
             if (res.status === 'PAID') {
                 setIsPaid(true);
-                setCheckMessage(tr("Xác nhận thành công! Cảm ơn tấm lòng hảo tâm của bạn."));
-                void queryClient.invalidateQueries({queryKey: ['campaign', campaign.id]});
-                void queryClient.invalidateQueries({queryKey: ['financial-summary', campaign.id]});
-                void queryClient.invalidateQueries({queryKey: ['campaign-dashboard', campaign.id]});
+                setCheckMessage(tr('Xác nhận thành công! Cảm ơn tấm lòng hảo tâm của bạn.'));
+                void queryClient.invalidateQueries({ queryKey: ['campaign', campaign.id] });
+                void queryClient.invalidateQueries({
+                    queryKey: ['financial-summary', campaign.id],
+                });
+                void queryClient.invalidateQueries({
+                    queryKey: ['campaign-dashboard', campaign.id],
+                });
             } else {
-                setCheckMessage(tr("Hệ thống chưa nhận được thông báo chuyển khoản. Vui lòng thử lại sau vài giây sau khi chuyển tiền."));
+                setCheckMessage(
+                    tr(
+                        'Hệ thống chưa nhận được thông báo chuyển khoản. Vui lòng thử lại sau vài giây sau khi chuyển tiền.',
+                    ),
+                );
             }
         } catch (e) {
             setCheckMessage(errorMessage(e));
@@ -136,10 +148,11 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
     if (campaign.content.contributionMode === 'VOLUNTEER_ONLY') return null;
 
     const closed = !['OPEN', 'ACTIVE'].includes(campaign.status)
-        ? tr("Chiến dịch hiện không nhận đóng góp tài chính.")
-        : campaign.content.fundraisingDeadline && Date.now() >= new Date(campaign.content.fundraisingDeadline).getTime()
-            ? tr("Đã hết hạn gây quỹ.")
-            : null;
+        ? tr('Chiến dịch hiện không nhận đóng góp tài chính.')
+        : campaign.content.fundraisingDeadline &&
+            Date.now() >= new Date(campaign.content.fundraisingDeadline).getTime()
+          ? tr('Đã hết hạn gây quỹ.')
+          : null;
 
     return (
         <Card className="border border-primary-muted/40 shadow-sm">
@@ -147,7 +160,9 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                 <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xs">
                     ₫
                 </span>
-                <h2 className="text-lg font-bold text-text-primary">{tr("Tiếp sức cho chiến dịch")}</h2>
+                <h2 className="text-lg font-bold text-text-primary">
+                    {tr('Tiếp sức cho chiến dịch')}
+                </h2>
             </div>
 
             {closed ? (
@@ -157,23 +172,30 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
             ) : !user ? (
                 <div className="space-y-3">
                     <p className="text-xs text-text-secondary leading-relaxed">
-                        {tr("Đăng nhập để ủng hộ và lưu lại lịch sử đóng góp của bạn trên hệ thống.")}
+                        {tr(
+                            'Đăng nhập để ủng hộ và lưu lại lịch sử đóng góp của bạn trên hệ thống.',
+                        )}
                     </p>
                     <Link
                         className="ui-button ui-button-primary w-full text-center"
                         to="/login"
-                        state={{from: '/campaigns/' + campaign.slug}}
+                        state={{ from: '/campaigns/' + campaign.slug }}
                     >
-                        {tr("Đăng nhập để ủng hộ")}
+                        {tr('Đăng nhập để ủng hộ')}
                     </Link>
                 </div>
             ) : settings.isPending ? (
                 <LoadingState />
             ) : settings.isError ? (
-                <ErrorState message={errorMessage(settings.error)} onRetry={() => void settings.refetch()} />
+                <ErrorState
+                    message={errorMessage(settings.error)}
+                    onRetry={() => void settings.refetch()}
+                />
             ) : !settings.data.available ? (
                 <p role="status" className="text-sm text-text-secondary">
-                    {tr("Cổng thanh toán hiện chưa khả dụng. Bạn vẫn có thể tham gia các hoạt động khác.")}
+                    {tr(
+                        'Cổng thanh toán hiện chưa khả dụng. Bạn vẫn có thể tham gia các hoạt động khác.',
+                    )}
                 </p>
             ) : isPaid ? (
                 <div className="space-y-4 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 text-center">
@@ -181,9 +203,13 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                         <span className="text-2xl">🎉</span>
                     </div>
                     <div>
-                        <h3 className="text-base font-bold text-emerald-900">{tr("Ủng hộ thành công!")}</h3>
+                        <h3 className="text-base font-bold text-emerald-900">
+                            {tr('Ủng hộ thành công!')}
+                        </h3>
                         <p className="mt-1 text-xs text-emerald-700 leading-relaxed">
-                            {tr("Khoản đóng góp của bạn đã được ghi nhận tự động vào chiến dịch. Cảm ơn sự đồng hành của bạn!")}
+                            {tr(
+                                'Khoản đóng góp của bạn đã được ghi nhận tự động vào chiến dịch. Cảm ơn sự đồng hành của bạn!',
+                            )}
                         </p>
                     </div>
                     <Button
@@ -195,7 +221,7 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                             setCheckMessage(null);
                         }}
                     >
-                        {tr("Tiếp tục ủng hộ")}
+                        {tr('Tiếp tục ủng hộ')}
                     </Button>
                 </div>
             ) : activeDonation && secondsLeft <= 0 ? (
@@ -204,9 +230,13 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                         ⏱️
                     </div>
                     <div>
-                        <h4 className="text-sm font-bold text-amber-900">{tr("Mã QR đã hết hạn")}</h4>
+                        <h4 className="text-sm font-bold text-amber-900">
+                            {tr('Mã QR đã hết hạn')}
+                        </h4>
                         <p className="mt-1 text-xs text-amber-800 leading-relaxed">
-                            {tr("Thời gian thanh toán (10 phút) đã kết thúc. Vui lòng tạo mã QR mới để đảm bảo việc xử lý chính xác.")}
+                            {tr(
+                                'Thời gian thanh toán (10 phút) đã kết thúc. Vui lòng tạo mã QR mới để đảm bảo việc xử lý chính xác.',
+                            )}
                         </p>
                     </div>
                     <Button
@@ -218,7 +248,7 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                             setCheckMessage(null);
                         }}
                     >
-                        {tr("Tạo mã QR mới")}
+                        {tr('Tạo mã QR mới')}
                     </Button>
                 </div>
             ) : activeDonation ? (
@@ -228,10 +258,10 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                             {activeDonation.isDirectPayos ? (
                                 <>
                                     <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-                                    {tr("Cổng PayOS Trực Tuyến")}
+                                    {tr('Cổng PayOS Trực Tuyến')}
                                 </>
                             ) : (
-                                <>⚡ {tr("Mã VietQR tiếp sức")}</>
+                                <>⚡ {tr('Mã VietQR tiếp sức')}</>
                             )}
                         </span>
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
@@ -239,26 +269,31 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                             </span>
-                            {tr("Đang chờ xác nhận")}
+                            {tr('Đang chờ xác nhận')}
                         </span>
                     </div>
 
-                    {activeDonation.vietQrUrl && <div className="flex justify-center py-1">
-                        <div className="rounded-2xl border border-border bg-white p-2.5 shadow-md">
-                            <img
-                                src={activeDonation.vietQrUrl || undefined}
-                                alt="Mã VietQR ủng hộ"
-                                className="h-56 w-56 rounded-xl object-contain"
-                            />
+                    {activeDonation.vietQrUrl && (
+                        <div className="flex justify-center py-1">
+                            <div className="rounded-2xl border border-border bg-white p-2.5 shadow-md">
+                                <img
+                                    src={activeDonation.vietQrUrl || undefined}
+                                    alt="Mã VietQR ủng hộ"
+                                    className="h-56 w-56 rounded-xl object-contain"
+                                />
+                            </div>
                         </div>
-                    </div>}
+                    )}
 
                     {/* 10-Minute Expiry Countdown Bar */}
                     <div className="flex items-center justify-center gap-2 rounded-xl bg-white/90 border border-amber-200/80 px-3 py-1.5 text-xs text-amber-900 shadow-2xs">
                         <span>⏱️</span>
-                        <span>{tr("Mã QR hết hạn sau:")}</span>
+                        <span>{tr('Mã QR hết hạn sau:')}</span>
                         <span className="font-mono font-extrabold text-amber-700 text-sm">
-                            {Math.floor(secondsLeft / 60).toString().padStart(2, '0')}:{(secondsLeft % 60).toString().padStart(2, '0')}
+                            {Math.floor(secondsLeft / 60)
+                                .toString()
+                                .padStart(2, '0')}
+                            :{(secondsLeft % 60).toString().padStart(2, '0')}
                         </span>
                     </div>
 
@@ -269,52 +304,67 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                             rel="noreferrer"
                             className="flex items-center justify-center gap-2 w-full rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-hover transition-colors shadow-xs"
                         >
-                            <span>💳</span> {tr("Mở trang thanh toán")} ↗
+                            <span>💳</span> {tr('Mở trang thanh toán')} ↗
                         </a>
                     )}
 
                     <div className="rounded-xl bg-white p-3 text-left text-xs space-y-2 border border-border/80">
                         <div className="flex justify-between items-center">
-                            <span className="text-text-secondary">{tr("Số tiền:")}</span>
-                            <strong className="text-sm font-bold text-primary">{vnd(activeDonation.amount)}</strong>
+                            <span className="text-text-secondary">{tr('Số tiền:')}</span>
+                            <strong className="text-sm font-bold text-primary">
+                                {vnd(activeDonation.amount)}
+                            </strong>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-text-secondary">{tr("Ngân hàng:")}</span>
-                            <span className="font-semibold text-text-primary">{activeDonation.bankName || "—"}</span>
+                            <span className="text-text-secondary">{tr('Ngân hàng:')}</span>
+                            <span className="font-semibold text-text-primary">
+                                {activeDonation.bankName || '—'}
+                            </span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-text-secondary">{tr("Số tài khoản:")}</span>
+                            <span className="text-text-secondary">{tr('Số tài khoản:')}</span>
                             <div className="flex items-center gap-1.5">
                                 <span className="font-mono font-semibold text-text-primary select-all">
-                                    {activeDonation.accountNumber || ""}
+                                    {activeDonation.accountNumber || ''}
                                 </span>
                                 <button
                                     type="button"
-                                    onClick={() => copyToClipboard(activeDonation.accountNumber || "", "accountNumber")}
+                                    onClick={() =>
+                                        copyToClipboard(
+                                            activeDonation.accountNumber || '',
+                                            'accountNumber',
+                                        )
+                                    }
                                     className="rounded border border-border px-1.5 py-0.5 text-[10px] text-text-secondary hover:bg-surface-muted transition-colors"
-                                    title={tr("Sao chép số tài khoản")}
+                                    title={tr('Sao chép số tài khoản')}
                                 >
-                                    {copiedField === 'accountNumber' ? '✓ ' + tr("Đã chép") : tr("Chép")}
+                                    {copiedField === 'accountNumber'
+                                        ? '✓ ' + tr('Đã chép')
+                                        : tr('Chép')}
                                 </button>
                             </div>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-text-secondary">{tr("Chủ tài khoản:")}</span>
-                            <span className="font-semibold text-text-primary">{activeDonation.accountName || "—"}</span>
+                            <span className="text-text-secondary">{tr('Chủ tài khoản:')}</span>
+                            <span className="font-semibold text-text-primary">
+                                {activeDonation.accountName || '—'}
+                            </span>
                         </div>
                         <div className="flex justify-between items-center pt-1.5 border-t border-border">
-                            <span className="text-text-secondary">{tr("Nội dung:")}</span>
+                            <span className="text-text-secondary">{tr('Nội dung:')}</span>
                             <div className="flex items-center gap-1.5">
                                 <span className="rounded bg-surface-muted px-2 py-0.5 font-mono text-[11px] font-bold text-primary select-all">
                                     DUT {activeDonation.orderCode}
                                 </span>
                                 <button
                                     type="button"
-                                    onClick={() => copyToClipboard(`DUT ${activeDonation.orderCode}`, "memo")}
+                                    onClick={() =>
+                                        copyToClipboard(`DUT ${activeDonation.orderCode}`, 'memo')
+                                    }
                                     className="rounded border border-border px-1.5 py-0.5 text-[10px] text-text-secondary hover:bg-surface-muted transition-colors"
-                                    title={tr("Sao chép nội dung chuyển khoản")}
+                                    title={tr('Sao chép nội dung chuyển khoản')}
                                 >
-                                    {copiedField === 'memo' ? '✓ ' + tr("Đã chép") : tr("Chép")}
+                                    {copiedField === 'memo' ? '✓ ' + tr('Đã chép') : tr('Chép')}
                                 </button>
                             </div>
                         </div>
@@ -332,7 +382,7 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                             disabled={checking}
                             onClick={checkManual}
                         >
-                            {checking ? tr("Đang kiểm tra…") : tr("Kiểm tra trạng thái thanh toán")}
+                            {checking ? tr('Đang kiểm tra…') : tr('Kiểm tra trạng thái thanh toán')}
                         </Button>
                         {user?.role === 'ADMIN' && (
                             <button
@@ -345,10 +395,18 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                                     try {
                                         await api.adminSettle(activeDonation.donationId);
                                         setIsPaid(true);
-                                        setCheckMessage(tr("Quản trị viên đã xác nhận thanh toán thành công!"));
-                                        void queryClient.invalidateQueries({queryKey: ['campaign', campaign.id]});
-                                        void queryClient.invalidateQueries({queryKey: ['financial-summary', campaign.id]});
-                                        void queryClient.invalidateQueries({queryKey: ['campaign-dashboard', campaign.id]});
+                                        setCheckMessage(
+                                            tr('Quản trị viên đã xác nhận thanh toán thành công!'),
+                                        );
+                                        void queryClient.invalidateQueries({
+                                            queryKey: ['campaign', campaign.id],
+                                        });
+                                        void queryClient.invalidateQueries({
+                                            queryKey: ['financial-summary', campaign.id],
+                                        });
+                                        void queryClient.invalidateQueries({
+                                            queryKey: ['campaign-dashboard', campaign.id],
+                                        });
                                     } catch (e) {
                                         setCheckMessage(errorMessage(e));
                                     } finally {
@@ -356,7 +414,7 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                                     }
                                 }}
                             >
-                                ⚡ {tr("Xác nhận đã nhận tiền (Dành cho Quản trị viên)")}
+                                ⚡ {tr('Xác nhận đã nhận tiền (Dành cho Quản trị viên)')}
                             </button>
                         )}
                         <div className="flex items-center justify-between text-xs px-1">
@@ -368,7 +426,7 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                                     setCheckMessage(null);
                                 }}
                             >
-                                {tr("← Nhập số tiền khác")}
+                                {tr('← Nhập số tiền khác')}
                             </button>
                             {activeDonation.checkoutUrl && (
                                 <a
@@ -377,7 +435,7 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                                     rel="noreferrer"
                                     className="font-semibold text-primary hover:underline"
                                 >
-                                    {tr("Mở trang thanh toán")} ↗
+                                    {tr('Mở trang thanh toán')} ↗
                                 </a>
                             )}
                         </div>
@@ -388,19 +446,24 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                     <form
                         noValidate
                         className="space-y-4"
-                        onSubmit={f.handleSubmit(({amount}) => {
+                        onSubmit={f.handleSubmit(({ amount }) => {
                             const parsed = z
                                 .string()
                                 .trim()
-                                .regex(/^[0-9]{1,19}$/, tr("Nhập số tiền VND nguyên"))
+                                .regex(/^[0-9]{1,19}$/, tr('Nhập số tiền VND nguyên'))
                                 .safeParse(amount);
                             if (!parsed.success) {
-                                f.setError('amount', {message: parsed.error.issues[0].message});
+                                f.setError('amount', { message: parsed.error.issues[0].message });
                                 return;
                             }
                             const n = BigInt(parsed.data);
-                            if (n < BigInt(settings.data.minimumVnd) || n > BigInt(settings.data.maximumVnd)) {
-                                f.setError('amount', {message: tr("Số tiền nằm ngoài giới hạn đóng góp")});
+                            if (
+                                n < BigInt(settings.data.minimumVnd) ||
+                                n > BigInt(settings.data.maximumVnd)
+                            ) {
+                                f.setError('amount', {
+                                    message: tr('Số tiền nằm ngoài giới hạn đóng góp'),
+                                });
                                 return;
                             }
                             setConfirm(n.toString());
@@ -408,14 +471,16 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                     >
                         <div>
                             <label className="block text-xs font-semibold text-text-secondary mb-1.5">
-                                {tr("Chọn nhanh số tiền:")}
+                                {tr('Chọn nhanh số tiền:')}
                             </label>
                             <div className="grid grid-cols-3 gap-1.5">
-                                {QUICK_AMOUNTS.map(amt => (
+                                {QUICK_AMOUNTS.map((amt) => (
                                     <button
                                         key={amt}
                                         type="button"
-                                        onClick={() => f.setValue('amount', amt, {shouldValidate: true})}
+                                        onClick={() =>
+                                            f.setValue('amount', amt, { shouldValidate: true })
+                                        }
                                         className={`rounded-lg border px-2 py-1.5 text-xs font-semibold transition-all ${
                                             f.watch('amount') === amt
                                                 ? 'bg-primary text-white border-primary shadow-xs'
@@ -430,7 +495,7 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
 
                         <FormField
                             id="donation-amount"
-                            label={tr("Hoặc tự nhập số tiền đóng góp (VND)")}
+                            label={tr('Hoặc tự nhập số tiền đóng góp (VND)')}
                             error={f.formState.errors.amount?.message}
                         >
                             <Input
@@ -445,31 +510,41 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
 
                         {mutation.isError && <ErrorState message={errorMessage(mutation.error)} />}
 
-                        <Button type="submit" className="w-full font-bold shadow-xs" disabled={mutation.isPending}>
-                            {mutation.isPending ? tr("Đang tạo mã VietQR…") : tr("Tạo mã VietQR ủng hộ")}
+                        <Button
+                            type="submit"
+                            className="w-full font-bold shadow-xs"
+                            disabled={mutation.isPending}
+                        >
+                            {mutation.isPending
+                                ? tr('Đang tạo mã VietQR…')
+                                : tr('Tạo mã VietQR ủng hộ')}
                         </Button>
                     </form>
 
                     <ConfirmDialog
                         open={confirm !== null}
-                        title={tr("Xác nhận tạo mã quyên góp?")}
+                        title={tr('Xác nhận tạo mã quyên góp?')}
                         message={
                             confirm
                                 ? `Bạn muốn quyên góp ${vnd(confirm)} cho chiến dịch này? Hệ thống sẽ tạo mã VietQR động ngay bên dưới để bạn quét chuyển khoản.`
                                 : ''
                         }
-                        confirmLabel={tr("Tạo mã QR")}
+                        confirmLabel={tr('Tạo mã QR')}
                         busy={mutation.isPending}
                         onClose={() => setConfirm(null)}
                         onConfirm={() => {
                             if (confirm) {
                                 mutation.mutate(confirm, {
-                                    onSuccess: r => {
+                                    onSuccess: (r) => {
                                         setConfirm(null);
                                         setIsPaid(r.status === 'PAID');
-                                        const orderCode = r.orderCode || r.donationId.substring(0, 15);
-                                        const qrUrl = r.qrCodeUrl || "";
-                                        const isDirectPayos = Boolean(r.checkoutUrl && r.checkoutUrl.startsWith('https://pay.payos.vn'));
+                                        const orderCode =
+                                            r.orderCode || r.donationId.substring(0, 15);
+                                        const qrUrl = r.qrCodeUrl || '';
+                                        const isDirectPayos = Boolean(
+                                            r.checkoutUrl &&
+                                            r.checkoutUrl.startsWith('https://pay.payos.vn'),
+                                        );
                                         setActiveDonation({
                                             donationId: r.donationId,
                                             amount: confirm,
@@ -483,12 +558,13 @@ export function DonationPanel({campaign}: { campaign: CampaignDetail }) {
                                             isDirectPayos,
                                         });
                                     },
-                                    onError: e => {
+                                    onError: (e) => {
                                         setConfirm(null);
                                         for (const field of apiError(e)?.fieldErrors || []) {
-                                            if (field.field === 'amount') f.setError('amount', {message: field.message});
+                                            if (field.field === 'amount')
+                                                f.setError('amount', { message: field.message });
                                         }
-                                    }
+                                    },
                                 });
                             }
                         }}

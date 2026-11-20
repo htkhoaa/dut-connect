@@ -1,21 +1,21 @@
-import {useState} from 'react';
-import {useQuery, useMutation} from '@tanstack/react-query';
-import {useLanguage, tr} from '../../../shared/lib/i18n';
-import {Dialog} from '../../../shared/components/Dialog';
-import {Button} from '../../../shared/components/Button';
-import {Icon} from '../../../shared/components/Icon';
-import {Badge} from '../../../shared/components/Badge';
-import {LoadingState} from '../../../shared/components/LoadingState';
-import {ErrorState} from '../../../shared/components/ErrorState';
-import {errorMessage} from '../../../shared/api/errors';
-import {errorLabel} from '../../../shared/api/errorLabels';
-import type {ContributionMode} from '../types';
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { useLanguage, tr } from '../../../shared/lib/i18n';
+import { Dialog } from '../../../shared/components/Dialog';
+import { Button } from '../../../shared/components/Button';
+import { Icon } from '../../../shared/components/Icon';
+import { Badge } from '../../../shared/components/Badge';
+import { LoadingState } from '../../../shared/components/LoadingState';
+import { ErrorState } from '../../../shared/components/ErrorState';
+import { errorMessage } from '../../../shared/api/errors';
+import { errorLabel } from '../../../shared/api/errorLabels';
+import type { ContributionMode } from '../types';
 import {
     getThankYouRecipients,
     sendThankYou,
     getCertificatePreviewSvg,
     type ThankYouRecipient,
-    type CampaignThankYouResponse
+    type CampaignThankYouResponse,
 } from '../thankYouApi';
 
 interface Props {
@@ -26,10 +26,12 @@ interface Props {
     onClose: () => void;
 }
 
-export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, onClose}: Props) {
+export function CampaignThankYouModal({ open, campaignId, campaignTitle, mode, onClose }: Props) {
     useLanguage();
     const [tab, setTab] = useState<'recipients' | 'certificate' | 'message'>('recipients');
-    const [certType, setCertType] = useState<'DONATION' | 'VOLUNTEER'>(mode === 'VOLUNTEER_ONLY' ? 'VOLUNTEER' : 'DONATION');
+    const [certType, setCertType] = useState<'DONATION' | 'VOLUNTEER'>(
+        mode === 'VOLUNTEER_ONLY' ? 'VOLUNTEER' : 'DONATION',
+    );
     const [recipientFilter, setRecipientFilter] = useState<'ALL' | 'DONATION' | 'VOLUNTEER'>('ALL');
     const [customSubject, setCustomSubject] = useState('');
     const [customMessage, setCustomMessage] = useState('');
@@ -48,17 +50,30 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
     });
 
     const sendMutation = useMutation({
-        mutationFn: (recipientKeys?: string[]) => sendThankYou(campaignId, customSubject || undefined, customMessage || undefined, recipientKeys),
+        mutationFn: (recipientKeys?: string[]) =>
+            sendThankYou(
+                campaignId,
+                customSubject || undefined,
+                customMessage || undefined,
+                recipientKeys,
+            ),
         onSuccess: (data) => {
-            setSentResult(previous => {
+            setSentResult((previous) => {
                 if (!previous) return data;
-                const updated = new Map(previous.recipients.map(r => [r.contributionType + ':' + r.userId, r]));
-                data.recipients.forEach(r => updated.set(r.contributionType + ':' + r.userId, r));
+                const updated = new Map(
+                    previous.recipients.map((r) => [r.contributionType + ':' + r.userId, r]),
+                );
+                data.recipients.forEach((r) => updated.set(r.contributionType + ':' + r.userId, r));
                 const recipients = [...updated.values()];
-                const successful = recipients.filter(r => r.emailSent);
-                return {...data, recipients, totalSent: successful.length,
-                    donorsCount: successful.filter(r => r.contributionType === 'DONATION').length,
-                    volunteersCount: successful.filter(r => r.contributionType === 'VOLUNTEER').length};
+                const successful = recipients.filter((r) => r.emailSent);
+                return {
+                    ...data,
+                    recipients,
+                    totalSent: successful.length,
+                    donorsCount: successful.filter((r) => r.contributionType === 'DONATION').length,
+                    volunteersCount: successful.filter((r) => r.contributionType === 'VOLUNTEER')
+                        .length,
+                };
             });
         },
     });
@@ -68,21 +83,21 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
     const data = recipientsQuery.data;
     const allRecipients: ThankYouRecipient[] = [
         ...(data?.donors ?? []),
-        ...(data?.volunteers ?? [])
+        ...(data?.volunteers ?? []),
     ];
 
-    const filteredRecipients = allRecipients.filter(r => {
+    const filteredRecipients = allRecipients.filter((r) => {
         if (recipientFilter === 'ALL') return true;
         return r.contributionType === recipientFilter;
     });
 
     const totalCount = allRecipients.length;
-    const failedRecipients = sentResult?.recipients.filter(r => !r.emailSent) ?? [];
-    const retryableRecipients = failedRecipients.filter(r => r.errorCode !== 'MAIL_IN_PROGRESS');
+    const failedRecipients = sentResult?.recipients.filter((r) => !r.emailSent) ?? [];
+    const retryableRecipients = failedRecipients.filter((r) => r.errorCode !== 'MAIL_IN_PROGRESS');
 
     const handleDownloadCert = () => {
         if (!previewQuery.data?.svg) return;
-        const blob = new Blob([previewQuery.data.svg], {type: 'image/svg+xml;charset=utf-8'});
+        const blob = new Blob([previewQuery.data.svg], { type: 'image/svg+xml;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -94,40 +109,110 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
     return (
         <Dialog
             open={open}
-            title={tr("Gửi lời cảm ơn & Chứng chỉ xác nhận")}
+            title={tr('Gửi lời cảm ơn & Chứng chỉ xác nhận')}
             onClose={onClose}
             busy={sendMutation.isPending}
             className="max-w-4xl max-h-[90vh] overflow-y-auto"
         >
             {sentResult ? (
                 <div className="space-y-5 py-4">
-                    <h3 className={`text-xl font-bold ${sentResult.totalSent === 0 ? 'text-danger' : failedRecipients.length ? 'text-amber-700' : 'text-success'}`}>
-                        {tr(sentResult.totalSent === 0 ? 'Chưa gửi được thư cảm ơn' : failedRecipients.length ? 'Một số thư chưa gửi được' : 'Đã gửi lời cảm ơn thành công!')}
+                    <h3
+                        className={`text-xl font-bold ${sentResult.totalSent === 0 ? 'text-danger' : failedRecipients.length ? 'text-amber-700' : 'text-success'}`}
+                    >
+                        {tr(
+                            sentResult.totalSent === 0
+                                ? 'Chưa gửi được thư cảm ơn'
+                                : failedRecipients.length
+                                  ? 'Một số thư chưa gửi được'
+                                  : 'Đã gửi lời cảm ơn thành công!',
+                        )}
                     </h3>
-                    <p className="text-sm text-text-secondary">{tr('Dịch vụ email đã tiếp nhận')} <strong>{sentResult.totalSent} / {sentResult.recipients.length}</strong> {tr('thư cảm ơn. Người nhận nên kiểm tra cả hộp thư đến và thư rác.')}</p>
+                    <p className="text-sm text-text-secondary">
+                        {tr('Dịch vụ email đã tiếp nhận')}{' '}
+                        <strong>
+                            {sentResult.totalSent} / {sentResult.recipients.length}
+                        </strong>{' '}
+                        {tr('thư cảm ơn. Người nhận nên kiểm tra cả hộp thư đến và thư rác.')}
+                    </p>
                     <div className="grid grid-cols-3 gap-3">
-                        <div className="rounded-xl border border-border p-3"><p className="text-xs text-text-secondary">{tr('Ủng hộ tài chính')}</p><strong className="text-xl">{sentResult.donorsCount}</strong></div>
-                        <div className="rounded-xl border border-border p-3"><p className="text-xs text-text-secondary">{tr('Tình nguyện viên')}</p><strong className="text-xl">{sentResult.volunteersCount}</strong></div>
-                        <div className="rounded-xl border border-border p-3"><p className="text-xs text-text-secondary">{tr('Chưa gửi được')}</p><strong className="text-xl text-danger">{failedRecipients.length}</strong></div>
+                        <div className="rounded-xl border border-border p-3">
+                            <p className="text-xs text-text-secondary">{tr('Ủng hộ tài chính')}</p>
+                            <strong className="text-xl">{sentResult.donorsCount}</strong>
+                        </div>
+                        <div className="rounded-xl border border-border p-3">
+                            <p className="text-xs text-text-secondary">{tr('Tình nguyện viên')}</p>
+                            <strong className="text-xl">{sentResult.volunteersCount}</strong>
+                        </div>
+                        <div className="rounded-xl border border-border p-3">
+                            <p className="text-xs text-text-secondary">{tr('Chưa gửi được')}</p>
+                            <strong className="text-xl text-danger">
+                                {failedRecipients.length}
+                            </strong>
+                        </div>
                     </div>
-                    {sentResult.totalSent > 0 && <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{tr('Thư đã được dịch vụ email tiếp nhận, kèm tệp chứng nhận. Những thư đã gửi thành công sẽ không được gửi trùng khi thử lại.')}</p>}
-                    {failedRecipients.length > 0 && <div role="alert" className="space-y-3 rounded-xl border border-danger/20 p-4">
-                        <h4 className="font-semibold">{tr('Các thư chưa gửi được')}</h4>
-                        <ul className="max-h-64 space-y-3 overflow-y-auto text-sm">{failedRecipients.map(r => <li key={r.contributionType + r.userId}>
-                            <p className="break-words font-medium">{r.fullName} — {r.email}</p>
-                            <p className="mt-1 text-danger">{tr(errorLabel(r.errorCode || 'MAIL_DELIVERY_FAILED', 502))}</p>
-                        </li>)}</ul>
-                        {retryableRecipients.length > 0 && <Button variant="secondary" disabled={sendMutation.isPending} onClick={() => sendMutation.mutate(retryableRecipients.map(r => r.contributionType + ':' + r.userId))}>
-                            {tr(sendMutation.isPending ? 'Đang gửi…' : 'Thử lại thư lỗi')}
-                        </Button>}
-                    </div>}
-                    {sendMutation.isError && <ErrorState message={errorMessage(sendMutation.error)}/>}
-                    <div className="flex justify-end"><Button disabled={sendMutation.isPending} onClick={onClose}>{tr('Đóng')}</Button></div>
+                    {sentResult.totalSent > 0 && (
+                        <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+                            {tr(
+                                'Thư đã được dịch vụ email tiếp nhận, kèm tệp chứng nhận. Những thư đã gửi thành công sẽ không được gửi trùng khi thử lại.',
+                            )}
+                        </p>
+                    )}
+                    {failedRecipients.length > 0 && (
+                        <div
+                            role="alert"
+                            className="space-y-3 rounded-xl border border-danger/20 p-4"
+                        >
+                            <h4 className="font-semibold">{tr('Các thư chưa gửi được')}</h4>
+                            <ul className="max-h-64 space-y-3 overflow-y-auto text-sm">
+                                {failedRecipients.map((r) => (
+                                    <li key={r.contributionType + r.userId}>
+                                        <p className="break-words font-medium">
+                                            {r.fullName} — {r.email}
+                                        </p>
+                                        <p className="mt-1 text-danger">
+                                            {tr(
+                                                errorLabel(
+                                                    r.errorCode || 'MAIL_DELIVERY_FAILED',
+                                                    502,
+                                                ),
+                                            )}
+                                        </p>
+                                    </li>
+                                ))}
+                            </ul>
+                            {retryableRecipients.length > 0 && (
+                                <Button
+                                    variant="secondary"
+                                    disabled={sendMutation.isPending}
+                                    onClick={() =>
+                                        sendMutation.mutate(
+                                            retryableRecipients.map(
+                                                (r) => r.contributionType + ':' + r.userId,
+                                            ),
+                                        )
+                                    }
+                                >
+                                    {tr(sendMutation.isPending ? 'Đang gửi…' : 'Thử lại thư lỗi')}
+                                </Button>
+                            )}
+                        </div>
+                    )}
+                    {sendMutation.isError && (
+                        <ErrorState message={errorMessage(sendMutation.error)} />
+                    )}
+                    <div className="flex justify-end">
+                        <Button disabled={sendMutation.isPending} onClick={onClose}>
+                            {tr('Đóng')}
+                        </Button>
+                    </div>
                 </div>
             ) : recipientsQuery.isPending ? (
-                <LoadingState message={tr("Đang tổng hợp danh sách sinh viên đóng góp…")} />
+                <LoadingState message={tr('Đang tổng hợp danh sách sinh viên đóng góp…')} />
             ) : recipientsQuery.isError ? (
-                <ErrorState message={errorMessage(recipientsQuery.error)} onRetry={() => void recipientsQuery.refetch()} />
+                <ErrorState
+                    message={errorMessage(recipientsQuery.error)}
+                    onRetry={() => void recipientsQuery.refetch()}
+                />
             ) : (
                 <div className="space-y-5">
                     {/* Summary statistics bar */}
@@ -136,8 +221,12 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
                             <div className="flex items-center gap-2">
                                 <span className="text-lg">💰</span>
                                 <div>
-                                    <p className="text-xs text-text-secondary font-medium">{tr("Sinh viên ủng hộ tài chính")}</p>
-                                    <p className="text-xl font-bold text-primary">{data?.donorsCount ?? 0} {tr("bạn")}</p>
+                                    <p className="text-xs text-text-secondary font-medium">
+                                        {tr('Sinh viên ủng hộ tài chính')}
+                                    </p>
+                                    <p className="text-xl font-bold text-primary">
+                                        {data?.donorsCount ?? 0} {tr('bạn')}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -146,8 +235,12 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
                             <div className="flex items-center gap-2">
                                 <span className="text-lg">🤝</span>
                                 <div>
-                                    <p className="text-xs text-text-secondary font-medium">{tr("Tình nguyện viên tham gia")}</p>
-                                    <p className="text-xl font-bold text-emerald-700">{data?.volunteersCount ?? 0} {tr("bạn")}</p>
+                                    <p className="text-xs text-text-secondary font-medium">
+                                        {tr('Tình nguyện viên tham gia')}
+                                    </p>
+                                    <p className="text-xl font-bold text-emerald-700">
+                                        {data?.volunteersCount ?? 0} {tr('bạn')}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -156,8 +249,12 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
                             <div className="flex items-center gap-2">
                                 <span className="text-lg">💌</span>
                                 <div>
-                                    <p className="text-xs text-text-secondary font-medium">{tr("Tổng sinh viên sẽ tri ân")}</p>
-                                    <p className="text-xl font-bold text-amber-700">{totalCount} {tr("sinh viên")}</p>
+                                    <p className="text-xs text-text-secondary font-medium">
+                                        {tr('Tổng sinh viên sẽ tri ân')}
+                                    </p>
+                                    <p className="text-xl font-bold text-amber-700">
+                                        {totalCount} {tr('sinh viên')}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -174,7 +271,7 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
                                     : 'bg-surface-muted text-text-secondary hover:bg-surface-muted/80'
                             }`}
                         >
-                            👥 {tr("Danh sách nhận tri ân")} ({totalCount})
+                            👥 {tr('Danh sách nhận tri ân')} ({totalCount})
                         </button>
                         <button
                             type="button"
@@ -185,7 +282,7 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
                                     : 'bg-surface-muted text-text-secondary hover:bg-surface-muted/80'
                             }`}
                         >
-                            🎖️ {tr("Xem trước chứng chỉ DUT")}
+                            🎖️ {tr('Xem trước chứng chỉ DUT')}
                         </button>
                         <button
                             type="button"
@@ -196,7 +293,7 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
                                     : 'bg-surface-muted text-text-secondary hover:bg-surface-muted/80'
                             }`}
                         >
-                            ✍️ {tr("Nội dung thư cảm ơn")}
+                            ✍️ {tr('Nội dung thư cảm ơn')}
                         </button>
                     </div>
 
@@ -214,7 +311,7 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
                                                 : 'bg-surface-muted text-text-secondary hover:bg-border'
                                         }`}
                                     >
-                                        {tr("Tất cả")} ({totalCount})
+                                        {tr('Tất cả')} ({totalCount})
                                     </button>
                                     <button
                                         type="button"
@@ -225,7 +322,7 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
                                                 : 'bg-surface-muted text-text-secondary hover:bg-border'
                                         }`}
                                     >
-                                        {tr("Ủng hộ tài chính")} ({data?.donorsCount ?? 0})
+                                        {tr('Ủng hộ tài chính')} ({data?.donorsCount ?? 0})
                                     </button>
                                     <button
                                         type="button"
@@ -236,42 +333,77 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
                                                 : 'bg-surface-muted text-text-secondary hover:bg-border'
                                         }`}
                                     >
-                                        {tr("Tình nguyện viên")} ({data?.volunteersCount ?? 0})
+                                        {tr('Tình nguyện viên')} ({data?.volunteersCount ?? 0})
                                     </button>
                                 </div>
                                 <span className="text-xs text-text-secondary">
-                                    {tr("Kèm chứng chỉ xác nhận có chữ ký & con dấu")}
+                                    {tr('Kèm chứng chỉ xác nhận có chữ ký & con dấu')}
                                 </span>
                             </div>
 
                             {filteredRecipients.length === 0 ? (
                                 <div className="rounded-xl border border-dashed border-border py-8 text-center text-sm text-text-secondary">
-                                    {tr("Không có sinh viên nào trong mục này.")}
+                                    {tr('Không có sinh viên nào trong mục này.')}
                                 </div>
                             ) : (
                                 <div className="max-h-64 overflow-y-auto rounded-xl border border-border">
                                     <table className="w-full text-left text-xs">
                                         <thead className="sticky top-0 bg-surface-muted border-b border-border text-text-secondary">
                                             <tr>
-                                                <th className="p-2.5 font-semibold">{tr("Họ và tên")}</th>
-                                                <th className="p-2.5 font-semibold">{tr("MSSV")}</th>
-                                                <th className="p-2.5 font-semibold">{tr("Email")}</th>
-                                                <th className="p-2.5 font-semibold">{tr("Hình thức")}</th>
-                                                <th className="p-2.5 font-semibold text-right">{tr("Chi tiết")}</th>
+                                                <th className="p-2.5 font-semibold">
+                                                    {tr('Họ và tên')}
+                                                </th>
+                                                <th className="p-2.5 font-semibold">
+                                                    {tr('MSSV')}
+                                                </th>
+                                                <th className="p-2.5 font-semibold">
+                                                    {tr('Email')}
+                                                </th>
+                                                <th className="p-2.5 font-semibold">
+                                                    {tr('Hình thức')}
+                                                </th>
+                                                <th className="p-2.5 font-semibold text-right">
+                                                    {tr('Chi tiết')}
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-border/60">
                                             {filteredRecipients.map((r, i) => (
-                                                <tr key={r.userId + '-' + r.contributionType + '-' + i} className="hover:bg-surface-muted/50">
-                                                    <td className="p-2.5 font-medium text-text-primary">{r.fullName}</td>
-                                                    <td className="p-2.5 font-mono text-text-secondary">{r.studentId}</td>
-                                                    <td className="p-2.5 text-text-secondary truncate max-w-[150px]">{r.email}</td>
+                                                <tr
+                                                    key={
+                                                        r.userId +
+                                                        '-' +
+                                                        r.contributionType +
+                                                        '-' +
+                                                        i
+                                                    }
+                                                    className="hover:bg-surface-muted/50"
+                                                >
+                                                    <td className="p-2.5 font-medium text-text-primary">
+                                                        {r.fullName}
+                                                    </td>
+                                                    <td className="p-2.5 font-mono text-text-secondary">
+                                                        {r.studentId}
+                                                    </td>
+                                                    <td className="p-2.5 text-text-secondary truncate max-w-[150px]">
+                                                        {r.email}
+                                                    </td>
                                                     <td className="p-2.5">
-                                                        <Badge tone={r.contributionType === 'DONATION' ? 'neutral' : 'success'}>
-                                                            {r.contributionType === 'DONATION' ? tr("Ủng hộ tài chính") : tr("Tình nguyện viên")}
+                                                        <Badge
+                                                            tone={
+                                                                r.contributionType === 'DONATION'
+                                                                    ? 'neutral'
+                                                                    : 'success'
+                                                            }
+                                                        >
+                                                            {r.contributionType === 'DONATION'
+                                                                ? tr('Ủng hộ tài chính')
+                                                                : tr('Tình nguyện viên')}
                                                         </Badge>
                                                     </td>
-                                                    <td className="p-2.5 font-semibold text-right text-text-primary">{r.detail}</td>
+                                                    <td className="p-2.5 font-semibold text-right text-text-primary">
+                                                        {r.detail}
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -295,7 +427,7 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
                                                 : 'text-text-secondary hover:text-text-primary'
                                         }`}
                                     >
-                                        💰 {tr("Mẫu: Chứng chỉ Ủng hộ tài chính")}
+                                        💰 {tr('Mẫu: Chứng chỉ Ủng hộ tài chính')}
                                     </button>
                                     <button
                                         type="button"
@@ -306,29 +438,37 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
                                                 : 'text-text-secondary hover:text-text-primary'
                                         }`}
                                     >
-                                        🤝 {tr("Mẫu: Chứng chỉ Tham gia tình nguyện")}
+                                        🤝 {tr('Mẫu: Chứng chỉ Tham gia tình nguyện')}
                                     </button>
                                 </div>
 
-                                <Button variant="secondary" onClick={handleDownloadCert} className="text-xs py-1 px-2.5">
+                                <Button
+                                    variant="secondary"
+                                    onClick={handleDownloadCert}
+                                    className="text-xs py-1 px-2.5"
+                                >
                                     <Icon name="file" size={14} />
-                                    {tr("Tải file SVG mẫu")}
+                                    {tr('Tải file SVG mẫu')}
                                 </Button>
                             </div>
 
                             {previewQuery.isPending ? (
-                                <LoadingState message={tr("Đang kết xuất chứng chỉ DUT…")} />
+                                <LoadingState message={tr('Đang kết xuất chứng chỉ DUT…')} />
                             ) : previewQuery.isError ? (
                                 <ErrorState message={errorMessage(previewQuery.error)} />
                             ) : previewQuery.data?.svg ? (
                                 <div className="overflow-hidden rounded-xl border border-border bg-white shadow-md p-1">
                                     <div
                                         className="w-full aspect-[16/11] max-h-[380px] overflow-hidden flex items-center justify-center [&>svg]:w-full [&>svg]:h-full"
-                                        dangerouslySetInnerHTML={{__html: previewQuery.data.svg}}
+                                        dangerouslySetInnerHTML={{ __html: previewQuery.data.svg }}
                                     />
                                     <div className="bg-surface-muted/60 p-2.5 text-center text-xs text-text-secondary border-t border-border flex items-center justify-center gap-1.5">
                                         <Icon name="check" size={14} className="text-emerald-600" />
-                                        <span>{tr("Mỗi sinh viên sẽ nhận được chứng chỉ cá nhân hóa với họ tên, MSSV, đóng góp cụ thể và con dấu đỏ Trường ĐH Bách khoa.")}</span>
+                                        <span>
+                                            {tr(
+                                                'Mỗi sinh viên sẽ nhận được chứng chỉ cá nhân hóa với họ tên, MSSV, đóng góp cụ thể và con dấu đỏ Trường ĐH Bách khoa.',
+                                            )}
+                                        </span>
                                     </div>
                                 </div>
                             ) : null}
@@ -340,7 +480,7 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
                         <div className="space-y-3">
                             <div>
                                 <label className="block text-xs font-semibold text-text-secondary mb-1">
-                                    {tr("Tiêu đề email cảm ơn (Tùy chọn)")}
+                                    {tr('Tiêu đề email cảm ơn (Tùy chọn)')}
                                 </label>
                                 <input
                                     type="text"
@@ -353,22 +493,41 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
 
                             <div>
                                 <label className="block text-xs font-semibold text-text-secondary mb-1">
-                                    {tr("Lời nhắn riêng từ Ban Tổ chức (Tùy chọn)")}
+                                    {tr('Lời nhắn riêng từ Ban Tổ chức (Tùy chọn)')}
                                 </label>
                                 <textarea
                                     rows={4}
                                     value={customMessage}
                                     onChange={(e) => setCustomMessage(e.target.value)}
-                                    placeholder={tr("Nhập thêm lời nhắn gửi, lời chúc hoặc ghi chú đặc biệt từ Ban Tổ chức gửi đến các bạn sinh viên...")}
+                                    placeholder={tr(
+                                        'Nhập thêm lời nhắn gửi, lời chúc hoặc ghi chú đặc biệt từ Ban Tổ chức gửi đến các bạn sinh viên...',
+                                    )}
                                     className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-xs text-text-primary focus:border-primary focus:outline-none"
                                 />
                             </div>
 
                             <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-primary/90 space-y-1">
-                                <p className="font-semibold">{tr("Cấu trúc email được gửi tự động:")}</p>
-                                <p>• {tr("Thư cảm ơn trang trọng với nhận diện thương hiệu Trường Đại học Bách khoa - ĐHĐN.")}</p>
-                                <p>• {tr("Kèm hình ảnh Giấy chứng nhận tham gia chính thức (đính kèm tệp PNG và hiển thị trong email).")}</p>
-                                <p>• {tr("Gửi thông báo realtime đến chuông thông báo trong ứng dụng.")}</p>
+                                <p className="font-semibold">
+                                    {tr('Cấu trúc email được gửi tự động:')}
+                                </p>
+                                <p>
+                                    •{' '}
+                                    {tr(
+                                        'Thư cảm ơn trang trọng với nhận diện thương hiệu Trường Đại học Bách khoa - ĐHĐN.',
+                                    )}
+                                </p>
+                                <p>
+                                    •{' '}
+                                    {tr(
+                                        'Kèm hình ảnh Giấy chứng nhận tham gia chính thức (đính kèm tệp PNG và hiển thị trong email).',
+                                    )}
+                                </p>
+                                <p>
+                                    •{' '}
+                                    {tr(
+                                        'Gửi thông báo realtime đến chuông thông báo trong ứng dụng.',
+                                    )}
+                                </p>
                             </div>
                         </div>
                     )}
@@ -383,15 +542,24 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
                     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
                         <div className="text-xs text-text-secondary">
                             {totalCount > 0 ? (
-                                <span>{tr("Sẵn sàng gửi email đến")} <strong>{totalCount}</strong> {tr("sinh viên.")}</span>
+                                <span>
+                                    {tr('Sẵn sàng gửi email đến')} <strong>{totalCount}</strong>{' '}
+                                    {tr('sinh viên.')}
+                                </span>
                             ) : (
-                                <span>{tr("Chưa ghi nhận sinh viên đóng góp cho chiến dịch này.")}</span>
+                                <span>
+                                    {tr('Chưa ghi nhận sinh viên đóng góp cho chiến dịch này.')}
+                                </span>
                             )}
                         </div>
 
                         <div className="flex gap-2">
-                            <Button variant="secondary" onClick={onClose} disabled={sendMutation.isPending}>
-                                {tr("Hủy")}
+                            <Button
+                                variant="secondary"
+                                onClick={onClose}
+                                disabled={sendMutation.isPending}
+                            >
+                                {tr('Hủy')}
                             </Button>
                             <Button
                                 variant="primary"
@@ -402,11 +570,11 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
                                 {sendMutation.isPending ? (
                                     <span className="flex items-center gap-1.5">
                                         <Icon name="clock" size={14} className="animate-spin" />
-                                        {tr("Đang gửi email & chứng chỉ…")}
+                                        {tr('Đang gửi email & chứng chỉ…')}
                                     </span>
                                 ) : (
                                     <span className="flex items-center gap-1.5">
-                                        💌 {tr("Gửi thư cảm ơn & Chứng chỉ")} ({totalCount})
+                                        💌 {tr('Gửi thư cảm ơn & Chứng chỉ')} ({totalCount})
                                     </span>
                                 )}
                             </Button>

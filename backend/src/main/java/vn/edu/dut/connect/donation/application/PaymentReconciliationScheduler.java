@@ -1,5 +1,6 @@
 package vn.edu.dut.connect.donation.application;
 
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -8,16 +9,19 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 @Component
 public class PaymentReconciliationScheduler {
+
     private static final Logger log = LoggerFactory.getLogger(PaymentReconciliationScheduler.class);
     private final PaymentGateways gateways;
     private final PaymentTransactions transactions;
     private final JdbcClient jdbc;
 
-    public PaymentReconciliationScheduler(PaymentGateways gateways, PaymentTransactions transactions, JdbcClient jdbc) {
+    public PaymentReconciliationScheduler(
+        PaymentGateways gateways,
+        PaymentTransactions transactions,
+        JdbcClient jdbc
+    ) {
         this.gateways = gateways;
         this.transactions = transactions;
         this.jdbc = jdbc;
@@ -34,14 +38,23 @@ public class PaymentReconciliationScheduler {
     @Scheduled(fixedDelay = 15000)
     public void reconcilePendingPayments() {
         try {
-            List<String> pendingOrders = jdbc.sql("""
-                select provider_order_id from dut_connect.payment_transactions
-                where provider = 'payos' and status in ('CREATED', 'PROVIDER_PENDING')
-                and created_at > now() - interval '24 hours'
-                order by created_at, id limit 10 offset :offset
-            """).param("offset", nextPage * 10L).query(String.class).list();
+            List<String> pendingOrders = jdbc
+                .sql(
+                    """
+                        select provider_order_id from dut_connect.payment_transactions
+                        where provider = 'payos' and status in ('CREATED', 'PROVIDER_PENDING')
+                        and created_at > now() - interval '24 hours'
+                        order by created_at, id limit 10 offset :offset
+                    """
+                )
+                .param("offset", nextPage * 10L)
+                .query(String.class)
+                .list();
 
-            if (pendingOrders.isEmpty()) { nextPage = 0; return; }
+            if (pendingOrders.isEmpty()) {
+                nextPage = 0;
+                return;
+            }
             nextPage++;
 
             var payos = gateways.get("payos");
@@ -52,11 +65,18 @@ public class PaymentReconciliationScheduler {
                         log.info("Auto-reconciled PayOS payment orderId={} outcome=PAID", orderId);
                         transactions.settle(result);
                     } else if (result.outcome() == PaymentGateway.Outcome.CANCELLED) {
-                        log.info("Auto-reconciled PayOS payment orderId={} outcome=CANCELLED", orderId);
+                        log.info(
+                            "Auto-reconciled PayOS payment orderId={} outcome=CANCELLED",
+                            orderId
+                        );
                         transactions.settle(result);
                     }
                 } catch (Exception e) {
-                    log.debug("Auto-reconcile check failed for orderId={}: {}", orderId, e.getMessage());
+                    log.debug(
+                        "Auto-reconcile check failed for orderId={}: {}",
+                        orderId,
+                        e.getMessage()
+                    );
                 }
             }
         } catch (Exception e) {

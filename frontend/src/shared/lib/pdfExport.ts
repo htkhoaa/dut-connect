@@ -1,6 +1,11 @@
+import type { CampaignDashboard } from '../../features/dashboard/types';
 function escapeHtml(value: string) {
-    return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 export interface CertificateData {
@@ -15,15 +20,22 @@ export interface CertificateData {
 }
 
 export function exportVolunteerCertificate(data: CertificateData) {
-    data = {...data, fullName: escapeHtml(data.fullName), studentId: escapeHtml(data.studentId),
-        campaignTitle: escapeHtml(data.campaignTitle), verifiedHours: escapeHtml(data.verifiedHours),
+    data = {
+        ...data,
+        fullName: escapeHtml(data.fullName),
+        studentId: escapeHtml(data.studentId),
+        campaignTitle: escapeHtml(data.campaignTitle),
+        verifiedHours: escapeHtml(data.verifiedHours),
         className: data.className ? escapeHtml(data.className) : undefined,
         faculty: data.faculty ? escapeHtml(data.faculty) : undefined,
-        organizerName: data.organizerName ? escapeHtml(data.organizerName) : undefined};
+        organizerName: data.organizerName ? escapeHtml(data.organizerName) : undefined,
+    };
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const dateStr = data.verifiedAt ? new Date(data.verifiedAt).toLocaleDateString('vi-VN') : new Date().toLocaleDateString('vi-VN');
+    const dateStr = data.verifiedAt
+        ? new Date(data.verifiedAt).toLocaleDateString('vi-VN')
+        : new Date().toLocaleDateString('vi-VN');
 
     const html = `
 <!DOCTYPE html>
@@ -193,12 +205,16 @@ export function exportVolunteerCertificate(data: CertificateData) {
     printWindow.document.close();
 }
 
-export function exportCampaignPdfReport(campaignTitle: string, dashboardData: any) {
+export function exportCampaignPdfReport(
+    campaignTitle: string,
+    dashboardData: Partial<CampaignDashboard> | null | undefined,
+) {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const op = dashboardData?.operations || {};
-    const fin = dashboardData?.financialSummary || {};
+    const op: Partial<CampaignDashboard['operations']> = dashboardData?.operations || {};
+    const fin: Partial<CampaignDashboard['financialSummary']> =
+        dashboardData?.financialSummary || {};
 
     const html = `
 <!DOCTYPE html>

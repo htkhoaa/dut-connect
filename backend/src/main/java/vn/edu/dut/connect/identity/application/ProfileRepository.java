@@ -1,7 +1,6 @@
 package vn.edu.dut.connect.identity.application;
 
 import java.util.*;
-
 import vn.edu.dut.connect.identity.domain.StudentProfile;
 
 public interface ProfileRepository {

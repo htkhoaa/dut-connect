@@ -1,6 +1,7 @@
 package vn.edu.dut.connect.donation.domain;
 
 public class PaymentViolation extends RuntimeException {
+
     private final String code, field;
 
     public PaymentViolation(String code, String message, String field) {

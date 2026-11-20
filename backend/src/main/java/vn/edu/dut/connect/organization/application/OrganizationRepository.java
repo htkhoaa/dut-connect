@@ -1,8 +1,11 @@
 package vn.edu.dut.connect.organization.application;
+
+import static vn.edu.dut.connect.organization.application.OrganizationContracts.*;
+
 import java.util.*;
 import vn.edu.dut.connect.organization.domain.*;
 import vn.edu.dut.connect.shared.application.PageResult;
-import static vn.edu.dut.connect.organization.application.OrganizationContracts.*;
+
 public interface OrganizationRepository {
     Optional<Organization> find(UUID id);
     Map<UUID, String> names(Set<UUID> ids);

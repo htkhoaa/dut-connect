@@ -1,30 +1,37 @@
 package vn.edu.dut.connect.volunteer.application;
 
-import java.util.*;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import vn.edu.dut.connect.volunteer.domain.*;
-import vn.edu.dut.connect.shared.application.*;
-import vn.edu.dut.connect.identity.application.Pagination;
-
 import static vn.edu.dut.connect.volunteer.application.CoordinationContracts.*;
 
+import java.util.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import vn.edu.dut.connect.campaign.application.CampaignAccessPort;
 import vn.edu.dut.connect.campaign.domain.CampaignStatus;
 import vn.edu.dut.connect.identity.application.IdentityDirectoryPort;
+import vn.edu.dut.connect.identity.application.Pagination;
+import vn.edu.dut.connect.shared.application.*;
+import vn.edu.dut.connect.volunteer.domain.*;
 
 @Service
 @Transactional(readOnly = true)
 public class TaskService {
-    private static final org.slf4j.Logger log=org.slf4j.LoggerFactory.getLogger(TaskService.class);
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(
+        TaskService.class
+    );
     private final AcceptedVolunteerRepository volunteers;
     private final TaskRepository repository;
     private final CoordinationAuthorization access;
     private final CampaignAccessPort campaigns;
     private final IdentityDirectoryPort identities;
 
-    public TaskService(AcceptedVolunteerRepository volunteers, TaskRepository repository, CoordinationAuthorization access, CampaignAccessPort campaigns, IdentityDirectoryPort identities) {
+    public TaskService(
+        AcceptedVolunteerRepository volunteers,
+        TaskRepository repository,
+        CoordinationAuthorization access,
+        CampaignAccessPort campaigns,
+        IdentityDirectoryPort identities
+    ) {
         this.volunteers = volunteers;
         this.repository = repository;
         this.access = access;
@@ -52,12 +59,24 @@ public class TaskService {
     public TaskDto create(UUID c, UUID actor, TaskRequest r) {
         access.requireOperationalWrite(c, actor);
         access.requireManager(c, actor);
-        if (r.status() != null && r.status() != TaskStatus.TODO)
-            CoordinationValues.invalid("status", "New tasks start To do");
+        if (r.status() != null && r.status() != TaskStatus.TODO) CoordinationValues.invalid(
+            "status",
+            "New tasks start To do"
+        );
         CoordinationPatch.clear(r.clearFields(), Set.of());
         var users = r.assigneeUserIds() == null ? List.<UUID>of() : r.assigneeUserIds();
         access.accepted(c, users);
-        var v = repository.saveTask(new VolunteerTask(c, actor, r.title(), r.description(), r.track(), r.priority(), r.dueAt()));
+        var v = repository.saveTask(
+            new VolunteerTask(
+                c,
+                actor,
+                r.title(),
+                r.description(),
+                r.track(),
+                r.priority(),
+                r.dueAt()
+            )
+        );
         repository.assign(v.id(), users);
         return dto(v, actor);
     }
@@ -69,13 +88,30 @@ public class TaskService {
         v.requireVersion(r.version());
         v.mutable();
         CoordinationPatch.clear(r.clearFields(), Set.of("dueAt"));
-        if (r.clearFields() != null && r.clearFields().contains("dueAt") && r.dueAt() != null)
-            CoordinationValues.invalid("dueAt", "Cannot set and clear due date");
+        if (
+            r.clearFields() != null && r.clearFields().contains("dueAt") && r.dueAt() != null
+        ) CoordinationValues.invalid("dueAt", "Cannot set and clear due date");
         if (r.assigneeUserIds() != null) access.accepted(v.campaignId(), r.assigneeUserIds());
-        v.edit(r.title() == null ? v.title() : r.title(), r.description() == null ? v.description() : r.description(), r.track() == null ? v.track() : r.track(), r.priority() == null ? v.priority() : r.priority(), r.clearFields() != null && r.clearFields().contains("dueAt") ? null : r.dueAt() == null ? v.dueAt() : r.dueAt());
+        v.edit(
+            r.title() == null ? v.title() : r.title(),
+            r.description() == null ? v.description() : r.description(),
+            r.track() == null ? v.track() : r.track(),
+            r.priority() == null ? v.priority() : r.priority(),
+            r.clearFields() != null && r.clearFields().contains("dueAt")
+                ? null
+                : r.dueAt() == null
+                  ? v.dueAt()
+                  : r.dueAt()
+        );
         if (r.status() != null) v.correct(r.status());
         repository.saveTask(v);
-        log.info("Task transitioned actor={} campaign={} task={} status={}",actor,v.campaignId(),v.id(),v.status());
+        log.info(
+            "Task transitioned actor={} campaign={} task={} status={}",
+            actor,
+            v.campaignId(),
+            v.id(),
+            v.status()
+        );
         if (r.assigneeUserIds() != null) repository.assign(id, r.assigneeUserIds());
         return dto(v, actor);
     }
@@ -87,7 +123,13 @@ public class TaskService {
         v.requireVersion(version);
         v.start();
         repository.saveTask(v);
-        log.info("Task transitioned actor={} campaign={} task={} status={}",actor,v.campaignId(),v.id(),v.status());
+        log.info(
+            "Task transitioned actor={} campaign={} task={} status={}",
+            actor,
+            v.campaignId(),
+            v.id(),
+            v.status()
+        );
         return dto(v, actor);
     }
 
@@ -98,7 +140,13 @@ public class TaskService {
         v.requireVersion(version);
         v.done();
         repository.saveTask(v);
-        log.info("Task transitioned actor={} campaign={} task={} status={}",actor,v.campaignId(),v.id(),v.status());
+        log.info(
+            "Task transitioned actor={} campaign={} task={} status={}",
+            actor,
+            v.campaignId(),
+            v.id(),
+            v.status()
+        );
         return dto(v, actor);
     }
 
@@ -109,7 +157,13 @@ public class TaskService {
         v.requireVersion(version);
         v.verify(actor);
         repository.saveTask(v);
-        log.info("Task transitioned actor={} campaign={} task={} status={}",actor,v.campaignId(),v.id(),v.status());
+        log.info(
+            "Task transitioned actor={} campaign={} task={} status={}",
+            actor,
+            v.campaignId(),
+            v.id(),
+            v.status()
+        );
         return dto(v, actor);
     }
 
@@ -123,7 +177,9 @@ public class TaskService {
     }
 
     private VolunteerTask writable(UUID id, UUID actor) {
-        UUID c = repository.taskCampaign(id).orElseThrow(() -> ApplicationFailure.missing("Task not found"));
+        UUID c = repository
+            .taskCampaign(id)
+            .orElseThrow(() -> ApplicationFailure.missing("Task not found"));
         access.requireOperationalWrite(c, actor);
         access.view(c, actor);
         return repository.task(id).orElseThrow(() -> ApplicationFailure.missing("Task not found"));
@@ -134,27 +190,79 @@ public class TaskService {
     }
 
     private TaskDto dto(VolunteerTask v, UUID actor) {
-        return dtos(new PageResult<>(List.of(v), 0, 1, 1, 1, false, false), actor).items().getFirst();
+        return dtos(new PageResult<>(List.of(v), 0, 1, 1, 1, false, false), actor)
+            .items()
+            .getFirst();
     }
 
     private PageResult<TaskDto> dtos(PageResult<VolunteerTask> page, UUID actor) {
-        var assignment = repository.assignees(page.items().stream().map(VolunteerTask::id).collect(java.util.stream.Collectors.toSet()));
-        var names = identities.findAccounts(assignment.values().stream().flatMap(List::stream).collect(java.util.stream.Collectors.toSet()));
-        var campaignViews = campaigns.getCampaigns(page.items().stream().map(VolunteerTask::campaignId).collect(java.util.stream.Collectors.toSet()));
+        var assignment = repository.assignees(
+            page
+                .items()
+                .stream()
+                .map(VolunteerTask::id)
+                .collect(java.util.stream.Collectors.toSet())
+        );
+        var names = identities.findAccounts(
+            assignment
+                .values()
+                .stream()
+                .flatMap(List::stream)
+                .collect(java.util.stream.Collectors.toSet())
+        );
+        var campaignViews = campaigns.getCampaigns(
+            page
+                .items()
+                .stream()
+                .map(VolunteerTask::campaignId)
+                .collect(java.util.stream.Collectors.toSet())
+        );
         var account = identities.findAccount(actor).orElseThrow();
         if (!account.active()) CoordinationAuthorization.denied();
-        var managed = account.admin() ? campaignViews.keySet() : campaigns.managedCampaigns(campaignViews.keySet(), actor);
+        var managed = account.admin()
+            ? campaignViews.keySet()
+            : campaigns.managedCampaigns(campaignViews.keySet(), actor);
         var tracks = new HashMap<String, VolunteerTrack>();
         for (var p : volunteers.participations(campaignViews.keySet(), names.keySet()))
             tracks.put(p.campaignId() + ":" + p.userId(), p.assignedTrack());
         return page.map(v -> {
             var c = campaignViews.get(v.campaignId());
-            boolean mutable = c.status() == CampaignStatus.OPEN || c.status() == CampaignStatus.ACTIVE;
+            boolean mutable =
+                c.status() == CampaignStatus.OPEN || c.status() == CampaignStatus.ACTIVE;
             var users = assignment.getOrDefault(v.id(), List.of());
-            return new TaskDto(v.id(), v.campaignId(), c.title(), v.title(), v.description(), v.track(), v.priority(), v.dueAt(), v.status(), users.stream().map(u -> {
-                var a = names.get(u);
-                return new AssigneeDto(u, a.fullName(), a.studentId(), tracks.get(v.campaignId() + ":" + u));
-            }).toList(), v.createdByUserId(), v.verifiedByUserId(), v.verifiedAt(), v.createdAt(), v.updatedAt(), v.version(), mutable && managed.contains(v.campaignId()) && v.status() != TaskStatus.VERIFIED, mutable && users.contains(actor) && (v.status() == TaskStatus.TODO || v.status() == TaskStatus.IN_PROGRESS));
+            return new TaskDto(
+                v.id(),
+                v.campaignId(),
+                c.title(),
+                v.title(),
+                v.description(),
+                v.track(),
+                v.priority(),
+                v.dueAt(),
+                v.status(),
+                users
+                    .stream()
+                    .map(u -> {
+                        var a = names.get(u);
+                        return new AssigneeDto(
+                            u,
+                            a.fullName(),
+                            a.studentId(),
+                            tracks.get(v.campaignId() + ":" + u)
+                        );
+                    })
+                    .toList(),
+                v.createdByUserId(),
+                v.verifiedByUserId(),
+                v.verifiedAt(),
+                v.createdAt(),
+                v.updatedAt(),
+                v.version(),
+                mutable && managed.contains(v.campaignId()) && v.status() != TaskStatus.VERIFIED,
+                mutable &&
+                    users.contains(actor) &&
+                    (v.status() == TaskStatus.TODO || v.status() == TaskStatus.IN_PROGRESS)
+            );
         });
     }
 }

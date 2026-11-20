@@ -1,19 +1,18 @@
 package vn.edu.dut.connect.volunteer.infrastructure.persistence;
 
-import java.util.*;
-import java.time.Instant;
+import static vn.edu.dut.connect.volunteer.application.CoordinationContracts.*;
 
-import org.springframework.stereotype.Repository;
+import java.util.*;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.stereotype.Repository;
+import vn.edu.dut.connect.identity.application.Pagination;
+import vn.edu.dut.connect.shared.application.PageResult;
 import vn.edu.dut.connect.volunteer.application.*;
 import vn.edu.dut.connect.volunteer.domain.*;
-import vn.edu.dut.connect.shared.application.PageResult;
-import vn.edu.dut.connect.identity.application.Pagination;
-
-import static vn.edu.dut.connect.volunteer.application.CoordinationContracts.*;
 
 @Repository
 public class MeetingPersistence implements MeetingRepository {
+
     private final JdbcClient jdbc;
     private final JpaMeetingRepository meetings;
 
@@ -27,7 +26,11 @@ public class MeetingPersistence implements MeetingRepository {
     }
 
     public Optional<UUID> meetingCampaign(UUID id) {
-        return jdbc.sql("select campaign_id from dut_connect.meetings where id=:id").param("id", id).query(UUID.class).optional();
+        return jdbc
+            .sql("select campaign_id from dut_connect.meetings where id=:id")
+            .param("id", id)
+            .query(UUID.class)
+            .optional();
     }
 
     public Meeting saveMeeting(Meeting v) {
@@ -41,14 +44,39 @@ public class MeetingPersistence implements MeetingRepository {
 
     public PageResult<Meeting> meetings(UUID c, Pagination p) {
         var page = pageIds("campaign_id=:c", Map.of("c", c), p);
-        var map = meetings.findAllById(page.items()).stream().collect(java.util.stream.Collectors.toMap(Meeting::id, v -> v));
+        var map = meetings
+            .findAllById(page.items())
+            .stream()
+            .collect(java.util.stream.Collectors.toMap(Meeting::id, v -> v));
         return page.map(map::get);
     }
 
     private PageResult<UUID> pageIds(String where, Map<String, Object> args, Pagination p) {
-        long total = jdbc.sql("select count(*) from dut_connect.meetings where " + where).params(args).query(Long.class).single();
-        var ids = jdbc.sql("select id from dut_connect.meetings where " + where + " order by starts_at,id limit :size offset :offset").params(args).param("size", p.size()).param("offset", (long) p.page() * p.size()).query(UUID.class).list();
+        long total = jdbc
+            .sql("select count(*) from dut_connect.meetings where " + where)
+            .params(args)
+            .query(Long.class)
+            .single();
+        var ids = jdbc
+            .sql(
+                "select id from dut_connect.meetings where " +
+                    where +
+                    " order by starts_at,id limit :size offset :offset"
+            )
+            .params(args)
+            .param("size", p.size())
+            .param("offset", (long) p.page() * p.size())
+            .query(UUID.class)
+            .list();
         int pages = (int) Math.min(Integer.MAX_VALUE, (total + p.size() - 1) / p.size());
-        return new PageResult<>(ids, p.page(), p.size(), total, pages, p.page() + 1L < pages, p.page() > 0);
+        return new PageResult<>(
+            ids,
+            p.page(),
+            p.size(),
+            total,
+            pages,
+            p.page() + 1L < pages,
+            p.page() > 0
+        );
     }
 }

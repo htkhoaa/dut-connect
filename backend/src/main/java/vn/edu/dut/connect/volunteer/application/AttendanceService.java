@@ -1,28 +1,31 @@
 package vn.edu.dut.connect.volunteer.application;
 
-import java.util.*;
-import java.time.Instant;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import vn.edu.dut.connect.volunteer.domain.*;
-import vn.edu.dut.connect.shared.application.*;
-import vn.edu.dut.connect.identity.application.Pagination;
-
 import static vn.edu.dut.connect.volunteer.application.CoordinationContracts.*;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import vn.edu.dut.connect.identity.application.IdentityDirectoryPort;
+import vn.edu.dut.connect.identity.application.Pagination;
+import vn.edu.dut.connect.shared.application.*;
+import vn.edu.dut.connect.volunteer.domain.*;
 
 @Service
 @Transactional(readOnly = true)
 public class AttendanceService {
+
     private final AttendanceRepository repository;
     private final CoordinationAuthorization access;
     private final IdentityDirectoryPort identities;
 
-    public AttendanceService(AttendanceRepository repository, CoordinationAuthorization access, IdentityDirectoryPort identities) {
+    public AttendanceService(
+        AttendanceRepository repository,
+        CoordinationAuthorization access,
+        IdentityDirectoryPort identities
+    ) {
         this.repository = repository;
         this.access = access;
         this.identities = identities;
@@ -37,14 +40,22 @@ public class AttendanceService {
     public SessionDto create(UUID c, UUID actor, SessionRequest r) {
         access.requireOperationalWrite(c, actor);
         access.requireManager(c, actor);
-        return dto(repository.saveSession(new AttendanceSession(c, actor, r.title(), r.startsAt(), r.endsAt())));
+        return dto(
+            repository.saveSession(
+                new AttendanceSession(c, actor, r.title(), r.startsAt(), r.endsAt())
+            )
+        );
     }
 
     @Transactional
     public SessionDto edit(UUID id, UUID actor, SessionRequest r) {
         var v = writable(id, actor);
         v.requireVersion(r.version());
-        v.edit(r.title() == null ? v.title() : r.title(), r.startsAt() == null ? v.startsAt() : r.startsAt(), r.endsAt() == null ? v.endsAt() : r.endsAt());
+        v.edit(
+            r.title() == null ? v.title() : r.title(),
+            r.startsAt() == null ? v.startsAt() : r.startsAt(),
+            r.endsAt() == null ? v.endsAt() : r.endsAt()
+        );
         return dto(repository.saveSession(v));
     }
 
@@ -56,11 +67,15 @@ public class AttendanceService {
     }
 
     public PageResult<AttendanceDto> records(UUID id, UUID actor, Pagination p) {
-        var c = repository.sessionCampaign(id).orElseThrow(() -> ApplicationFailure.missing("Session not found"));
+        var c = repository
+            .sessionCampaign(id)
+            .orElseThrow(() -> ApplicationFailure.missing("Session not found"));
         access.view(c, actor);
         var page = repository.records(id, p);
         var mapped = recordDtos(page.items());
-        var byId = mapped.stream().collect(java.util.stream.Collectors.toMap(AttendanceDto::id, v -> v));
+        var byId = mapped
+            .stream()
+            .collect(java.util.stream.Collectors.toMap(AttendanceDto::id, v -> v));
         return page.map(v -> byId.get(v.id()));
     }
 
@@ -80,49 +95,107 @@ public class AttendanceService {
         var session = writable(sessionId, actor);
         String token = session.generateQrToken();
         repository.saveSession(session);
-        String frontendUrl = System.getenv().getOrDefault("APP_FRONTEND_URL", "https://dutconnect.vercel.app");
-        if (frontendUrl.endsWith("/")) frontendUrl = frontendUrl.substring(0, frontendUrl.length() - 1);
+        String frontendUrl = System.getenv().getOrDefault(
+            "APP_FRONTEND_URL",
+            "https://dutconnect.vercel.app"
+        );
+        if (frontendUrl.endsWith("/")) frontendUrl = frontendUrl.substring(
+            0,
+            frontendUrl.length() - 1
+        );
         String checkinUrl = "/attendance/checkin?token=" + token;
         String fullUrl = frontendUrl + checkinUrl;
-        String qrImageUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + URLEncoder.encode(fullUrl, StandardCharsets.UTF_8);
+        String qrImageUrl =
+            "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" +
+            URLEncoder.encode(fullUrl, StandardCharsets.UTF_8);
         return new QrSessionDto(session.id(), token, session.qrExpiresAt(), checkinUrl, qrImageUrl);
     }
 
     @Transactional
     public QrCheckinResponse checkinQr(String token, UUID actor) {
-        if (token == null || token.isBlank()) throw new ApplicationFailure(400, "VALIDATION_ERROR", "Token is required");
-        var session = repository.sessionByQrToken(token)
-                .orElseThrow(() -> ApplicationFailure.missing("Attendance session not found for this QR code"));
+        if (token == null || token.isBlank()) throw new ApplicationFailure(
+            400,
+            "VALIDATION_ERROR",
+            "Token is required"
+        );
+        var session = repository
+            .sessionByQrToken(token)
+            .orElseThrow(() ->
+                ApplicationFailure.missing("Attendance session not found for this QR code")
+            );
         access.requireOperationalWrite(session.campaignId(), actor);
         Instant now = Instant.now();
-        if (now.isBefore(session.startsAt()) || !now.isBefore(session.endsAt()))
-            throw new ApplicationFailure(409, "ATTENDANCE_NOT_OPEN", "Check-in is only available during this session");
+        if (
+            now.isBefore(session.startsAt()) || !now.isBefore(session.endsAt())
+        ) throw new ApplicationFailure(
+            409,
+            "ATTENDANCE_NOT_OPEN",
+            "Check-in is only available during this session"
+        );
         if (session.qrExpiresAt() != null && Instant.now().isAfter(session.qrExpiresAt())) {
             throw new ApplicationFailure(400, "QR_EXPIRED", "This attendance QR code has expired");
         }
         access.accepted(session.campaignId(), List.of(actor));
-        repository.upsert(session.id(), actor, List.of(new AttendanceInput(actor, AttendanceStatus.PRESENT)));
+        repository.upsert(
+            session.id(),
+            actor,
+            List.of(new AttendanceInput(actor, AttendanceStatus.PRESENT))
+        );
         session.touch();
         repository.saveSession(session);
-        return new QrCheckinResponse(session.id(), session.title(), session.campaignId(), Instant.now());
+        return new QrCheckinResponse(
+            session.id(),
+            session.title(),
+            session.campaignId(),
+            Instant.now()
+        );
     }
 
     private AttendanceSession writable(UUID id, UUID actor) {
-        UUID c = repository.sessionCampaign(id).orElseThrow(() -> ApplicationFailure.missing("Session not found"));
+        UUID c = repository
+            .sessionCampaign(id)
+            .orElseThrow(() -> ApplicationFailure.missing("Session not found"));
         access.requireOperationalWrite(c, actor);
         access.requireManager(c, actor);
-        return repository.session(id).orElseThrow(() -> ApplicationFailure.missing("Session not found"));
+        return repository
+            .session(id)
+            .orElseThrow(() -> ApplicationFailure.missing("Session not found"));
     }
 
     private List<AttendanceDto> recordDtos(List<AttendanceRow> rows) {
-        var names = identities.findAccounts(rows.stream().map(AttendanceRow::userId).collect(java.util.stream.Collectors.toSet()));
-        return rows.stream().map(v -> {
-            var a = names.get(v.userId());
-            return new AttendanceDto(v.id(), v.sessionId(), v.userId(), a.fullName(), a.studentId(), v.status(), v.recordedByUserId(), v.recordedAt(), v.updatedAt());
-        }).toList();
+        var names = identities.findAccounts(
+            rows.stream().map(AttendanceRow::userId).collect(java.util.stream.Collectors.toSet())
+        );
+        return rows
+            .stream()
+            .map(v -> {
+                var a = names.get(v.userId());
+                return new AttendanceDto(
+                    v.id(),
+                    v.sessionId(),
+                    v.userId(),
+                    a.fullName(),
+                    a.studentId(),
+                    v.status(),
+                    v.recordedByUserId(),
+                    v.recordedAt(),
+                    v.updatedAt()
+                );
+            })
+            .toList();
     }
 
     static SessionDto dto(AttendanceSession v) {
-        return new SessionDto(v.id(), v.campaignId(), v.title(), v.startsAt(), v.endsAt(), v.createdByUserId(), v.createdAt(), v.updatedAt(), v.version());
+        return new SessionDto(
+            v.id(),
+            v.campaignId(),
+            v.title(),
+            v.startsAt(),
+            v.endsAt(),
+            v.createdByUserId(),
+            v.createdAt(),
+            v.updatedAt(),
+            v.version()
+        );
     }
 }

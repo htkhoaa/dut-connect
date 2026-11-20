@@ -1,19 +1,19 @@
 package vn.edu.dut.connect.identity.application;
 
+import static vn.edu.dut.connect.identity.application.IdentityContracts.*;
+
 import java.time.Instant;
 import java.util.UUID;
-
 import org.slf4j.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.edu.dut.connect.identity.domain.*;
-import vn.edu.dut.connect.shared.application.PageResult;
 import vn.edu.dut.connect.shared.application.ApplicationFailure;
-
-import static vn.edu.dut.connect.identity.application.IdentityContracts.*;
+import vn.edu.dut.connect.shared.application.PageResult;
 
 @Service
 public class AdminUserService {
+
     private static final Logger log = LoggerFactory.getLogger(AdminUserService.class);
     private final UserRepository users;
     private final RefreshTokenRepository tokens;
@@ -29,8 +29,16 @@ public class AdminUserService {
     }
 
     @Transactional(readOnly = true)
-    public PageResult<UserSummary> list(UUID actor, int page, int size, String name, String studentId) {
-        IdentityAccess.requireAdmin(users.findUser(actor).orElseThrow(() -> ApplicationFailure.missing("User not found")));
+    public PageResult<UserSummary> list(
+        UUID actor,
+        int page,
+        int size,
+        String name,
+        String studentId
+    ) {
+        IdentityAccess.requireAdmin(
+            users.findUser(actor).orElseThrow(() -> ApplicationFailure.missing("User not found"))
+        );
         return users.listUsers(new Pagination(page, size), name, studentId).map(UserSummary::from);
     }
 
@@ -39,9 +47,14 @@ public class AdminUserService {
         // Stable lock ordering also covers administrators changing one another's status.
         UUID first = actor.compareTo(id) <= 0 ? actor : id;
         UUID second = first.equals(actor) ? id : actor;
-        User firstUser = users.lockUser(first).orElseThrow(() -> ApplicationFailure.missing("User not found"));
-        User secondUser = first.equals(second) ? firstUser : users.lockUser(second)
-                .orElseThrow(() -> ApplicationFailure.missing("User not found"));
+        User firstUser = users
+            .lockUser(first)
+            .orElseThrow(() -> ApplicationFailure.missing("User not found"));
+        User secondUser = first.equals(second)
+            ? firstUser
+            : users
+                  .lockUser(second)
+                  .orElseThrow(() -> ApplicationFailure.missing("User not found"));
         User administrator = first.equals(actor) ? firstUser : secondUser;
         User user = first.equals(id) ? firstUser : secondUser;
         IdentityAccess.requireAdmin(administrator);

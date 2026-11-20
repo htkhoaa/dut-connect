@@ -1,7 +1,7 @@
-import axios, {AxiosError, AxiosHeaders} from 'axios';
-import type {AuthResponse, LoginValues} from '../../features/auth/types';
-import {useAuth} from '../../features/auth/store';
-import {queryClient} from './queryClient';
+import axios, { AxiosError, AxiosHeaders } from 'axios';
+import type { AuthResponse, LoginValues } from '../../features/auth/types';
+import { useAuth } from '../../features/auth/store';
+import { queryClient } from './queryClient';
 
 export const apiClient = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
@@ -31,9 +31,9 @@ export async function loginSession(values: LoginValues) {
         // Cookie responses must finish in order, including a failed rotation.
         if (refreshRequest) await refreshRequest.catch(() => undefined);
         const credentials = values.email
-            ? {email: values.email.trim(), password: values.password}
-            : {studentId: values.studentId?.trim(), password: values.password};
-        const {data} = await apiClient.post<AuthResponse>('/auth/login', credentials);
+            ? { email: values.email.trim(), password: values.password }
+            : { studentId: values.studentId?.trim(), password: values.password };
+        const { data } = await apiClient.post<AuthResponse>('/auth/login', credentials);
         queryClient.clear();
         useAuth.getState().accept(data);
         return data;
@@ -72,7 +72,8 @@ export function refreshSession(): Promise<AuthResponse> {
 function rotateSession(): Promise<AuthResponse> {
     if (!refreshRequest) {
         const generation = sessionGeneration;
-        refreshRequest = apiClient.post<AuthResponse>('/auth/refresh')
+        refreshRequest = apiClient
+            .post<AuthResponse>('/auth/refresh')
             .then((response) => {
                 if (generation === sessionGeneration) useAuth.getState().accept(response.data);
                 return response.data;
@@ -88,46 +89,73 @@ function rotateSession(): Promise<AuthResponse> {
     return refreshRequest;
 }
 
-apiClient.interceptors.request.use((config) => {
-    const sessionConfig = config as typeof config & {sessionGeneration?: number};
-    sessionConfig.sessionGeneration ??= sessionGeneration;
-    const token = useAuth.getState().accessToken;
-    if (token && !['/auth/login', '/auth/register', '/auth/refresh'].includes(config.url || '')) {
-        config.headers.set('Authorization', 'Bearer ' + token);
-    }
-    return config;
-}, undefined, {synchronous: true});
-apiClient.interceptors.response.use((response) => {
-    if (response.status === 204 || response.status === 205) return response;
-    const contentType = String(response.headers['content-type'] || '').toLowerCase();
-    const binary = response.config.responseType === 'blob' || response.config.responseType === 'arraybuffer';
-    // A static SPA host can return index.html with HTTP 200 for an unconfigured API route.
-    // Reject it before query caching or authentication treats it as application data.
-    if (contentType.includes('text/html') || (!binary &&
-        (!/^application\/(?:[\w.-]+\+)?json(?:\s*;|$)/.test(contentType) ||
-            response.data === null || typeof response.data !== 'object'))) {
-        throw new AxiosError('The API did not return application data.', 'ERR_INVALID_API_RESPONSE',
-            response.config, response.request, response);
-    }
-    return response;
-}, async (error: unknown) => {
-    if (!axios.isAxiosError(error)) throw error;
-    const config = error.config as (NonNullable<typeof error.config> & {
-        authRetried?: boolean;
-        sessionGeneration?: number;
-    }) | undefined;
-    if (!config || error.response?.status !== 401 ||
-        ['/auth/login', '/auth/register', '/auth/refresh'].includes(config.url || '')) throw error;
-    // Never retry an old account's request using a new account's credentials.
-    if (changingSession || config.sessionGeneration !== sessionGeneration) throw error;
-    if (config.authRetried) {
-        clearSession();
-        throw error;
-    }
-    const session = await refreshSession();
-    if (changingSession || config.sessionGeneration !== sessionGeneration) throw error;
-    config.headers = AxiosHeaders.from(config.headers);
-    config.headers.set('Authorization', 'Bearer ' + session.accessToken);
-    config.authRetried = true;
-    return apiClient.request(config);
-});
+apiClient.interceptors.request.use(
+    (config) => {
+        const sessionConfig = config as typeof config & { sessionGeneration?: number };
+        sessionConfig.sessionGeneration ??= sessionGeneration;
+        const token = useAuth.getState().accessToken;
+        if (
+            token &&
+            !['/auth/login', '/auth/register', '/auth/refresh'].includes(config.url || '')
+        ) {
+            config.headers.set('Authorization', 'Bearer ' + token);
+        }
+        return config;
+    },
+    undefined,
+    { synchronous: true },
+);
+apiClient.interceptors.response.use(
+    (response) => {
+        if (response.status === 204 || response.status === 205) return response;
+        const contentType = String(response.headers['content-type'] || '').toLowerCase();
+        const binary =
+            response.config.responseType === 'blob' ||
+            response.config.responseType === 'arraybuffer';
+        // A static SPA host can return index.html with HTTP 200 for an unconfigured API route.
+        // Reject it before query caching or authentication treats it as application data.
+        if (
+            contentType.includes('text/html') ||
+            (!binary &&
+                (!/^application\/(?:[\w.-]+\+)?json(?:\s*;|$)/.test(contentType) ||
+                    response.data === null ||
+                    typeof response.data !== 'object'))
+        ) {
+            throw new AxiosError(
+                'The API did not return application data.',
+                'ERR_INVALID_API_RESPONSE',
+                response.config,
+                response.request,
+                response,
+            );
+        }
+        return response;
+    },
+    async (error: unknown) => {
+        if (!axios.isAxiosError(error)) throw error;
+        const config = error.config as
+            | (NonNullable<typeof error.config> & {
+                  authRetried?: boolean;
+                  sessionGeneration?: number;
+              })
+            | undefined;
+        if (
+            !config ||
+            error.response?.status !== 401 ||
+            ['/auth/login', '/auth/register', '/auth/refresh'].includes(config.url || '')
+        )
+            throw error;
+        // Never retry an old account's request using a new account's credentials.
+        if (changingSession || config.sessionGeneration !== sessionGeneration) throw error;
+        if (config.authRetried) {
+            clearSession();
+            throw error;
+        }
+        const session = await refreshSession();
+        if (changingSession || config.sessionGeneration !== sessionGeneration) throw error;
+        config.headers = AxiosHeaders.from(config.headers);
+        config.headers.set('Authorization', 'Bearer ' + session.accessToken);
+        config.authRetried = true;
+        return apiClient.request(config);
+    },
+);

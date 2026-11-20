@@ -1,13 +1,16 @@
 package vn.edu.dut.connect.campaign.application;
+
+import static vn.edu.dut.connect.campaign.application.CampaignContracts.*;
+
 import java.util.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import vn.edu.dut.connect.campaign.domain.*;
-import vn.edu.dut.connect.shared.application.*;
 import vn.edu.dut.connect.identity.application.*;
-import static vn.edu.dut.connect.campaign.application.CampaignContracts.*;
+import vn.edu.dut.connect.shared.application.*;
+
 @Service
 public class CampaignAuthorization {
+
     private final IdentityDirectoryPort identities;
     private final CampaignRepository campaigns;
 
@@ -17,7 +20,11 @@ public class CampaignAuthorization {
     }
 
     public IdentityDirectoryPort.Account active(UUID id) {
-        var account = identities.findAccount(id).orElseThrow(() -> new ApplicationFailure(401, "AUTHENTICATION_REQUIRED", "Account unavailable"));
+        var account = identities
+            .findAccount(id)
+            .orElseThrow(() ->
+                new ApplicationFailure(401, "AUTHENTICATION_REQUIRED", "Account unavailable")
+            );
         if (!account.active()) denied();
         return account;
     }
@@ -36,9 +43,13 @@ public class CampaignAuthorization {
     public void owner(UUID campaign, UUID actor) {
         manager(campaign, actor);
     }
+
     public void proposer(Proposal proposal, UUID actor) {
         active(actor);
         if (!proposal.proposerId().equals(actor)) denied();
     }
-    private static void denied() { throw new ApplicationFailure(403,"ACCESS_DENIED","Campaign permission required"); }
+
+    private static void denied() {
+        throw new ApplicationFailure(403, "ACCESS_DENIED", "Campaign permission required");
+    }
 }

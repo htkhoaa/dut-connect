@@ -1,9 +1,7 @@
 package vn.edu.dut.connect.identity.application;
 
-import vn.edu.dut.connect.identity.domain.User;
-
 import java.util.*;
-
+import vn.edu.dut.connect.identity.domain.User;
 import vn.edu.dut.connect.shared.application.PageResult;
 
 public interface UserRepository {

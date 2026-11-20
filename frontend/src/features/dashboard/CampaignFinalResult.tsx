@@ -1,23 +1,24 @@
-import {useState} from 'react';
-import {useQuery} from '@tanstack/react-query';
-import {useLanguage, tr, locale} from "../../shared/lib/i18n";
-import type {CampaignDashboard} from './types';
-import {Button} from '../../shared/components/Button';
-import {Card} from '../../shared/components/Card';
-import {Icon} from '../../shared/components/Icon';
-import {apiClient} from '../../shared/api/client';
-import {vnd} from '../campaigns/presentation';
-import {fundraisingPercent, formatPercent} from '../../shared/lib/fundraising';
-import {catalogLabel} from '../../shared/lib/catalogLabels';
-import {ApiImage} from '../../shared/components/ApiImage';
-import {LoadingState} from '../../shared/components/LoadingState';
-import {ErrorState} from '../../shared/components/ErrorState';
-import {errorMessage} from '../../shared/api/errors';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useLanguage, tr, locale } from '../../shared/lib/i18n';
+import type { CampaignDashboard } from './types';
+import { Button } from '../../shared/components/Button';
+import { Card } from '../../shared/components/Card';
+import { Icon } from '../../shared/components/Icon';
+import { apiClient } from '../../shared/api/client';
+import { vnd } from '../campaigns/presentation';
+import { fundraisingPercent, formatPercent } from '../../shared/lib/fundraising';
+import { catalogLabel } from '../../shared/lib/catalogLabels';
+import { ApiImage } from '../../shared/components/ApiImage';
+import { LoadingState } from '../../shared/components/LoadingState';
+import { ErrorState } from '../../shared/components/ErrorState';
+import { errorMessage } from '../../shared/api/errors';
 
 async function embeddedPhoto(src: string): Promise<string> {
     let blob: Blob;
     if (src.startsWith('/api/v1/')) {
-        blob = (await apiClient.get<Blob>(src.slice('/api/v1'.length), {responseType: 'blob'})).data;
+        blob = (await apiClient.get<Blob>(src.slice('/api/v1'.length), { responseType: 'blob' }))
+            .data;
     } else {
         const response = await fetch(src);
         if (!response.ok) throw new Error('Image unavailable');
@@ -47,7 +48,11 @@ interface Props {
 }
 
 function escapeXml(value: string) {
-    return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
 }
 
 function titleLines(title: string): string[] {
@@ -63,7 +68,13 @@ function titleLines(title: string): string[] {
     return lines;
 }
 
-export function CampaignFinalResult({title, data, campaignId, categoryName, organizerName}: Props) {
+export function CampaignFinalResult({
+    title,
+    data,
+    campaignId,
+    categoryName,
+    organizerName,
+}: Props) {
     useLanguage();
     const [activeTab, setActiveTab] = useState<'poster' | 'social'>('poster');
     const [selectedPhoto, setSelectedPhoto] = useState<string>('/images/dut-campus-main.jpg');
@@ -80,11 +91,18 @@ export function CampaignFinalResult({title, data, campaignId, categoryName, orga
     });
 
     const galleryImages = galleryQuery.data ?? [];
-    const activePhoto = galleryImages.length > 0 && selectedPhoto === '/images/dut-campus-main.jpg'
-        ? galleryImages[0].imageUrl
-        : selectedPhoto;
-    const photoQuery = useQuery({queryKey: ['poster-photo', activePhoto], queryFn: () => embeddedPhoto(activePhoto)});
-    const campaignUrl = new URL(campaignId ? '/campaigns/' + campaignId : '/campaigns', window.location.origin).href;
+    const activePhoto =
+        galleryImages.length > 0 && selectedPhoto === '/images/dut-campus-main.jpg'
+            ? galleryImages[0].imageUrl
+            : selectedPhoto;
+    const photoQuery = useQuery({
+        queryKey: ['poster-photo', activePhoto],
+        queryFn: () => embeddedPhoto(activePhoto),
+    });
+    const campaignUrl = new URL(
+        campaignId ? '/campaigns/' + campaignId : '/campaigns',
+        window.location.origin,
+    ).href;
 
     const volunteers = data.operations.applications.ACCEPTED;
     const verifiedVolunteers = data.operations.verifiedCompletionCount;
@@ -93,18 +111,26 @@ export function CampaignFinalResult({title, data, campaignId, categoryName, orga
     const donationCount = data.financialSummary.successfulDonationCount;
     const goal = data.financialSummary.fundraisingGoal;
     const progressPercent = fundraisingPercent(donations, goal);
-    const progressLabel = progressPercent === null ? tr('Chưa đặt mục tiêu') : formatPercent(progressPercent);
+    const progressLabel =
+        progressPercent === null ? tr('Chưa đặt mục tiêu') : formatPercent(progressPercent);
     const tasksDone = data.operations.tasks.DONE + data.operations.tasks.VERIFIED;
     const totalTasks = data.operations.tasks.TODO + data.operations.tasks.IN_PROGRESS + tasksDone;
 
     const formattedDonations = vnd(donations);
-    const formattedGoal = goal ? vnd(goal) : tr("Chưa đặt mục tiêu");
+    const formattedGoal = goal ? vnd(goal) : tr('Chưa đặt mục tiêu');
 
     const generatePosterSvg = () => {
         const lines = titleLines(title);
-        const posterTitle = lines.map((line, index) => `<tspan x="0" y="${lines.length === 1 ? 42 : 20 + index * (lines.length > 3 ? 20 : 28)}" ${line.length > 70 ? 'textLength="1420" lengthAdjust="spacingAndGlyphs"' : ''}>${escapeXml(line)}</tspan>`).join('');
-        const escapedCategory = escapeXml(categoryName ? tr(catalogLabel(categoryName)) : tr("Cộng đồng DUT"));
-        const escapedOrganizer = escapeXml(organizerName || "Trường Đại học Bách khoa - ĐHĐN");
+        const posterTitle = lines
+            .map(
+                (line, index) =>
+                    `<tspan x="0" y="${lines.length === 1 ? 42 : 20 + index * (lines.length > 3 ? 20 : 28)}" ${line.length > 70 ? 'textLength="1420" lengthAdjust="spacingAndGlyphs"' : ''}>${escapeXml(line)}</tspan>`,
+            )
+            .join('');
+        const escapedCategory = escapeXml(
+            categoryName ? tr(catalogLabel(categoryName)) : tr('Cộng đồng DUT'),
+        );
+        const escapedOrganizer = escapeXml(organizerName || 'Trường Đại học Bách khoa - ĐHĐN');
 
         return `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
       <defs>
@@ -237,7 +263,7 @@ export function CampaignFinalResult({title, data, campaignId, categoryName, orga
 
     const downloadSvg = () => {
         const svgContent = generatePosterSvg();
-        const blob = new Blob([svgContent], {type: 'image/svg+xml;charset=utf-8'});
+        const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -249,32 +275,38 @@ export function CampaignFinalResult({title, data, campaignId, categoryName, orga
     const downloadPng = () => {
         setExportError('');
         const svgContent = generatePosterSvg();
-        const svgBlob = new Blob([svgContent], {type: 'image/svg+xml;charset=utf-8'});
+        const svgBlob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
         const url = URL.createObjectURL(svgBlob);
         const img = new Image();
         img.onload = () => {
             try {
-            const canvas = document.createElement('canvas');
-            canvas.width = 1600;
-            canvas.height = 1000;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-                ctx.drawImage(img, 0, 0);
-                const pngUrl = canvas.toDataURL('image/png');
-                const downloadLink = document.createElement('a');
-                downloadLink.href = pngUrl;
-                downloadLink.download = `DUT-Connect-Poster-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.png`;
-                downloadLink.click();
-            }
+                const canvas = document.createElement('canvas');
+                canvas.width = 1600;
+                canvas.height = 1000;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0);
+                    const pngUrl = canvas.toDataURL('image/png');
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = pngUrl;
+                    downloadLink.download = `DUT-Connect-Poster-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.png`;
+                    downloadLink.click();
+                }
             } catch {
                 setExportError(tr('Chưa xuất được poster. Vui lòng thử lại.'));
-            } finally {URL.revokeObjectURL(url);}
+            } finally {
+                URL.revokeObjectURL(url);
+            }
         };
-        img.onerror = () => {URL.revokeObjectURL(url); setExportError(tr('Chưa xuất được poster. Vui lòng thử lại.'));};
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            setExportError(tr('Chưa xuất được poster. Vui lòng thử lại.'));
+        };
         img.src = url;
     };
 
-    const socialPostContent = locale().startsWith('en') ? `📢 [CAMPAIGN RESULTS] ${title}
+    const socialPostContent = locale().startsWith('en')
+        ? `📢 [CAMPAIGN RESULTS] ${title}
 DUT Connect · University of Science and Technology, University of Danang
 
 Organizer: ${organizerName || 'DUT community'}
@@ -286,12 +318,13 @@ Completed tasks: ${tasksDone} / ${totalTasks}
 
 Thank you to everyone who contributed to this campaign.
 Campaign details: ${campaignUrl}
-#DUTConnect` : `📢 [TỔNG KẾT CHIẾN DỊCH] ${title}
+#DUTConnect`
+        : `📢 [TỔNG KẾT CHIẾN DỊCH] ${title}
 Trường Đại học Bách khoa - Đại học Đà Nẵng | Hệ thống DUT Connect
 
 Kính gửi Quý Thầy Cô, Quý Nhà hảo tâm, các anh chị Cựu sinh viên và các bạn Sinh viên Bách khoa thân mến!
 
-Chiến dịch "${title}" do ${organizerName || "Trường Đại học Bách khoa"} khởi xướng trên nền tảng DUT Connect đã chính thức khép lại với những kết quả và dấu ấn vô cùng ý nghĩa:
+Chiến dịch "${title}" do ${organizerName || 'Trường Đại học Bách khoa'} khởi xướng trên nền tảng DUT Connect đã chính thức khép lại với những kết quả và dấu ấn vô cùng ý nghĩa:
 
 🌟 NHỮNG CON SỐ ẤN TƯỢNG ĐÃ ĐẠT ĐƯỢC:
 💰 Kinh phí gây quỹ: ${formattedDonations} (${progressLabel})
@@ -312,7 +345,7 @@ Xin chân thành cảm ơn sự chung tay đồng hành, tinh thần trách nhi�
             setCopied(true);
             setTimeout(() => setCopied(false), 3000);
         } catch {
-            alert(tr("Không thể sao chép, vui lòng thử lại"));
+            alert(tr('Không thể sao chép, vui lòng thử lại'));
         }
     };
 
@@ -323,8 +356,10 @@ Xin chân thành cảm ơn sự chung tay đồng hành, tinh thần trách nhi�
             {/* Header with Tab Navigation */}
             <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
                 <div>
-                    <span className="eyebrow text-primary">{tr("TỔNG KẾT CHIẾN DỊCH")}</span>
-                    <h2 className="text-xl font-bold text-text-primary">{tr("Tạo post & Poster kết quả")}</h2>
+                    <span className="eyebrow text-primary">{tr('TỔNG KẾT CHIẾN DỊCH')}</span>
+                    <h2 className="text-xl font-bold text-text-primary">
+                        {tr('Tạo post & Poster kết quả')}
+                    </h2>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
@@ -338,7 +373,7 @@ Xin chân thành cảm ơn sự chung tay đồng hành, tinh thần trách nhi�
                                     : 'text-text-secondary hover:text-text-primary'
                             }`}
                         >
-                            🖼️ {tr("Poster Đồ Họa")}
+                            🖼️ {tr('Poster Đồ Họa')}
                         </button>
                         <button
                             type="button"
@@ -349,19 +384,29 @@ Xin chân thành cảm ơn sự chung tay đồng hành, tinh thần trách nhi�
                                     : 'text-text-secondary hover:text-text-primary'
                             }`}
                         >
-                            📝 {tr("Bài Đăng Mạng Xã Hội")}
+                            📝 {tr('Bài Đăng Mạng Xã Hội')}
                         </button>
                     </div>
 
                     {activeTab === 'poster' && (
                         <div className="flex gap-2">
-                            <Button variant="secondary" disabled={!photoQuery.data} onClick={downloadSvg} className="text-xs py-1.5">
+                            <Button
+                                variant="secondary"
+                                disabled={!photoQuery.data}
+                                onClick={downloadSvg}
+                                className="text-xs py-1.5"
+                            >
                                 <Icon name="file" size={15} />
-                                {tr("Tải vector SVG")}
+                                {tr('Tải vector SVG')}
                             </Button>
-                            <Button variant="primary" disabled={!photoQuery.data} onClick={downloadPng} className="text-xs py-1.5 font-semibold shadow-xs">
+                            <Button
+                                variant="primary"
+                                disabled={!photoQuery.data}
+                                onClick={downloadPng}
+                                className="text-xs py-1.5 font-semibold shadow-xs"
+                            >
                                 <Icon name="check" size={15} />
-                                {tr("Tải poster PNG (HD)")}
+                                {tr('Tải poster PNG (HD)')}
                             </Button>
                         </div>
                     )}
@@ -373,7 +418,7 @@ Xin chân thành cảm ơn sự chung tay đồng hành, tinh thần trách nhi�
                 <div className="mb-4 rounded-xl border border-border bg-surface-muted/50 p-3">
                     <p className="mb-2 text-xs font-semibold text-text-secondary flex items-center gap-1.5">
                         <Icon name="grid" size={14} />
-                        {tr("Chọn ảnh chiến dịch hiển thị trên Poster:")}
+                        {tr('Chọn ảnh chiến dịch hiển thị trên Poster:')}
                     </p>
                     <div className="flex gap-2.5 overflow-x-auto pb-1">
                         {galleryImages.map((img) => (
@@ -387,7 +432,11 @@ Xin chân thành cảm ơn sự chung tay đồng hành, tinh thần trách nhi�
                                         : 'border-transparent opacity-75 hover:opacity-100'
                                 }`}
                             >
-                                <ApiImage src={img.imageUrl} alt={img.caption || tr('Hình ảnh chiến dịch')} className="h-full w-full object-cover" />
+                                <ApiImage
+                                    src={img.imageUrl}
+                                    alt={img.caption || tr('Hình ảnh chiến dịch')}
+                                    className="h-full w-full object-cover"
+                                />
                                 {activePhoto === img.imageUrl && (
                                     <span className="absolute top-1 right-1 rounded-full bg-primary p-0.5 text-white">
                                         <Icon name="check" size={10} />
@@ -402,19 +451,31 @@ Xin chân thành cảm ơn sự chung tay đồng hành, tinh thần trách nhi�
             {/* Tab 1: Poster View */}
             {activeTab === 'poster' && (
                 <div className="space-y-3">
-                    {galleryQuery.isError && <ErrorState message={errorMessage(galleryQuery.error)} onRetry={() => void galleryQuery.refetch()}/>}
-                    {photoQuery.isPending ? <LoadingState/> : photoQuery.isError ?
-                        <ErrorState message={tr('Chưa tải được ảnh poster.')} onRetry={() => void photoQuery.refetch()}/> :
-                    <div className="relative overflow-hidden rounded-2xl shadow-xl border border-border">
-                        <img
-                            src={svgSource}
-                            alt={tr("Poster kết quả chiến dịch")}
-                            className="w-full h-auto block"
+                    {galleryQuery.isError && (
+                        <ErrorState
+                            message={errorMessage(galleryQuery.error)}
+                            onRetry={() => void galleryQuery.refetch()}
                         />
-                    </div>}
-                    {exportError && <ErrorState message={exportError}/>}
+                    )}
+                    {photoQuery.isPending ? (
+                        <LoadingState />
+                    ) : photoQuery.isError ? (
+                        <ErrorState
+                            message={tr('Chưa tải được ảnh poster.')}
+                            onRetry={() => void photoQuery.refetch()}
+                        />
+                    ) : (
+                        <div className="relative overflow-hidden rounded-2xl shadow-xl border border-border">
+                            <img
+                                src={svgSource}
+                                alt={tr('Poster kết quả chiến dịch')}
+                                className="w-full h-auto block"
+                            />
+                        </div>
+                    )}
+                    {exportError && <ErrorState message={exportError} />}
                     <p className="text-center text-xs text-text-secondary">
-                        {tr("Poster 1600 × 1000 px, tích hợp số liệu và hình ảnh của chiến dịch.")}
+                        {tr('Poster 1600 × 1000 px, tích hợp số liệu và hình ảnh của chiến dịch.')}
                     </p>
                 </div>
             )}
@@ -424,21 +485,23 @@ Xin chân thành cảm ơn sự chung tay đồng hành, tinh thần trách nhi�
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <p className="text-xs text-text-secondary">
-                            {tr("Nội dung bài viết được tạo sẵn với đầy đủ số liệu và hashtag, phù hợp đăng tải lên Facebook, Fanpage, Zalo và Cổng thông tin:")}
+                            {tr(
+                                'Nội dung bài viết được tạo sẵn với đầy đủ số liệu và hashtag, phù hợp đăng tải lên Facebook, Fanpage, Zalo và Cổng thông tin:',
+                            )}
                         </p>
                         <Button
-                            variant={copied ? "secondary" : "primary"}
+                            variant={copied ? 'secondary' : 'primary'}
                             onClick={copySocialPost}
                             className="text-xs font-semibold"
                         >
                             {copied ? (
                                 <span className="flex items-center gap-1.5 text-emerald-600">
                                     <Icon name="check" size={14} />
-                                    {tr("Đã sao chép vào clipboard!")}
+                                    {tr('Đã sao chép vào clipboard!')}
                                 </span>
                             ) : (
                                 <span className="flex items-center gap-1.5">
-                                    📋 {tr("Sao chép bài viết")}
+                                    📋 {tr('Sao chép bài viết')}
                                 </span>
                             )}
                         </Button>

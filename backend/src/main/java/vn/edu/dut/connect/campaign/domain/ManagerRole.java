@@ -1,2 +1,5 @@
 package vn.edu.dut.connect.campaign.domain;
-public enum ManagerRole { OWNER }
+
+public enum ManagerRole {
+    OWNER,
+}

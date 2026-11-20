@@ -1,3 +1,6 @@
 package vn.edu.dut.connect.volunteer.domain;
 
-public enum MeetingType {ONLINE, OFFLINE}
+public enum MeetingType {
+    ONLINE,
+    OFFLINE,
+}

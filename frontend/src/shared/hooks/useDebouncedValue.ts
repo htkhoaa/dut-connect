@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import { useEffect, useState } from 'react';
 
 /** Wait for a short typing pause before changing the server query. */
 export function useDebouncedValue<T>(value: T, delay = 300): T {

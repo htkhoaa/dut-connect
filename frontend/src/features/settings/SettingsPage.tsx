@@ -1,56 +1,58 @@
-import {useLanguage, tr, renderText} from "../../shared/lib/i18n";
-import {useState, useEffect} from 'react';
-import {useSearchParams, Link} from 'react-router-dom';
-import {Icon, type IconName} from '../../shared/components/Icon';
-import {ProfilePage} from '../profile/ProfilePage';
-import {HistoryPage} from '../volunteers/HistoryPage';
-import {DonationsPage} from '../donations/DonationsPage';
-import {OrganizationListPage} from '../organizations/OrganizationListPage';
-import {ProposalListPage} from '../proposals/ProposalListPage';
+import { useLanguage, tr, renderText } from '../../shared/lib/i18n';
+import { useState, useEffect } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
+import { Icon, type IconName } from '../../shared/components/Icon';
+import { ProfilePage } from '../profile/ProfilePage';
+import { HistoryPage } from '../volunteers/HistoryPage';
+import { DonationsPage } from '../donations/DonationsPage';
+import { OrganizationListPage } from '../organizations/OrganizationListPage';
+import { ProposalListPage } from '../proposals/ProposalListPage';
 
 type TabId = 'profile' | 'history' | 'donations' | 'organizations' | 'proposals';
-type Tab = {id: TabId; label: string; icon: IconName};
+type Tab = { id: TabId; label: string; icon: IconName };
 
 const tabs: Tab[] = [
-    {id: 'profile', label: 'Hồ sơ & kỹ năng', icon: 'users'},
-    {id: 'history', label: 'Lịch sử tình nguyện', icon: 'calendar'},
-    {id: 'donations', label: 'Khoản ủng hộ', icon: 'heart'},
-    {id: 'organizations', label: 'Tổ chức của tôi', icon: 'building'},
-    {id: 'proposals', label: 'Đề xuất chiến dịch', icon: 'file'},
+    { id: 'profile', label: 'Hồ sơ & kỹ năng', icon: 'users' },
+    { id: 'history', label: 'Lịch sử tình nguyện', icon: 'calendar' },
+    { id: 'donations', label: 'Khoản ủng hộ', icon: 'heart' },
+    { id: 'organizations', label: 'Tổ chức của tôi', icon: 'building' },
+    { id: 'proposals', label: 'Đề xuất chiến dịch', icon: 'file' },
 ];
 
 export function SettingsPage() {
     useLanguage();
     const [searchParams, setSearchParams] = useSearchParams();
     const tabParam = searchParams.get('tab') as TabId | null;
-    const [active, setActive] = useState<TabId>(tabParam && tabs.some(t => t.id === tabParam) ? tabParam : 'profile');
+    const [active, setActive] = useState<TabId>(
+        tabParam && tabs.some((t) => t.id === tabParam) ? tabParam : 'profile',
+    );
 
     useEffect(() => {
-        if (tabParam && tabs.some(t => t.id === tabParam)) {
+        if (tabParam && tabs.some((t) => t.id === tabParam)) {
             setActive(tabParam);
         }
     }, [tabParam]);
 
     const selectTab = (id: TabId) => {
         setActive(id);
-        setSearchParams({tab: id});
+        setSearchParams({ tab: id });
     };
 
     return (
         <div className="mx-auto max-w-6xl space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
                 <div>
-                    <p className="eyebrow mb-1 text-primary">{tr("KHÔNG GIAN CỦA BẠN")}</p>
-                    <h1 className="text-3xl font-bold">{tr("Cài đặt cá nhân")}</h1>
+                    <p className="eyebrow mb-1 text-primary">{tr('KHÔNG GIAN CỦA BẠN')}</p>
+                    <h1 className="text-3xl font-bold">{tr('Cài đặt cá nhân')}</h1>
                 </div>
                 <Link to="/campaigns" className="ui-button ui-button-secondary">
-                    {tr("← Khám phá chiến dịch")}
+                    {tr('← Khám phá chiến dịch')}
                 </Link>
             </div>
 
             {/* Horizontal Tabs */}
             <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface p-1.5 shadow-sm">
-                {tabs.map(tab => (
+                {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         type="button"

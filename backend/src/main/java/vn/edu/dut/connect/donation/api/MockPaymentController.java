@@ -1,18 +1,18 @@
 package vn.edu.dut.connect.donation.api;
 
-import java.util.UUID;
+import static vn.edu.dut.connect.donation.application.DonationContracts.*;
 
+import java.util.UUID;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.dut.connect.donation.application.MockPaymentService;
 
-import static vn.edu.dut.connect.donation.application.DonationContracts.*;
-
 @RestController
 @Profile("dev & !prod")
 @RequestMapping("/api/v1/dev/mock-payments")
 public class MockPaymentController {
+
     private final MockPaymentService service;
 
     public MockPaymentController(MockPaymentService service) {

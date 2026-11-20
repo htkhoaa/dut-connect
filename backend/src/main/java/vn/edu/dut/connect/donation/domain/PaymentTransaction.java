@@ -1,7 +1,6 @@
 package vn.edu.dut.connect.donation.domain;
 
 import jakarta.persistence.*;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
@@ -9,42 +8,62 @@ import java.util.UUID;
 @Entity
 @Table(name = "payment_transactions")
 public class PaymentTransaction {
+
     @Id
     private UUID id;
+
     @Column(nullable = false)
     private UUID donationId;
+
     @Column(nullable = false, length = 30)
     private String provider;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private PaymentStatus status;
+
     @Column(nullable = false, length = 100, unique = true)
     private String providerOrderId;
+
     @Column(length = 100, unique = true)
     private String providerTransactionId;
+
     @Column(nullable = false, precision = 19, scale = 0)
     private BigDecimal amount;
+
     @Column(length = 2000)
     private String checkoutUrl;
+
     @Column(length = 100)
     private String providerResponseCode;
+
     @Column(length = 1000)
     private String failureReason;
+
     private Instant expiresAt;
     private Instant paidAt;
+
     @Column(nullable = false)
     private Instant createdAt;
+
     @Column(nullable = false)
     private Instant updatedAt;
+
     @Column(name = "payos_order_code")
     private Long payosOrderCode;
+
     @Version
     private Long version;
 
-    protected PaymentTransaction() {
-    }
+    protected PaymentTransaction() {}
 
-    public PaymentTransaction(UUID donation, String provider, String order, BigDecimal amount, Instant expires) {
+    public PaymentTransaction(
+        UUID donation,
+        String provider,
+        String order,
+        BigDecimal amount,
+        Instant expires
+    ) {
         id = UUID.randomUUID();
         donationId = donation;
         this.provider = provider;
@@ -63,8 +82,11 @@ public class PaymentTransaction {
 
     public void created(String url, String code) {
         if (status != PaymentStatus.CREATED) return;
-        if (url == null || url.isBlank() || url.length() > 2000)
-            throw new PaymentViolation("PAYMENT_PROVIDER_ERROR", "Provider returned an invalid checkout URL", null);
+        if (url == null || url.isBlank() || url.length() > 2000) throw new PaymentViolation(
+            "PAYMENT_PROVIDER_ERROR",
+            "Provider returned an invalid checkout URL",
+            null
+        );
         checkoutUrl = url;
         providerResponseCode = code;
         change(PaymentStatus.PROVIDER_PENDING);
@@ -79,8 +101,13 @@ public class PaymentTransaction {
     }
 
     public void paid(String transaction, Instant time) {
-        if (transaction == null || transaction.isBlank() || transaction.length() > 100)
-            throw new PaymentViolation("PAYMENT_VERIFICATION_FAILED", "Provider transaction reference required", null);
+        if (
+            transaction == null || transaction.isBlank() || transaction.length() > 100
+        ) throw new PaymentViolation(
+            "PAYMENT_VERIFICATION_FAILED",
+            "Provider transaction reference required",
+            null
+        );
         if (status == PaymentStatus.PAID) return;
         if (status == PaymentStatus.CREATED) change(PaymentStatus.PROVIDER_PENDING);
         if (status != PaymentStatus.PROVIDER_PENDING) invalid();
@@ -105,7 +132,11 @@ public class PaymentTransaction {
     }
 
     private void invalid() {
-        throw new PaymentViolation("INVALID_STATE_TRANSITION", "Payment cannot perform this transition", null);
+        throw new PaymentViolation(
+            "INVALID_STATE_TRANSITION",
+            "Payment cannot perform this transition",
+            null
+        );
     }
 
     private void change(PaymentStatus next) {

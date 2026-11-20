@@ -1,6 +1,6 @@
-import {apiClient, loginSession, logoutSession} from '../../shared/api/client';
-import {useAuth} from './store';
-import type {LoginValues, RegisterValues, UserSummary} from './types';
+import { apiClient, loginSession, logoutSession } from '../../shared/api/client';
+import { useAuth } from './store';
+import type { LoginValues, RegisterValues, UserSummary } from './types';
 
 export async function login(values: LoginValues) {
     return loginSession(values);
@@ -18,12 +18,18 @@ export async function currentUser() {
     return (await apiClient.get<UserSummary>('/auth/me')).data;
 }
 
-export async function requestLoginLink(values: {email: string; fullName?: string; faculty?: string}) {
+export async function requestLoginLink(values: {
+    email: string;
+    fullName?: string;
+    faculty?: string;
+}) {
     await apiClient.post('/auth/login-link', values);
 }
 
 export async function verifyLoginLink(token: string) {
-    const {data} = await apiClient.post('/auth/login-link/verify', undefined, {params: {token}});
+    const { data } = await apiClient.post('/auth/login-link/verify', undefined, {
+        params: { token },
+    });
     useAuth.getState().accept(data);
     return data;
 }
