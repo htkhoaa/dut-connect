@@ -11,7 +11,11 @@ interface NavItem {
 }
 
 const allItems: NavItem[] = [
+    {path: 'team', label: 'Đội tình nguyện', icon: 'users', modes: ['VOLUNTEER_ONLY', 'HYBRID']},
     {path: 'applications', label: 'Đăng ký tình nguyện', icon: 'users', modes: ['VOLUNTEER_ONLY', 'HYBRID']},
+    {path: 'tasks', label: 'Nhiệm vụ', icon: 'file', modes: ['VOLUNTEER_ONLY', 'HYBRID']},
+    {path: 'meetings', label: 'Lịch họp', icon: 'users', modes: ['VOLUNTEER_ONLY', 'HYBRID']},
+    {path: 'attendance', label: 'Điểm danh', icon: 'shield', modes: ['VOLUNTEER_ONLY', 'HYBRID']},
     {path: 'finance', label: 'Tài chính', icon: 'heart', modes: ['DONATION_ONLY', 'HYBRID']},
     {path: 'completions', label: 'Xác minh hoàn thành', icon: 'shield', modes: ['VOLUNTEER_ONLY', 'HYBRID']},
     {path: 'reports', label: 'Báo cáo', icon: 'file', modes: ['VOLUNTEER_ONLY', 'DONATION_ONLY', 'HYBRID']},

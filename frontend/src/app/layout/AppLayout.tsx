@@ -11,6 +11,7 @@ import {LanguageSwitch} from '../../shared/components/LanguageSwitch';
 import {NotificationBell} from '../../features/notifications/NotificationBell';
 import {useGlobalRealtime} from '../../shared/lib/useRealtimeWs';
 import {FloatingNotificationContainer} from '../../shared/components/FloatingNotification';
+import {Breadcrumbs} from '../../shared/components/Breadcrumbs';
 
 type AdminItem = {to: string; label: string; icon: IconName};
 const adminItems: AdminItem[] = [
@@ -143,30 +144,7 @@ export function AppLayout() {
                         ) : (
                             user && (
                                 <>
-                                    <NavLink
-                                        to="/manage/campaigns"
-                                        className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
-                                            isActive
-                                                ? 'bg-primary-light text-primary font-semibold shadow-2xs'
-                                                : headerScrolled
-                                                    ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
-                                                    : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
-                                        }`}
-                                    >
-                                        {tr("Chiến dịch của tôi")}
-                                    </NavLink>
-                                    <NavLink
-                                        to="/proposals"
-                                        className={({isActive}) => `rounded-xl px-3 py-1.5 lg:px-3.5 lg:py-2 whitespace-nowrap transition-all ${
-                                            isActive
-                                                ? 'bg-primary-light text-primary font-semibold shadow-2xs'
-                                                : headerScrolled
-                                                    ? 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
-                                                    : 'text-text-secondary hover:bg-white/60 hover:text-text-primary'
-                                        }`}
-                                    >
-                                        {tr("Đề xuất")}
-                                    </NavLink>
+                                    <NavLink to="/me" className={({isActive}) => `rounded-xl px-3 py-2 whitespace-nowrap ${isActive ? 'bg-primary-light text-primary font-semibold' : 'text-text-secondary hover:bg-surface-muted'}`}>{tr('Không gian của tôi')}</NavLink>
                                 </>
                             )
                         )}
@@ -209,6 +187,8 @@ export function AppLayout() {
                                             </div>
 
                                             <div className="py-1">
+                                                <Link to="/me" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-primary hover:bg-primary-light">{tr('Không gian của tôi')} →</Link>
+                                                <Link to="/guide" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-text-secondary hover:bg-surface-muted">{tr('Hướng dẫn tham gia')}</Link>
                                                 {isAdmin ? (
                                                     <>
                                                         <Link to="/admin" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-primary hover:bg-primary-light transition-colors">
@@ -378,6 +358,7 @@ export function AppLayout() {
             {/* MAIN CONTENT AREA */}
             <FloatingNotificationContainer />
             <main id="main-content" className="flex-1 w-full max-w-7xl mx-auto px-4 py-8 sm:px-6">
+                <Breadcrumbs/>
                 {renderText(logout.isError && <p role="alert" className="mb-4 text-danger">{renderText(errorMessage(logout.error))}</p>)}
                 <Suspense fallback={<LoadingState message={tr("Đang tải trang…")} />}>
                     <Outlet />
@@ -397,6 +378,7 @@ export function AppLayout() {
                         <p className="mb-3 font-semibold text-text-primary">{tr("Cùng hành động")}</p>
                         <div className="grid gap-2 text-xs">
                             <Link to="/campaigns" className="hover:text-primary transition-colors">{tr("Khám phá chiến dịch")}</Link>
+                            <Link to="/guide" className="hover:text-primary transition-colors">{tr("Hướng dẫn tham gia")}</Link>
                             <Link to="/organizations" className="hover:text-primary transition-colors">{tr("Cộng đồng tổ chức")}</Link>
                             <Link to={user ? '/proposals/new' : '/login'} className="hover:text-primary transition-colors">{tr(user ? 'Tạo đề xuất' : 'Đăng nhập để bắt đầu')}</Link>
                         </div>

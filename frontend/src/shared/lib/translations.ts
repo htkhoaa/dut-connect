@@ -983,3 +983,70 @@ Object.assign(english, {
   'XÁC NHẬN MINH BẠCH': 'CAMPAIGN RESULTS',
   'Mỗi hành động nhỏ đều tạo nên một giá trị lớn cho cộng đồng Bách khoa.': 'Every contribution makes a difference to the DUT community.',
 });
+
+Object.assign(english, Object.fromEntries(`
+Không gian của tôi|My space
+Hướng dẫn tham gia|Getting started
+Đường dẫn trang|Breadcrumbs
+Các bước tạo đề xuất|Proposal steps
+Nội dung đề xuất|Proposal details
+Thời gian và nguồn lực|Schedule and resources
+Hình ảnh|Photos
+Kiểm tra và gửi|Review and submit
+Dữ liệu được giữ khi chuyển bước. Bạn chỉ gửi đề xuất sau khi kiểm tra ở bước cuối.|Your entries are kept between steps. Submit your proposal after the final review.
+Kiểm tra kế hoạch trước khi gửi|Review your plan before submitting
+Sửa nội dung|Edit details
+Sửa thời gian và nguồn lực|Edit schedule and resources
+Sau khi gửi, theo dõi kết quả xét duyệt trong Đề xuất của tôi.|After submitting, track the decision in My proposals.
+Xem nội dung chi tiết|View full details
+Bước trước|Previous step
+Tiếp tục|Continue
+Quay lại danh sách|Back to list
+Tham gia và đóng góp|Participate and contribute
+Tổ chức hoạt động|Organize activities
+Tài khoản và trợ giúp|Account and help
+Chọn việc bạn muốn làm. Các thông tin đăng ký, đóng góp và quản lý được tập trung tại đây.|Choose what you want to do. Find your applications, donations and management tools here.
+Tìm hoạt động để tham gia hoặc quyên góp.|Find a campaign to volunteer for or support.
+Theo dõi kết quả xét duyệt và đội tình nguyện.|Track application decisions and your volunteer team.
+Kiểm tra trạng thái các khoản đóng góp.|Check the status of your donations.
+Xem công việc được giao và cập nhật tiến độ.|View your assigned tasks and update progress.
+Xem kết quả hoàn thành và số giờ đã xác minh.|View completion results and verified hours.
+Chuẩn bị kế hoạch và gửi đề xuất để xét duyệt.|Prepare your plan and submit it for review.
+Theo dõi đề xuất đang chờ duyệt hoặc cần bổ sung.|Track proposals awaiting review or updates.
+Điều phối thành viên, nhiệm vụ, tài chính và báo cáo.|Coordinate volunteers, tasks, finances and reports.
+Quản lý hồ sơ tổ chức và quyền đại diện.|Manage organization details and representation permissions.
+Cập nhật thông tin và kỹ năng của bạn.|Update your profile and skills.
+Quản lý tùy chọn tài khoản.|Manage your account preferences.
+Xem các bước tham gia, quyên góp và tạo chiến dịch.|Learn how to volunteer, donate and create campaigns.
+Bắt đầu từ mục tiêu của bạn và theo dõi từng bước trên DUT Connect.|Start with your goal and follow the steps on DUT Connect.
+Tôi muốn tham gia tình nguyện|I want to volunteer
+Tôi muốn quyên góp|I want to donate
+Tôi muốn tổ chức chiến dịch|I want to organize a campaign
+Chọn chiến dịch gây quỹ|Choose a fundraising campaign
+Chọn chiến dịch đang mở tuyển và đọc yêu cầu.|Choose a campaign accepting volunteers and read its requirements.
+Đăng nhập, hoàn thiện hồ sơ rồi gửi đăng ký.|Sign in, complete your profile and apply.
+Theo dõi xét duyệt trong Đăng ký của tôi.|Track the decision in My applications.
+Khi được nhận, theo dõi nhiệm vụ, lịch họp và điểm danh.|Once accepted, follow tasks, meetings and attendance.
+Chọn chiến dịch đang nhận đóng góp và xem mục tiêu gây quỹ.|Choose a campaign accepting donations and review its fundraising goal.
+Đăng nhập, nhập số tiền và thực hiện thanh toán.|Sign in, enter an amount and complete payment.
+Chỉ khoản thanh toán thành công mới được tính vào tiến độ.|Only successful payments count towards fundraising progress.
+Theo dõi kết quả trong Quyên góp của tôi và chi phí công khai.|Track the result in My donations and review public expenses.
+Chọn cá nhân hoặc tổ chức đã xác minh mà bạn có quyền đại diện.|Choose Individual or a verified organization you can represent.
+Điền nội dung, thời gian, nguồn lực và hình ảnh.|Add details, schedule, resources and photos.
+Kiểm tra kế hoạch rồi gửi xét duyệt; theo dõi trong Đề xuất của tôi.|Review your plan and submit it; track the decision in My proposals.
+Khi được duyệt, mở Chiến dịch tôi quản lý để điều phối và báo cáo.|After approval, open Managed campaigns for coordination and reports.
+Mục lục trang|Page contents
+Trong trang này|On this page
+Gây quỹ|Fundraising
+Chi phí công khai|Public expenses
+Xem ảnh bìa|View cover photo
+Xem ảnh chiến dịch|View campaign photo
+Ảnh trước|Previous photo
+Ảnh tiếp theo|Next photo
+Phóng to|Zoom in
+Thu nhỏ|Zoom out
+Vừa khung|Fit to window
+Vùng xem ảnh, cuộn để di chuyển khi phóng to|Image viewer; scroll to pan when zoomed in
+Cuộn ngang hoặc dọc để di chuyển ảnh khi phóng to. Nhấn Esc để đóng.|Scroll horizontally or vertically to pan when zoomed in. Press Esc to close.
+Đóng hộp thoại|Close dialog
+`.trim().split('\n').map(row => {const at = row.indexOf('|'); return [row.slice(0, at), row.slice(at + 1)];})));

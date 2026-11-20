@@ -7,7 +7,7 @@ import {useEffect, useState, useRef} from 'react';
 import {useForm, type FieldPath} from 'react-hook-form';
 import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
 import {z} from 'zod';
-import {useNavigate} from 'react-router-dom';
+import {useNavigate, Link} from 'react-router-dom';
 import {useAuth} from '../../auth/store';
 import type {Content, FormValues} from '../types';
 import {useCategoryCatalog, useOrganizationOptions, useEditCampaign} from '../hooks';
@@ -122,6 +122,18 @@ export function PlanForm({
     modeLocked?: boolean;
 }) {
     useLanguage();
+    const [desktop, setDesktop] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
+    const [step, setStep] = useState(0);
+    const stepHeading = useRef<HTMLHeadingElement>(null);
+    const wizard = kind === 'proposal' && !id && !content && desktop;
+    const stepLabels = ['Nội dung đề xuất', 'Thời gian và nguồn lực', 'Hình ảnh', 'Kiểm tra và gửi'];
+    useEffect(() => {
+        const media = window.matchMedia('(min-width: 1024px)');
+        const update = () => setDesktop(media.matches);
+        media.addEventListener('change', update);
+        return () => media.removeEventListener('change', update);
+    }, []);
+    useEffect(() => {if (wizard) stepHeading.current?.focus();}, [step, wizard]);
     const qc = useQueryClient();
     const userId = useAuth(s => s.user?.id);
     const draftStorageKey = DRAFT_STORAGE_KEY + ':' + userId;
@@ -285,6 +297,10 @@ export function PlanForm({
     const submit = form.handleSubmit(async input => {
         const parsed = schema.safeParse(input);
         if (!parsed.success) {
+            if (wizard) {
+                const field = parsed.error.issues[0]?.path[0];
+                setStep(['organizerType', 'organizationId', 'categoryId', 'title', 'summary', 'description', 'expectedImpact'].includes(String(field)) ? 0 : 1);
+            }
             for (const issue of parsed.error.issues) {
                 form.setError(issue.path[0] as FieldPath<FormValues>, {message: issue.message});
             }
@@ -347,8 +363,31 @@ export function PlanForm({
         );
     }
 
+    function nextStep() {
+        const groups: (keyof FormValues)[][] = [
+            ['organizerType', 'organizationId', 'categoryId', 'title', 'summary', 'description', 'expectedImpact'],
+            ['contributionMode', 'startDate', 'endDate', 'applicationDeadline', 'fundraisingDeadline', 'targetVolunteerCount', 'targetTechnicalCount', 'targetLogisticsCount', 'volunteerRequirements', 'fundraisingGoal', 'donationBankName', 'donationAccountNumber', 'donationAccountHolder'],
+            [],
+        ];
+        const result = schema.safeParse(form.getValues());
+        const issues = result.success ? [] : result.error.issues.filter(issue => groups[step]?.includes(issue.path[0] as keyof FormValues));
+        form.clearErrors();
+        for (const issue of issues) form.setError(issue.path[0] as keyof FormValues, {message: tr(issue.message)});
+        if (issues.length) {form.setFocus(issues[0].path[0] as keyof FormValues); return;}
+        setStep(Math.min(step + 1, 3));
+    }
+    const values = form.watch();
+    const busy = mutation.isPending || savingDraft || uploadingImages;
     return (
-        <form noValidate onSubmit={submit} className="space-y-6">
+        <form noValidate onSubmit={event => {if (wizard && step < 3) {event.preventDefault(); nextStep();} else void submit(event);}} className="space-y-6">
+            {wizard && <div className="space-y-4 rounded-2xl border border-border bg-surface-muted p-4">
+                <nav aria-label={tr('Các bước tạo đề xuất')}><ol className="grid grid-cols-4 gap-2">
+                    {stepLabels.map((label, i) => <li key={label}><button type="button" disabled={i > step || busy} onClick={() => setStep(i)} aria-current={step === i ? 'step' : undefined} className={`w-full rounded-xl border p-3 text-left text-sm disabled:cursor-default ${step === i ? 'border-primary bg-primary text-white' : 'border-border bg-surface text-text-secondary'}`}><span className="mb-1 block text-xs">{i + 1} / 4</span>{tr(label)}</button></li>)}
+                </ol></nav>
+                <h2 ref={stepHeading} tabIndex={-1} className="text-lg font-bold outline-none">{tr(stepLabels[step])}</h2>
+                <p className="text-sm text-text-secondary">{tr('Dữ liệu được giữ khi chuyển bước. Bạn chỉ gửi đề xuất sau khi kiểm tra ở bước cuối.')}</p>
+            </div>}
+
             {draftRestored && (
                 <div className="flex items-center justify-between rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
                     <div className="flex items-center gap-2">
@@ -372,6 +411,7 @@ export function PlanForm({
             )}
 
             <fieldset disabled={mutation.isPending || savingDraft} className="space-y-5">
+                <div hidden={wizard && step !== 0} className="space-y-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                     <FormField id="plan-organizerType" label={tr("Đơn vị tổ chức *")} error={form.formState.errors.organizerType?.message}>
                         <Select id="plan-organizerType" disabled={kind === 'campaign'} {...form.register('organizerType')}>
@@ -447,6 +487,8 @@ export function PlanForm({
                 {renderText(area('description', tr("Mô tả chi tiết kế hoạch thực hiện *"), 20000))}
                 {renderText(area('expectedImpact', tr("Giá trị hướng đến cộng đồng *"), 10000))}
 
+                </div>
+                <div hidden={wizard && step !== 1} className="space-y-5">
                 <FormField id="plan-contributionMode" label={tr("Hình thức đóng góp *")} error={form.formState.errors.contributionMode?.message}>
                     <Select id="plan-contributionMode" disabled={modeLocked} {...form.register('contributionMode')}>
                         {renderText(
@@ -529,6 +571,8 @@ export function PlanForm({
                     )
                 )}
 
+                </div>
+                <div hidden={wizard && step !== 2} className="space-y-5">
                 {/* Campaign Image Upload Section */}
                 <div className="space-y-4 rounded-2xl border border-border bg-white p-5 shadow-2xs">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-3">
@@ -636,15 +680,38 @@ export function PlanForm({
                         </div>
                     )}
                 </div>
+                </div>
+                {wizard && step === 3 && <section className="space-y-4 rounded-2xl border border-border p-5">
+                    <h3 className="text-lg font-bold">{tr('Kiểm tra kế hoạch trước khi gửi')}</h3>
+                    <dl className="grid grid-cols-[auto_1fr] gap-x-5 gap-y-3 text-sm">
+                        <dt>{tr('Tiêu đề')}</dt><dd className="break-words font-semibold">{values.title}</dd>
+                        <dt>{tr('Đơn vị tổ chức')}</dt><dd>{values.organizerType === 'INDIVIDUAL' ? tr('Cá nhân') : organizations.data.find(o => o.id === values.organizationId)?.name}</dd>
+                        <dt>{tr('Danh mục')}</dt><dd>{catalogLabel(categories.data.find(c => c.id === values.categoryId)?.name || '')}</dd>
+                        <dt>{tr('Hình thức đóng góp')}</dt><dd>{tr(modes[values.contributionMode as keyof typeof modes])}</dd>
+                        <dt>{tr('Thời gian')}</dt><dd>{values.startDate} → {values.endDate}</dd>
+                        <dt>{tr('Hình ảnh')}</dt><dd>{pendingImages.length}</dd>
+                    </dl>
+                    <p className="whitespace-pre-wrap break-words text-sm text-text-secondary">{values.summary}</p>
+                    <details className="rounded-xl bg-surface-muted p-4 text-sm"><summary className="cursor-pointer font-semibold">{tr('Xem nội dung chi tiết')}</summary>
+                        <p className="mt-3 whitespace-pre-wrap break-words">{values.description}</p><p className="mt-3 whitespace-pre-wrap break-words">{values.expectedImpact}</p>
+                    </details>
+                    {values.contributionMode !== 'VOLUNTEER_ONLY' && <p className="text-sm">{tr('Mục tiêu gây quỹ (VND) *')}: {values.fundraisingGoal} VND · {tr('Hạn gây quỹ *')}: {values.fundraisingDeadline}</p>}
+                    {values.contributionMode !== 'DONATION_ONLY' && <p className="text-sm">{tr('Tổng tình nguyện viên *')}: {values.targetVolunteerCount} · {tr('Hạn đăng ký')}: {values.applicationDeadline}</p>}
+                    {pendingImages.length > 0 && <div className="flex gap-2 overflow-x-auto">{pendingImages.map(image => <img key={image.id} src={image.previewUrl} alt={image.caption || tr('Hình ảnh chiến dịch')} className="h-24 w-32 shrink-0 rounded-lg object-cover"/>)}</div>}
+                    <div className="flex gap-3"><Button type="button" variant="secondary" onClick={() => setStep(0)}>{tr('Sửa nội dung')}</Button><Button type="button" variant="secondary" onClick={() => setStep(1)}>{tr('Sửa thời gian và nguồn lực')}</Button></div>
+                    <p className="text-sm text-text-secondary">{tr('Sau khi gửi, theo dõi kết quả xét duyệt trong Đề xuất của tôi.')}</p>
+                </section>}
             </fieldset>
 
             {renderText(form.formState.errors.root && <ErrorState message={form.formState.errors.root.message || tr("Chưa thể lưu")} />)}
             {renderText(mutation.isSuccess && id && <p role="status" className="text-success">{tr("Đã lưu thay đổi.")}</p>)}
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
-                <Button type="submit" disabled={mutation.isPending || savingDraft || uploadingImages}>
+                {wizard && step > 0 && <Button type="button" variant="secondary" disabled={busy} onClick={() => setStep(step - 1)}>{tr('Bước trước')}</Button>}
+                {wizard && step < 3 && <Button type="button" disabled={busy} onClick={nextStep}>{tr('Tiếp tục')} →</Button>}
+                {(!wizard || step === 3) && <Button type="submit" disabled={mutation.isPending || savingDraft || uploadingImages}>
                     {renderText(uploadingImages ? tr("Đang tải ảnh lên…") : mutation.isPending ? tr("Đang lưu…") : id ? tr("Lưu thay đổi") : tr("Gửi đề xuất"))}
-                </Button>
+                </Button>}
                 {kind === 'proposal' && (
                     <Button
                         type="button"
@@ -655,6 +722,7 @@ export function PlanForm({
                         {uploadingImages ? tr("Đang tải ảnh…") : savingDraft ? tr("Đang lưu nháp…") : tr("Lưu bản nháp")}
                     </Button>
                 )}
+                <Link to={kind === 'campaign' ? '/manage/campaigns' : '/proposals'} className={`ui-button ui-button-secondary ${busy ? 'pointer-events-none opacity-50' : ''}`}>{tr('Quay lại danh sách')}</Link>
             </div>
         </form>
     );

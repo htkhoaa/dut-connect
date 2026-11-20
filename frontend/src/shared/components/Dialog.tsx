@@ -1,4 +1,4 @@
-import {useLanguage, renderText} from "../lib/i18n";
+import {useLanguage, renderText, tr} from "../lib/i18n";
 import {useEffect, useId, useRef, type ReactNode} from 'react';
 
 export function Dialog({open, title, children, onClose, busy = false, className}: {
@@ -19,6 +19,8 @@ export function Dialog({open, title, children, onClose, busy = false, className}
                        const bounds = event.currentTarget.getBoundingClientRect();
                        if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) onClose();
                    }}}>
-        <h2 id={titleId} className="mb-4 text-xl font-semibold">{renderText(title)}</h2>{renderText(children)}
+        <div className="mb-4 flex items-start justify-between gap-4"><h2 id={titleId} className="text-xl font-semibold">{renderText(title)}</h2>
+            <button type="button" disabled={busy} onClick={onClose} aria-label={tr('Đóng hộp thoại')} className="shrink-0 rounded-lg border border-border px-2 py-1 text-sm hover:bg-surface-muted disabled:opacity-50">{tr('Đóng')} ×</button>
+        </div>{renderText(children)}
     </dialog>;
 }

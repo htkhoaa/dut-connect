@@ -1,6 +1,8 @@
 import {createBrowserRouter} from 'react-router-dom';
 import {AppLayout} from '../layout/AppLayout';
 import {HomePage} from '../pages/HomePage';
+import {MySpacePage} from '../pages/MySpacePage';
+import {GuidePage} from '../pages/GuidePage';
 import {ActivityDetailPage} from '../../features/campaigns/ActivityGallery';
 import {NotFoundPage} from '../pages/NotFoundPage';
 import {RouteErrorPage} from '../pages/RouteErrorPage';
@@ -43,6 +45,7 @@ export const router = createBrowserRouter([
         errorElement: <RouteErrorPage/>,
         children: [
             {path: '/', element: <HomePage/>},
+            {path: '/guide', element: <GuidePage/>},
             {path: '/login', element: <AuthPage/>},
             {path: '/login-admin', element: <AuthPage admin/>},
             {path: '/campaigns', element: <CampaignListPage/>},
@@ -51,6 +54,7 @@ export const router = createBrowserRouter([
             {path: '/organizations', element: <OrganizationListPage/>},
             {path: '/organizations/:id', element: <OrganizationDetailPage/>},
             {element: <RouteGuard/>, children: [
+                {path: '/me', element: <MySpacePage/>},
                 {path: '/attendance/checkin', element: <QrCheckinPage/>},
                 {path: '/me/settings', element: <SettingsPage/>},
                 {path: '/me/profile', element: <ProfilePage/>},

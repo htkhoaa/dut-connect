@@ -1,3 +1,4 @@
+import {ImageViewer} from '../../shared/components/ImageViewer';
 import {ApiImage} from '../../shared/components/ApiImage';
 import {useState, useRef, useEffect} from 'react';
 import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
@@ -114,16 +115,18 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
                         <div
                             key={item.id}
                             className="group relative aspect-4/3 overflow-hidden rounded-xl border border-border bg-surface-muted cursor-pointer transition-all hover:shadow-md"
-                            onClick={() => setSelectedImage(item)}
+
                         >
+                            <button type="button" onClick={() => setSelectedImage(item)} aria-label={item.caption || tr("Xem ảnh chiến dịch")} className="h-full w-full">
                             <ApiImage
                                 src={item.imageUrl}
                                 alt={item.caption || tr("Hình ảnh chiến dịch")}
                                 loading="lazy"
                                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                             />
+                            </button>
                             {item.caption && (
-                                <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/40 to-transparent p-2 pt-6 text-[11px] text-white">
+                                <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/40 to-transparent p-2 pt-6 text-[11px] text-white">
                                     <p className="truncate font-medium">{renderText(item.caption)}</p>
                                 </div>
                             )}
@@ -194,66 +197,12 @@ export function CampaignGallery({campaignId, canManage = false}: {campaignId: st
                 </div>
             )}
 
-            {/* Fullscreen Lightbox Modal with Left/Right Navigation */}
-            {selectedImage && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-xs p-4 animate-in fade-in duration-200"
-                    onClick={() => setSelectedImage(null)}
-                >
-                    <div
-                        className="relative max-h-[92vh] max-w-4xl w-full overflow-hidden rounded-2xl bg-white shadow-2xl"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {/* Image Viewer */}
-                        <div className="relative flex items-center justify-center bg-black/95 min-h-[300px]">
-                            <ApiImage
-                                src={selectedImage.imageUrl}
-                                alt={selectedImage.caption || ''}
-                                className="max-h-[75vh] w-auto max-w-full object-contain"
-                            />
+            {selectedImage && <ImageViewer key={selectedImage.id} src={selectedImage.imageUrl}
+                caption={selectedImage.caption || tr('Hình ảnh chiến dịch DUT Connect')}
+                onClose={() => setSelectedImage(null)}
+                onPrevious={items.length > 1 ? showPrev : undefined} onNext={items.length > 1 ? showNext : undefined}
+                position={`${currentIndex + 1} / ${items.length}`}/>}
 
-                            {/* Left & Right Navigation Buttons */}
-                            {items.length > 1 && (
-                                <>
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); showPrev(); }}
-                                        className="absolute left-3 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-black/50 hover:bg-black/80 text-white hover:scale-105 transition-all shadow-lg text-lg font-bold backdrop-blur-xs"
-                                        title={tr("Ảnh trước (Phím mũi tên trái ←)")}
-                                    >
-                                        ⟨
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); showNext(); }}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-black/50 hover:bg-black/80 text-white hover:scale-105 transition-all shadow-lg text-lg font-bold backdrop-blur-xs"
-                                        title={tr("Ảnh kế tiếp (Phím mũi tên phải →)")}
-                                    >
-                                        ⟩
-                                    </button>
-                                </>
-                            )}
-                        </div>
-
-                        {/* Footer Bar */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-white border-t border-border">
-                            <div>
-                                <p className="text-sm font-semibold text-text-primary">
-                                    {renderText(selectedImage.caption || tr("Hình ảnh chiến dịch DUT Connect"))}
-                                </p>
-                                {items.length > 1 && (
-                                    <p className="text-xs text-text-secondary mt-0.5">
-                                        {tr("Ảnh")} {currentIndex + 1} / {items.length}
-                                    </p>
-                                )}
-                            </div>
-                            <Button variant="secondary" onClick={() => setSelectedImage(null)} className="text-xs">
-                                {tr("Đóng (Esc)")}
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </Card>
     );
 }
