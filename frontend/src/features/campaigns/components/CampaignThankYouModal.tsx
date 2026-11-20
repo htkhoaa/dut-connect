@@ -8,6 +8,7 @@ import {Badge} from '../../../shared/components/Badge';
 import {LoadingState} from '../../../shared/components/LoadingState';
 import {ErrorState} from '../../../shared/components/ErrorState';
 import {errorMessage} from '../../../shared/api/errors';
+import {errorLabel} from '../../../shared/api/errorLabels';
 import type {ContributionMode} from '../types';
 import {
     getThankYouRecipients,
@@ -47,9 +48,18 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
     });
 
     const sendMutation = useMutation({
-        mutationFn: () => sendThankYou(campaignId, customSubject || undefined, customMessage || undefined),
+        mutationFn: (recipientKeys?: string[]) => sendThankYou(campaignId, customSubject || undefined, customMessage || undefined, recipientKeys),
         onSuccess: (data) => {
-            setSentResult(data);
+            setSentResult(previous => {
+                if (!previous) return data;
+                const updated = new Map(previous.recipients.map(r => [r.contributionType + ':' + r.userId, r]));
+                data.recipients.forEach(r => updated.set(r.contributionType + ':' + r.userId, r));
+                const recipients = [...updated.values()];
+                const successful = recipients.filter(r => r.emailSent);
+                return {...data, recipients, totalSent: successful.length,
+                    donorsCount: successful.filter(r => r.contributionType === 'DONATION').length,
+                    volunteersCount: successful.filter(r => r.contributionType === 'VOLUNTEER').length};
+            });
         },
     });
 
@@ -67,6 +77,8 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
     });
 
     const totalCount = allRecipients.length;
+    const failedRecipients = sentResult?.recipients.filter(r => !r.emailSent) ?? [];
+    const retryableRecipients = failedRecipients.filter(r => r.errorCode !== 'MAIL_IN_PROGRESS');
 
     const handleDownloadCert = () => {
         if (!previewQuery.data?.svg) return;
@@ -88,50 +100,29 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
             className="max-w-4xl max-h-[90vh] overflow-y-auto"
         >
             {sentResult ? (
-                /* Success View */
-                <div className="py-6 text-center space-y-4">
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl text-emerald-600">
-                        ✓
-                    </div>
-                    <h3 className="text-xl font-bold text-text-primary">
-                        {tr("Đã gửi lời cảm ơn thành công!")}
+                <div className="space-y-5 py-4">
+                    <h3 className={`text-xl font-bold ${sentResult.totalSent === 0 ? 'text-danger' : failedRecipients.length ? 'text-amber-700' : 'text-success'}`}>
+                        {tr(sentResult.totalSent === 0 ? 'Chưa gửi được thư cảm ơn' : failedRecipients.length ? 'Một số thư chưa gửi được' : 'Đã gửi lời cảm ơn thành công!')}
                     </h3>
-                    <p className="max-w-xl mx-auto text-sm text-text-secondary leading-relaxed">
-                        {sentResult.message}
-                    </p>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg mx-auto py-2">
-                        <div className="rounded-xl border border-border bg-surface-muted p-3">
-                            <p className="text-xs text-text-secondary">{tr("Ủng hộ tài chính")}</p>
-                            <p className="text-xl font-bold text-primary">{sentResult.donorsCount}</p>
-                        </div>
-                        <div className="rounded-xl border border-border bg-surface-muted p-3">
-                            <p className="text-xs text-text-secondary">{tr("Tình nguyện viên")}</p>
-                            <p className="text-xl font-bold text-emerald-600">{sentResult.volunteersCount}</p>
-                        </div>
-                        <div className="rounded-xl border border-border bg-surface-muted p-3">
-                            <p className="text-xs text-text-secondary">{tr("Tổng email đã gửi")}</p>
-                            <p className="text-xl font-bold text-text-primary">{sentResult.totalSent}</p>
-                        </div>
+                    <p className="text-sm text-text-secondary">{tr('Dịch vụ email đã tiếp nhận')} <strong>{sentResult.totalSent} / {sentResult.recipients.length}</strong> {tr('thư cảm ơn. Người nhận nên kiểm tra cả hộp thư đến và thư rác.')}</p>
+                    <div className="grid grid-cols-3 gap-3">
+                        <div className="rounded-xl border border-border p-3"><p className="text-xs text-text-secondary">{tr('Ủng hộ tài chính')}</p><strong className="text-xl">{sentResult.donorsCount}</strong></div>
+                        <div className="rounded-xl border border-border p-3"><p className="text-xs text-text-secondary">{tr('Tình nguyện viên')}</p><strong className="text-xl">{sentResult.volunteersCount}</strong></div>
+                        <div className="rounded-xl border border-border p-3"><p className="text-xs text-text-secondary">{tr('Chưa gửi được')}</p><strong className="text-xl text-danger">{failedRecipients.length}</strong></div>
                     </div>
-
-                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 text-xs text-emerald-800 text-left max-w-xl mx-auto space-y-1">
-                        <p className="font-semibold flex items-center gap-1.5">
-                            <Icon name="check" size={15} />
-                            {tr("Chứng chỉ Trường Đại học Bách khoa đã được đính kèm vào email:")}
-                        </p>
-                        <ul className="list-disc list-inside space-y-0.5 text-emerald-700">
-                            <li>{tr("Sinh viên ủng hộ: nhận Chứng chỉ đóng góp tài chính kèm dấu đỏ & chữ ký.")}</li>
-                            <li>{tr("Sinh viên tình nguyện: nhận Chứng chỉ tình nguyện viên kèm số giờ đóng góp.")}</li>
-                            <li>{tr("Thông báo in-app realtime cũng đã được chuyển đến tài khoản sinh viên.")}</li>
-                        </ul>
-                    </div>
-
-                    <div className="pt-4 flex justify-end">
-                        <Button variant="primary" onClick={onClose}>
-                            {tr("Hoàn tất & Đóng")}
-                        </Button>
-                    </div>
+                    {sentResult.totalSent > 0 && <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{tr('Thư đã được dịch vụ email tiếp nhận, kèm tệp chứng nhận. Những thư đã gửi thành công sẽ không được gửi trùng khi thử lại.')}</p>}
+                    {failedRecipients.length > 0 && <div role="alert" className="space-y-3 rounded-xl border border-danger/20 p-4">
+                        <h4 className="font-semibold">{tr('Các thư chưa gửi được')}</h4>
+                        <ul className="max-h-64 space-y-3 overflow-y-auto text-sm">{failedRecipients.map(r => <li key={r.contributionType + r.userId}>
+                            <p className="break-words font-medium">{r.fullName} — {r.email}</p>
+                            <p className="mt-1 text-danger">{tr(errorLabel(r.errorCode || 'MAIL_DELIVERY_FAILED', 502))}</p>
+                        </li>)}</ul>
+                        {retryableRecipients.length > 0 && <Button variant="secondary" disabled={sendMutation.isPending} onClick={() => sendMutation.mutate(retryableRecipients.map(r => r.contributionType + ':' + r.userId))}>
+                            {tr(sendMutation.isPending ? 'Đang gửi…' : 'Thử lại thư lỗi')}
+                        </Button>}
+                    </div>}
+                    {sendMutation.isError && <ErrorState message={errorMessage(sendMutation.error)}/>}
+                    <div className="flex justify-end"><Button disabled={sendMutation.isPending} onClick={onClose}>{tr('Đóng')}</Button></div>
                 </div>
             ) : recipientsQuery.isPending ? (
                 <LoadingState message={tr("Đang tổng hợp danh sách sinh viên đóng góp…")} />
@@ -404,7 +395,7 @@ export function CampaignThankYouModal({open, campaignId, campaignTitle, mode, on
                             </Button>
                             <Button
                                 variant="primary"
-                                onClick={() => sendMutation.mutate()}
+                                onClick={() => sendMutation.mutate(undefined)}
                                 disabled={sendMutation.isPending || totalCount === 0}
                                 className="font-semibold shadow-xs"
                             >

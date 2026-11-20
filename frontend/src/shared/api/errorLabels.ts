@@ -1,4 +1,10 @@
 const codes: Record<string, string> = {
+    MAIL_UNAVAILABLE: 'Máy chủ chưa được cấu hình gửi email. Quản trị viên cần kiểm tra cấu hình dịch vụ thư.',
+    MAIL_IN_PROGRESS: 'Thư đang được xử lý hoặc đang chờ xác nhận. Không gửi lại để tránh trùng thư; hãy kiểm tra lại sau.',
+    MAIL_AUTHENTICATION_FAILED: 'Dịch vụ email từ chối xác thực. Cần kiểm tra tài khoản gửi và quyền gửi thư.',
+    MAIL_CONNECTION_FAILED: 'Máy chủ không kết nối được dịch vụ email. Cần kiểm tra SMTP host, cổng gửi thư và giới hạn mạng của nơi triển khai backend.',
+    MAIL_DELIVERY_FAILED: 'Chưa gửi được email. Cần kiểm tra kết nối và cấu hình dịch vụ thư trên máy chủ.',
+    CERTIFICATE_GENERATION_FAILED: 'Chưa tạo được tệp chứng nhận để gửi kèm thư.',
     VALIDATION_ERROR: 'Vui lòng kiểm tra thông tin đã nhập.', AUTHENTICATION_REQUIRED: 'Vui lòng đăng nhập để tiếp tục.',
     INVALID_CREDENTIALS: 'Mã sinh viên hoặc mật khẩu không đúng.', ACCESS_DENIED: 'Bạn không có quyền thực hiện thao tác này.',
     RESOURCE_NOT_FOUND: 'Không tìm thấy thông tin bạn yêu cầu.', CONFLICT: 'Thông tin đã tồn tại hoặc vừa được thay đổi. Vui lòng kiểm tra lại.',

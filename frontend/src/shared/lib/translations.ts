@@ -1050,3 +1050,20 @@ Vùng xem ảnh, cuộn để di chuyển khi phóng to|Image viewer; scroll to 
 Cuộn ngang hoặc dọc để di chuyển ảnh khi phóng to. Nhấn Esc để đóng.|Scroll horizontally or vertically to pan when zoomed in. Press Esc to close.
 Đóng hộp thoại|Close dialog
 `.trim().split('\n').map(row => {const at = row.indexOf('|'); return [row.slice(0, at), row.slice(at + 1)];})));
+
+Object.assign(english, Object.fromEntries(`
+Chưa gửi được thư cảm ơn|Thank-you emails could not be sent
+Một số thư chưa gửi được|Some emails could not be sent
+Dịch vụ email đã tiếp nhận|The email service has accepted
+thư cảm ơn. Người nhận nên kiểm tra cả hộp thư đến và thư rác.|thank-you emails. Recipients should check their inbox and spam folder.
+Chưa gửi được|Not sent
+Các thư chưa gửi được|Emails not sent
+Thử lại thư lỗi|Retry failed emails
+Thư đã được dịch vụ email tiếp nhận, kèm tệp chứng nhận. Những thư đã gửi thành công sẽ không được gửi trùng khi thử lại.|The email service has accepted the messages with certificate attachments. Successfully sent messages will not be sent again on retry.
+Máy chủ chưa được cấu hình gửi email. Quản trị viên cần kiểm tra cấu hình dịch vụ thư.|Email delivery is not configured. An administrator must check the server's email settings.
+Dịch vụ email từ chối xác thực. Cần kiểm tra tài khoản gửi và quyền gửi thư.|Email authentication failed. Check the sender account and send permissions.
+Chưa gửi được email. Cần kiểm tra kết nối và cấu hình dịch vụ thư trên máy chủ.|Email delivery failed. Check the connection and server email settings.
+Máy chủ không kết nối được dịch vụ email. Cần kiểm tra SMTP host, cổng gửi thư và giới hạn mạng của nơi triển khai backend.|The server cannot connect to the email service. Check the SMTP host, port and hosting network restrictions.
+Chưa tạo được tệp chứng nhận để gửi kèm thư.|The certificate attachment could not be generated.
+Thư đang được xử lý hoặc đang chờ xác nhận. Không gửi lại để tránh trùng thư; hãy kiểm tra lại sau.|Delivery is processing or awaiting confirmation. Check again later to avoid duplicate emails.
+`.trim().split('\n').map(row => {const at = row.indexOf('|'); return [row.slice(0, at), row.slice(at + 1)];})));

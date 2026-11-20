@@ -69,8 +69,13 @@ public class EmailNotificationService {
             }
             mail.send(message);
         } catch (Exception ex) {
-            log.error("Email notification failed recipient={} subject={} error={}", recipient, subject, ex.getClass().getSimpleName());
-            throw new ApplicationFailure(502, ex instanceof MailAuthenticationException ? "MAIL_AUTHENTICATION_FAILED" : "MAIL_DELIVERY_FAILED",
+            Throwable root = ex;
+            while (root.getCause() != null && root.getCause() != root) root = root.getCause();
+            String code = ex instanceof MailAuthenticationException ? "MAIL_AUTHENTICATION_FAILED"
+                    : root instanceof java.net.SocketTimeoutException || root instanceof java.net.ConnectException
+                        || root instanceof java.net.UnknownHostException ? "MAIL_CONNECTION_FAILED" : "MAIL_DELIVERY_FAILED";
+            log.error("Email notification failed error={} root={}", ex.getClass().getSimpleName(), root.getClass().getSimpleName());
+            throw new ApplicationFailure(502, code,
                     "Email provider rejected the message or could not be reached");
         }
     }

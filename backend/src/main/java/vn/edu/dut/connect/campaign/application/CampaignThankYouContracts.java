@@ -5,9 +5,9 @@ import java.util.UUID;
 
 public class CampaignThankYouContracts {
     public record SendThankYouRequest(
-            String customSubject,
-            String customMessage,
-            List<String> recipientKeys
+            @jakarta.validation.constraints.Size(max = 200) String customSubject,
+            @jakarta.validation.constraints.Size(max = 5000) String customMessage,
+            @jakarta.validation.constraints.Size(max = 500) List<String> recipientKeys
     ) {}
 
     public record ThankYouRecipientDto(

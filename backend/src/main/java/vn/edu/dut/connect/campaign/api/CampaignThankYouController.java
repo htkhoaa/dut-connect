@@ -34,7 +34,7 @@ public class CampaignThankYouController {
     public CampaignThankYouResponse sendThankYou(
             @PathVariable UUID id,
             Authentication auth,
-            @RequestBody(required = false) SendThankYouRequest request
+            @jakarta.validation.Valid @RequestBody(required = false) SendThankYouRequest request
     ) {
         if (auth == null) {
             throw new vn.edu.dut.connect.shared.application.ApplicationFailure(401, "AUTHENTICATION_REQUIRED", "Login required");
