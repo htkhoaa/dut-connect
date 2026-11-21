@@ -1,6 +1,9 @@
 spring:
   jpa:
     show-sql: false
+app:
+  mail:
+    campaign-relay-url: ${APP_CAMPAIGN_MAIL_RELAY_URL:https://dutconnect.vercel.app/api/mail-relay}
 logging:
   level:
     root: INFO

@@ -134,14 +134,31 @@ Chỉ đặt biến công khai `VITE_*` ở frontend. Thông tin database, JWT, 
 
 ### Trạng thái gửi thư cảm ơn
 
-Giữ nguyên logic hiện tại, chờ cấu hình dịch vụ gửi thư thật:
+Backend vẫn quyết định người nhận và lưu trạng thái. Ở production, SMTP của thư cảm ơn được chuyển qua API máy chủ Vercel để không cần kết nối SMTP từ Render:
 
 - Chỉ gửi sau khi chiến dịch hoàn thành và người thao tác đủ quyền.
 - Người nhận là email tài khoản đã quyên góp thành công hoặc tình nguyện viên đã xác minh hoàn thành. Email Outlook là địa chỉ nhận; đăng nhập website không cấp quyền gửi từ hộp thư đó.
 - Giao diện hiển thị kết quả từng người nhận. Database lưu `SENDING`, `SENT`, `FAILED`; không gửi lại thư đã thành công hoặc chưa xác định xong kết quả.
 - Dịch vụ tiếp nhận thư không đồng nghĩa thư chắc chắn nằm trong inbox. Người nhận cần xem cả thư rác.
-- Email production chưa được xác nhận gửi thành công; cần tài khoản có quyền quản lý backend để kiểm tra cấu hình/log. Không tự tạo dịch vụ hoặc nâng gói trả phí.
-- Render Free có giới hạn cổng SMTP; kiểm tra [tài liệu Render](https://render.com/docs/free) trước khi chọn cách gửi. Cấu hình xác thực phải theo nhà cung cấp hộp thư.
+- Email production chỉ được coi là hoạt động sau khi đã lưu cấu hình SMTP trên Vercel và kiểm tra gửi thật. Không tạo thêm dịch vụ hoặc nâng gói trả phí.
+- Local vẫn dùng SMTP/Mailpit như trước. Cấu hình xác thực và địa chỉ gửi phải theo nhà cung cấp hộp thư.
+
+Trên Vercel, đặt các biến **server-only** ở môi trường Production:
+
+```env
+APP_MAIL_ENABLED=true
+APP_MAIL_FROM=dia_chi_gui_da_xac_minh
+SPRING_MAIL_HOST=smtp-relay.brevo.com
+SPRING_MAIL_PORT=2525
+SPRING_MAIL_USERNAME=smtp_login_cua_brevo
+SPRING_MAIL_PASSWORD=smtp_key_cua_brevo
+```
+
+Không đặt SMTP key vào biến `VITE_*`, file nguồn hoặc GitHub. Địa chỉ From phải được xác minh trong Brevo; SMTP login không phải địa chỉ From. Sau khi đổi biến môi trường Vercel phải redeploy.
+
+`frontend/api/mail-relay.mjs` chỉ nhận nội dung có token 60 giây do backend ký. Token gắn với SHA-256 của đúng nội dung thư, được backend kiểm tra chữ ký/tài khoản trước khi Vercel gửi SMTP. Token đăng nhập thông thường không dùng được để gửi thư tùy ý. Chứng nhận và sổ theo dõi gửi vẫn do backend quản lý.
+
+Profile `prod` mặc định dùng `https://dutconnect.vercel.app/api/mail-relay`. Có thể đổi bằng `APP_CAMPAIGN_MAIL_RELAY_URL`; đặt rỗng để dùng lại SMTP trực tiếp. Backend phải được triển khai từ bản code có `CampaignMailDelivery` trước khi dùng luồng mới. Các email đăng nhập/thông báo khác vẫn theo cấu hình SMTP backend cũ.
 
 ### Dữ liệu mẫu
 
