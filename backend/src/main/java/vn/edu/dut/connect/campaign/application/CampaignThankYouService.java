@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.edu.dut.connect.campaign.domain.ContributionMode;
 import vn.edu.dut.connect.notification.application.NotificationService;
-import vn.edu.dut.connect.shared.application.EmailNotificationService;
 
 @Service
 public class CampaignThankYouService {
@@ -22,7 +21,7 @@ public class CampaignThankYouService {
     private final CampaignThankYouRepository repository;
     private final CampaignAuthorization access;
     private final CampaignAccessPort campaigns;
-    private final EmailNotificationService emailService;
+    private final CampaignMailDelivery emailService;
     private final NotificationService notificationService;
     private final DutCertificateGenerator certificateGenerator;
 
@@ -30,7 +29,7 @@ public class CampaignThankYouService {
         CampaignThankYouRepository repository,
         CampaignAuthorization access,
         CampaignAccessPort campaigns,
-        EmailNotificationService emailService,
+        CampaignMailDelivery emailService,
         NotificationService notificationService,
         DutCertificateGenerator certificateGenerator
     ) {
@@ -166,7 +165,8 @@ public class CampaignThankYouService {
                           detail,
                           message
                       );
-                emailService.sendWithImageAttachment(
+                emailService.send(
+                    actorId,
                     recipient.email(),
                     subject,
                     html,
