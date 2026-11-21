@@ -74,6 +74,7 @@ export async function POST(request) {
     const pass = process.env.SPRING_MAIL_PASSWORD;
     const from = process.env.APP_MAIL_FROM;
     if (process.env.APP_MAIL_ENABLED !== 'true' || !user || !pass || !from) {
+        console.warn('Campaign mail failed', { code: 'MAIL_UNAVAILABLE' });
         return reply(200, { accepted: false, code: 'MAIL_UNAVAILABLE' });
     }
     const smtp = nodemailer.createTransport({
@@ -112,6 +113,21 @@ export async function POST(request) {
                 : ['ETIMEDOUT', 'ECONNECTION', 'ESOCKET', 'EDNS'].includes(error.code)
                   ? 'MAIL_CONNECTION_FAILED'
                   : 'MAIL_DELIVERY_FAILED';
+        // Log only diagnostic codes; SMTP responses can contain private addresses.
+        const response = String(error.response || '').toLowerCase();
+        const reason = /sender.*(valid|verif|authoriz)|not.*verified/.test(response)
+            ? 'SENDER_NOT_VERIFIED'
+            : /credit|quota|limit/.test(response)
+              ? 'SENDING_LIMIT'
+              : /activat|suspend|block/.test(response)
+                ? 'ACCOUNT_RESTRICTED'
+                : 'SMTP_REJECTED';
+        console.warn('Campaign mail failed', {
+            code,
+            smtpCode: /^[A-Z_]+$/.test(error.code || '') ? error.code : 'UNKNOWN',
+            responseCode: Number.isInteger(error.responseCode) ? error.responseCode : undefined,
+            reason,
+        });
         return reply(200, { accepted: false, code });
     } finally {
         smtp.close();
